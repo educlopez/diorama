@@ -3,6 +3,7 @@
 <p align="center"><b>A Claude Code skill that builds small animated 3D worlds for the web.</b><br>Isometric scenes made of blocks and soft shadows, with little trucks, forklifts and people that keep their own time. A hero for a landing page, a card for your docs, or a mini figure for an empty state. Five themes, from pastel toy to a hairline drawing, all of them yours to tune.</p>
 
 <p align="center">
+  <a href="https://diorama.educalvolopez.com"><img src="https://img.shields.io/badge/site-diorama.educalvolopez.com-1b1b19?style=flat-square" alt="Site: diorama.educalvolopez.com"></a>
   <a href="https://code.claude.com/docs/en/skills"><img src="https://img.shields.io/badge/Claude_Code-skill-1b1b19?style=flat-square&logo=claude&logoColor=white" alt="Claude Code skill"></a>
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent_Skills-compatible-1b1b19?style=flat-square" alt="Agent Skills compatible"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1b1b19?style=flat-square" alt="MIT license"></a>
@@ -169,7 +170,7 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
 ## Site
 
-`apps/site` is the landing, the figures page and the docs: a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
+`apps/site` is [diorama.educalvolopez.com](https://diorama.educalvolopez.com): the landing, the figures page and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
 
 ```sh
 cd apps/site && npm install && npm run dev

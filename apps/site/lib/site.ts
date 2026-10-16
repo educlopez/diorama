@@ -1,3 +1,4 @@
+export const SITE = "https://diorama.educalvolopez.com";
 export const REPO = "https://github.com/educlopez/diorama";
 export const AUTHOR = { name: "Eduardo Calvo", url: "https://github.com/educlopez" };
 export const INSTALL = "npx skills add educlopez/diorama -g";
