@@ -59,7 +59,7 @@ Offer two or three when there is someone to ask, and wait. If there is nobody to
 
 ## 4. Hand over
 
-Publish `diorama-<name>.html` as an artifact if you can; otherwise leave it where the person can open it and say where. Then say, one line each:
+Hand over `diorama-<name>.html` the way the person asked: when they want the file, give the file and say where it is; otherwise publish it as an artifact if you can. Then say, one line each:
 
 - the concept: the place, what moves, what the pointer does, and the theme (and how to switch it: `theme:` in the figure, `?theme=` on the page, `{ theme }` on `Diorama.mount`);
 - the still frame: which second, and why that moment;

@@ -24,11 +24,15 @@
 - **answer:** the share that changes when the pointer arrives. Under 0.3% the pointer does nothing visible (a mini may rely on the tilt alone, which shows as a few percent).
 - **frame:** milliseconds per tick and render in software GL. Hundreds of parts cost a few ms here and under one on a GPU; above 15 ms, cut primitives or shrink the shadow map by choosing a smaller size.
 
-`clash` lists every moving part that passes through another part in the first 40 seconds, with the depth in world units and the second it starts. Read it with the sheet: a vehicle through a tree, two cars in one lane or a tractor inside a barn is a bug in the lane, the schedule or the furniture; forks in a rack, a flag on its hinge or a gantry arm against a rocket is a contact on purpose. Fix the bugs, keep the contacts.
+Mark ground that other things stand on (a hill, a mountain, a dune) with `group.userData.terrain = true`; the check skips it, so its slope does not flood the list. `clash` lists every moving part that passes through another part in the first 40 seconds, with the depth in world units and the second it starts. Read it with the sheet: a vehicle through a tree, two cars in one lane or a tractor inside a barn is a bug in the lane, the schedule or the furniture; forks in a rack, a flag on its hinge or a gantry arm against a rocket is a contact on purpose. Fix the bugs, keep the contacts.
 
 ## The rules, on the sheet
 
 Go down `craft.md`'s ten rules with the pictures: base whole and uncut (01); camera isometric, subject front-left (02); pale world, two or three accents (03); matte, no textures (04); every object recognisable by its giveaways (05); soft shadows under everything (06); no visible snap between moments (07, 08); different tempos, something rare (09); no words in the scene (10).
+
+## A closer look
+
+The sheet's tiles are small for a hero. Open the built page at any second, still, in a browser: `diorama-<name>.html?still&t=14` draws second 14 and stops; add `&theme=line` for another theme. Screenshot it at full width to judge people, chairs and wheels.
 
 ## Without a browser
 

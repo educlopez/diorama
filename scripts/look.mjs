@@ -27,6 +27,7 @@
  *   clash     moving parts that pass through other parts over the first 40 s: the pair, how deep,
  *             when first. A vehicle through a tree or two cars in one lane is a bug; forks in a rack,
  *             a flag on its hinge or an arm holding a rocket is a contact on purpose. Judge it on the sheet.
+ *             Ground that things stand on (a hill, a mountain) is not tested: mark it `userData.terrain = true`.
  *
  * Exits 1 when the validator rejects the page, the console has an error, or
  * no WebGL context was made; 2 when it cannot run; 0 otherwise. Everything
@@ -96,7 +97,8 @@ const CLASH = ({ span, dt, tol }) => {
   const rootOf = (m) => { let r = null; for (let o = m; o && o !== world; o = o.parent) if (animated.has(o)) r = o; return r; };
   const roots = new Map(); meshes.forEach((m) => roots.set(m, rootOf(m)));
   world.updateMatrixWorld(true); const wb = new T.Box3().setFromObject(world); const area = (wb.max.x - wb.min.x) * (wb.max.z - wb.min.z);
-  const skip = new Set(); meshes.forEach((m) => { const b = new T.Box3().setFromObject(m); const a = (b.max.x - b.min.x) * (b.max.z - b.min.z); if (b.max.y <= 0.15 || a > 0.3 * area || !m.castShadow) skip.add(m); });
+  const skip = new Set(); meshes.forEach((m) => { const b = new T.Box3().setFromObject(m); const a = (b.max.x - b.min.x) * (b.max.z - b.min.z); let terrain = false; for (let o = m; o && o !== world; o = o.parent) if (o.userData.terrain) terrain = true;
+    if (terrain || b.max.y <= 0.15 || a > 0.3 * area || !m.castShadow) skip.add(m); });
   const wp = new T.Vector3();
   const label = (o) => o.name || (o.geometry ? o.geometry.type.replace("Geometry", "") : o.type) + "@" + (o.getWorldPosition(wp), [wp.x, wp.z].map((q) => +q.toFixed(1)).join(","));
   c.t = 0; c.step(0); world.updateMatrixWorld(true); const LAB = new Map(); objs.forEach((o) => LAB.set(o, label(o)));

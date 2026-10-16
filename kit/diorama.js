@@ -57,7 +57,12 @@
      ctx.destroy()        stop everything, dispose
 
    D (per mount toolkit, parent defaults to world):
-     D.pal                           the palette in use
+     D.pal                           the palette in use: bg base ground grass asphalt line water sand ink steel slate mist
+                                     paper cloud coral terracotta mustard sage teal plum rose cobalt cobaltSoft safety ok warn
+                                     bad flame mint lilac sky wood cardboard skin leaf leafDark leafLight trunk tyre hub lampGlow,
+                                     and accent; snow is ground or paper. Materials are cached and shared: clone one
+                                     (D.mat(c).clone()) before changing it for a single object
+     group.userData.terrain = true   ground other things stand on (a hill, a mountain): look's clash check skips it
      D.group(x, y, z, parent)        a Group placed at x, y, z
      D.box(w, h, d, c, x, y, z, parent, { shadow, mat, r })
      D.rbox(w, h, d, c, x, y, z, parent, { r })  a box with rounded edges

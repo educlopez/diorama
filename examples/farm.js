@@ -64,7 +64,7 @@ Diorama.figure({
     var T = D.phase(t, 36) * 36, L = p.lap.length, stop = 20.3, d;
     if (T < 14) d = D.inOut(T / 14) * stop; else if (T < 19) d = stop; else d = stop + D.inOut((T - 19) / 17) * (L - stop);
     D.place(p.tractor, p.lap, d); D.spin(p.tw, d, .5); p.tractor.position.y = .03 * Math.abs(D.wave(t, .4)) * (T < 14 || T > 19 ? 1 : 0);
-    p.flock.forEach(function (s, k) { var g = D.pulse(t, 9 + k, .3); s.position.y = .12 * g; s.rotation.y += .002 * D.wave(t, 5, k); s.children[1].position.y = .5 - .12 * D.smooth(D.pulse(t, 6 + k * .7, .5)); });
+    p.flock.forEach(function (s, k) { var g = D.pulse(t, 9 + k, .3); s.position.y = .12 * g; s.rotation.y = (s.userData.yaw0 == null ? (s.userData.yaw0 = s.rotation.y) : s.userData.yaw0) + .15 * D.wave(t, 5, k); s.children[1].position.y = .5 - .12 * D.smooth(D.pulse(t, 6 + k * .7, .5)); });
     var W = D.phase(t, 22), wd = W < .5 ? D.smooth(W * 2) : 1 - D.smooth((W - .5) * 2);
     D.place(p.farmer, p.walk, wd * p.walk.length); if (W >= .5) p.farmer.rotation.y += Math.PI; p.farmer.position.y = .05 * Math.abs(D.wave(t, .5));
     p.hot.forEach(function (g) { var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .3 : 0; s.step(ctx.dt); g.position.y = (g.userData.y0 == null ? (g.userData.y0 = g.position.y) : g.userData.y0) + s.x; });
