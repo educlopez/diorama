@@ -32,7 +32,7 @@ export default function Page() {
     <main id="main" className="app">
       <Topbar />
       <header className="header header--tiles">
-        <p className="badge"><span>A Claude Code skill</span><span className="badge-dim">· {FIGURES.length} examples · {THEMES.length} themes</span></p>
+        <p className="badge"><span className="beta">Beta</span><span>A Claude Code skill</span><span className="badge-dim">· {FIGURES.length} examples · {THEMES.length} themes</span></p>
         <h1 className="title">Small 3D worlds that move, built by your agent</h1>
         <p className="subtitle">Install the skill, describe a place, get one HTML file: an animated isometric scene for a landing page, a doc or an empty state. Everything on this site was made with it.</p>
         <div className="cta-row">

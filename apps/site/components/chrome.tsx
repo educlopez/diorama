@@ -31,6 +31,7 @@ export function Topbar({ active }: { active?: "figures" | "how" | "docs" }) {
           <a className="brand" href="/" aria-label="Diorama home">
             <span className="brand-mark"><Mark /></span>
             <span className="brand-word"><span>Diorama</span></span>
+            <span className="beta beta--sm">Beta</span>
           </a>
           <nav className="nav-menu" aria-label="Primary">
             <a className={`pill${active === "figures" ? " pill--active" : ""}`} href="/figures">Figures</a>
@@ -39,7 +40,7 @@ export function Topbar({ active }: { active?: "figures" | "how" | "docs" }) {
           </nav>
         </div>
         <div className="nav-right">
-          <a className="ghost-pill" href={REPO} target="_blank" rel="noopener noreferrer" aria-label="GitHub repository"><GitHub /><span>GitHub</span></a>
+          <a className="ghost-pill" href={REPO} target="_blank" rel="noopener noreferrer" aria-label="GitHub repository"><GitHub /><span className="ghost-pill-label">GitHub</span></a>
         </div>
       </div>
     </header>
