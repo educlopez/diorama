@@ -63,6 +63,8 @@ Claude offers two or three concepts, builds the one you choose, checks it in a h
 | **`rack`** · a card, in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. | **`mailbox`** · a mini. The flag lifts every few seconds to check, finds nothing, settles. |
 | <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can beside it, on a rounded tile"> | <img src="docs/media/desk.png" alt="A line drawing of a desk with a lamp, an empty tray, a mug and a swivel chair, on a rounded tile"> |
 | **`seedling`** · a mini, in `line` with the pot as the accent. The can tips now and then. | **`desk`** · a mini, in `line` with a coral accent. The chair swivels, the lamp nods. |
+| <img src="docs/media/powder.png" alt="An isometric ski village at the foot of a snowy mountain: a chairlift up the slope, chalets with lit windows, a hotel, pines, a frozen pond and a shuttle bus"> | <img src="docs/media/turntable.png" alt="A line drawing of a record player on a low cabinet with a speaker and an empty crate, the platter mat in purple, on a rounded tile"> |
+| **`powder`** · a hero. Chairs climb the slope, two skiers ride up and carve back down, a ski class snakes the nursery, the shuttle waits at the lift. | **`turntable`** · a mini, in `line` with a purple accent. Now and then the arm swings over, finds no record and goes back. |
 
 Open them live in the gallery on the site: every figure answers the pointer, names what is under it, switches theme and pauses to its still frame.
 
@@ -155,6 +157,8 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/mailbox.js`: a mini. A letterbox on a post, door open, a fence, a tree and a rock; the flag checks now and then.
 - `examples/seedling.js`: a mini in `line`. A pot of soil and a watering can that tips now and then.
 - `examples/desk.js`: a mini in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
+- `examples/powder.js`: a hero. A ski village under a snowy peak: a chairlift on a loop, two skiers who ride up and ski down in turns, a ski class, a shuttle bus, a skater on the pond, smoking chimneys.
+- `examples/turntable.js`: a mini in `line` with a purple accent. A record player and an empty crate; the tonearm looks for a record now and then.
 
 Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
