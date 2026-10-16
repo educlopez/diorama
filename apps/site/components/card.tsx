@@ -4,7 +4,7 @@ import { REPO } from "@/lib/site";
 
 /** A figure card: the live stage with its chrome, then the meta row (tile icon, name, one line, tags). */
 export function FigureCard({ fig, index, chips = true, wide = false, full = false, lazy = false }: { fig: Figure; index?: number; chips?: boolean; wide?: boolean; full?: boolean; lazy?: boolean }) {
-  const name = fig.title ?? fig.empty?.title ?? fig.name;
+  const name = fig.title ?? fig.name;
   return (
     <article id={fig.name} className={`card fig-card${full ? " fig-card--full" : wide ? " fig-card--wide" : ""}`} data-fig={fig.name}>
       <Frame fig={fig} index={index} chips={chips} lazy={lazy} />

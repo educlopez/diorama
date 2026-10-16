@@ -43,18 +43,11 @@ export function Frame({ fig, index, chips = true, chrome = true, lazy = false }:
   const frame = (
     <iframe ref={ref} className={`frame${isMini ? " frame-mini" : ""}`} style={{ aspectRatio: ASPECT[fig.size] }} src={pageOf(fig.name)} title={`${fig.name} diorama`} loading={lazy ? "lazy" : "eager"} onLoad={() => send({ hello: true })} />
   );
-  const label = fig.title ?? fig.empty?.title ?? fig.name;
+  const label = fig.title ?? fig.name;
   return (
     <>
       <div className="stage">
-        {isMini ? (
-          <div className="empty-mock">
-            {frame}
-            <h3>{fig.empty?.title ?? "Nothing here yet"}</h3>
-            <p>{fig.empty?.body ?? fig.means}</p>
-            <span className="btn btn--primary">{fig.empty?.action ?? "Get started"}</span>
-          </div>
-        ) : frame}
+        {isMini ? <div className="mini-stage">{frame}</div> : frame}
         {chrome && (
           <>
             <span className="fig-tag fig-tag--tl">{index != null ? `Fig ${index} · ` : ""}{label}</span>

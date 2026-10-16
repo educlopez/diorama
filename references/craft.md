@@ -67,7 +67,7 @@ A scene reads as alive when two or three things keep their own time and one thin
 
 ## 10 · quiet: words stay out of the scene
 
-The scene is understood from its objects. Words go around the stage: the title, the `means`, the empty state's heading and button. The scene itself carries none: a sign half hidden by a roof reads as a glitch, and a brand on a wall is the brand's call, not yours.
+The scene is understood from its objects. Words go around the stage: the title, the `means`, and whatever the person's own UI puts beside the figure. The scene itself carries none: a sign half hidden by a roof reads as a glitch, and a brand on a wall is the brand's call, not yours.
 
 - **Keep it:** no `D.label` in a mini or a card, and at most one in a hero, only when the product asked for its mark. Say "nothing here" by showing the empty thing, not by writing it. Colour says where to look: the one accent on the object the eye should start at. A building is told by its roof, its windows and its door, not by its name.
 - **Rejected when:** text floats in the air; an arrow; an icon; a number; a mini with a label; a scene that cannot be understood without its title.
@@ -130,4 +130,4 @@ Every example is built from these. Positions are in the object's own group, nose
 
 **A cart or a kiosk.** A `D.rbox` body on four wheels, a wooden counter, two posts and a striped canopy of alternating boxes, a `pal.steel` machine with a steam of three small balls rising in `tick`, cups as short cylinders with an ink lid.
 
-**Clouds and gulls.** `D.props.cloud` (three balls, no shadow) drifting with `position.x += speed · dt` and wrapping; a gull is two thin boxes as wings that flap from a short wave, on a path above the scene.
+**Clouds and gulls.** `D.props.cloud` (three balls, no shadow) drifting from the clock, `position.x = wrap(x0 + speed · t)` with the start kept in `userData` (never `+= speed · dt`, which breaks the still frame and the loop); a gull is two thin boxes as wings that flap from a short wave, on a path above the scene.

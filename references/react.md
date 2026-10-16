@@ -46,7 +46,7 @@ Notes:
 - A figure file ends with `Diorama.figure({ … })`, which needs `Diorama` in scope. In a bundler, change its first line to `import Diorama from "./diorama.js";` or wrap it as `export default (Diorama) => Diorama.figure({ … })` and call it in the effect. Nothing else in the figure changes.
 - Server rendering: render the `<div>` empty with a fixed aspect ratio (`aspectRatio: "3 / 2"`, `"4 / 3"` or `"1"`) so nothing shifts when the canvas mounts.
 - One canvas per diorama. Several on one page are fine; each sleeps when offscreen.
-- The figure's `means` and `empty` text are yours to render as React text next to the stage; the kernel never writes words.
+- The figure's `title` and `means` are yours to render as React text next to the stage, along with any heading or button your UI needs; the kernel never writes words.
 
 ## Shipping the page itself
 

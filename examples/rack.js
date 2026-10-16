@@ -1,4 +1,4 @@
-/* rack · a card empty state: "No items in stock".
+/* rack · a card in mono with one accent.
    A pallet rack with every slot bare, a forklift waiting in front with its
    forks down. The forks rise and settle as if checking the shelves. The
    pointer picks a level; its beams light up and the forklift looks there.
@@ -8,7 +8,7 @@ Diorama.figure({
   name: 'rack',
   size: 'card',
   theme: { base: 'mono', accent: '#f2c230' },
-  title: 'No items in stock',
+  title: 'Pallet rack',
   means: 'A three-level rack with nothing on it and a forklift waiting. Hover a level and the forks go to it.',
   hint: 'Hover a level and the forks go to it.',
   still: 3,

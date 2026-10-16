@@ -34,7 +34,7 @@ export default function Page() {
       <header className="header header--tiles">
         <p className="badge"><span className="beta">Beta</span><span>A Claude Code skill</span><span className="badge-dim">· {FIGURES.length} examples · {THEMES.length} themes</span></p>
         <h1 className="title">Small 3D worlds that move, built by your agent</h1>
-        <p className="subtitle">Install the skill, describe a place, get one HTML file: an animated isometric scene for a landing page, a doc or an empty state. Everything on this site was made with it.</p>
+        <p className="subtitle">Install the skill, describe a place, get one HTML file: an animated isometric scene for a landing page, a doc or any spot in your app. Everything on this site was made with it.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="/docs">Get the skill</a>
           <a className="btn btn--secondary" href="/figures">See the examples</a>
@@ -75,7 +75,7 @@ export default function Page() {
 
       <section className="section" id="components" aria-labelledby="made-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
-          <h2 className="steps-title" id="made-title">Made with the skill.<br /><span className="steps-title-dim">Heroes, cards and empty states</span></h2>
+          <h2 className="steps-title" id="made-title">Made with the skill.<br /><span className="steps-title-dim">Heroes, cards and minis</span></h2>
           <p className="steps-lede">Three sizes, five themes, and a different place each time: an island, a launchpad, a coffee bar, a server, a mailbox, a desk. The gallery has all {FIGURES.length}, live.</p>
         </div>
         <div className="cards">

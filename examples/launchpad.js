@@ -1,4 +1,4 @@
-/* launchpad · a card empty state: "No deployments yet", at night.
+/* launchpad · a card at night.
    A rocket on its pad, a gantry with an arm, a fuel tank, a control bunker
    with lit windows, floodlights. Every twenty seconds the arm swings away,
    the engine lights and the rocket climbs out of the frame, then it is back
@@ -7,7 +7,7 @@ Diorama.figure({
   name: 'launchpad',
   size: 'card',
   theme: 'night',
-  title: 'No deployments yet',
+  title: 'Launchpad',
   means: 'A rocket waits on its pad under floodlights; every so often the arm swings away and it launches.',
   hint: 'Hover the rocket, the gantry or the control room; wait for the launch.',
   camera: { az: 38, el: 33, pad: 1.06 },

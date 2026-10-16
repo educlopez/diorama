@@ -13,7 +13,7 @@ const SECTIONS = [
   { id: "prompts", title: "Prompts" },
   { id: "sizes", title: "Sizes" },
   { id: "themes", title: "Themes" },
-  { id: "empty-states", title: "Empty states" },
+  { id: "minis", title: "Minis" },
   { id: "figure", title: "The figure file" },
   { id: "scripts", title: "Scripts" },
   { id: "embed", title: "Embed" },
@@ -40,7 +40,7 @@ const FIGURE = `Diorama.figure({
   size: 'mini',                          // hero | card | mini
   theme: 'toy',                          // or { base: 'line', accent: '#cf6a4c' }
   means: 'An open letterbox with nothing inside. The flag lifts now and then.',
-  empty: { title: 'No messages yet', body: 'When someone writes, it lands here.', action: 'Write a message' },
+  title: 'Mailbox',
   still: 1,                              // the second reduced motion shows
   build: function (o) {
     var D = o.D, pal = o.pal;
@@ -112,7 +112,7 @@ export default function Page() {
         </Section>
 
         <Section id="prompts">
-          <p className="note">Type <C>/diorama</C> and describe the place. Say where it will live (a hero, a card, an empty state), name the place or the product, and give a colour if you have one. The agent offers two or three concepts, builds the one you pick, runs the validator and the look, and hands you <C>diorama-&lt;name&gt;.html</C>.</p>
+          <p className="note">Type <C>/diorama</C> and describe the place. Say where it will live (a hero, a card, a small figure), name the place or the product, and give a colour if you have one. The agent offers two or three concepts, builds the one you pick, runs the validator and the look, and hands you <C>diorama-&lt;name&gt;.html</C>.</p>
           <CodeRows rows={[
             { code: "/diorama a hero for our logistics landing page: a yard with trucks docking" },
             { code: "/diorama an empty state for the inbox, small and quiet, line-drawing style" },
@@ -145,9 +145,9 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
           </table>
         </Section>
 
-        <Section id="empty-states">
-          <p className="note">A mini sits at 160 to 240px above a heading and one action. Its still frame is the picture; the ambient motion is the bonus. The canvas is transparent, so the card&rsquo;s background shows through. The figure carries the words as <C>empty: {"{ title, body, action }"}</C>; the page renders them.</p>
-          <div className="card fig-card" style={{ maxWidth: 420 }}><Frame fig={mailbox} chips={false} /><div style={{ height: 12 }} /></div>
+        <Section id="minis">
+          <p className="note">A mini is a small figure, 160 to 240px square: one object and one quiet motion. Use it wherever a page needs a small picture: an empty state, a feature in a list, a settings section, a 404, a sidebar. Its still frame is the picture and the ambient motion is the bonus. The canvas is transparent, so whatever sits behind it shows through. The words around it, a heading, a line, a button, are yours to write in your own UI.</p>
+          <div className="card fig-card" style={{ maxWidth: 360 }}><Frame fig={mailbox} chips={false} /><div style={{ height: 12 }} /></div>
         </Section>
 
         <Section id="figure">

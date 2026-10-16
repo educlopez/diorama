@@ -12,13 +12,13 @@ export type Theme = (typeof THEMES)[number];
 export const SIZES = [
   { name: "hero", lives: "the top of a landing page or a README", stage: "3:2, full width", moves: "three or four loops with different periods, one pointer answer", lines: "≤ 420" },
   { name: "card", lives: "beside text in docs or a post", stage: "4:3, about 500px", moves: "one process, one pointer answer", lines: "≤ 240" },
-  { name: "mini", lives: "an empty state above a heading and a button", stage: "1:1, 160 to 240px", moves: "one quiet ambient motion", lines: "≤ 150" },
+  { name: "mini", lives: "a small spot: an empty state, a feature list, a sidebar, a 404, an icon-sized hero", stage: "1:1, 160 to 240px", moves: "one quiet ambient motion", lines: "≤ 150" },
 ];
 export const THEME_ROWS = [
   { name: "toy", reads: "pastel blocks, one warm sun, a cool fill, soft shadows", keeps: "every colour", use: "product pages, READMEs, anything warm" },
   { name: "soft", reads: "the same on cream, gentler light, desaturated accents", keeps: "every colour, shifted warm", use: "editorial pages, paper backgrounds" },
   { name: "mono", reads: "tints of ink on white", keeps: "one accent", use: "docs, product UIs with their own accent, text-heavy pages" },
-  { name: "line", reads: "a hairline drawing: white fills, ink edges, silhouettes, no shadows", keeps: "one accent, as a stroke", use: "minimal or technical pages, quiet empty states" },
+  { name: "line", reads: "a hairline drawing: white fills, ink edges, silhouettes, no shadows", keeps: "one accent, as a stroke", use: "minimal or technical pages, small quiet figures" },
   { name: "night", reads: "dusk: dark base, cool sky, warm lamps and windows", keeps: "every colour, darker", use: "dark pages, hero sections on black" },
 ];
 export const THEME_FIELDS = [

@@ -1,4 +1,4 @@
-/* mailbox · a mini empty state: "No messages yet".
+/* mailbox · a mini.
    A letterbox on a post, door open, nothing inside. The flag rests down; now
    and then it lifts as if to check, finds nothing, and settles. */
 Diorama.figure({
@@ -6,7 +6,7 @@ Diorama.figure({
   size: 'mini',
   means: 'An open letterbox with nothing inside. The flag lifts now and then to check, and settles again.',
   hint: 'Wait for the flag to check.',
-  empty: { title: 'No messages yet', body: 'When someone writes to you, their letter lands here.', action: 'Write a message' },
+  title: 'Mailbox',
   still: 1,
   build: function (o) {
     var D = o.D, pal = o.pal;

@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: { default: "Diorama · small 3D worlds that move", template: "%s · Diorama" },
-  description: "A Claude Code skill that builds animated isometric 3D scenes for the web: a hero, a card, an empty state. One HTML file, five themes, all yours to tune.",
+  description: "A Claude Code skill that builds animated isometric 3D scenes for the web: a hero, a card, a small figure. One HTML file, five themes, all yours to tune.",
   icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: "/icon.svg" },
   openGraph: { title: "Diorama · small 3D worlds that move", description: "Animated isometric 3D scenes for the web, built by your agent. One HTML file, five themes.", type: "website", url: SITE },
 };

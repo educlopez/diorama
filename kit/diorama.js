@@ -20,7 +20,11 @@
                or { base: 'mono', …overrides } with any of the theme fields:
                  bg          css colour | 'transparent'
                  palette     { …overrides of Diorama.PAL } (also spec.palette)
-                 accent      the one colour mono and line keep (default pal.coral)
+                 accent      the one colour mono and line keep (default pal.coral). A surface keeps it only when its
+                             colour is exactly this hex, so paint accented parts with pal.accent, never a palette
+                             name that happens to match; a brand hex goes here and nowhere else
+                 accentFill  0..1 how much of the accent fills an accented surface in line (default .1: a tinted
+                             fill inside an accent outline); raise it for a solid brand shape
                  lights      { hemi: [sky, ground, i], sun: [colour, i], fill: [colour, i] | null, ambient: [colour, i] }
                  shadows     true | false
                  finish      { roughness, metalness }
@@ -53,7 +57,12 @@
      ctx.destroy()        stop everything, dispose
 
    D (per mount toolkit, parent defaults to world):
-     D.pal                           the palette in use
+     D.pal                           the palette in use: bg base ground grass asphalt line water sand ink steel slate mist
+                                     paper cloud coral terracotta mustard sage teal plum rose cobalt cobaltSoft safety ok warn
+                                     bad flame mint lilac sky wood cardboard skin leaf leafDark leafLight trunk tyre hub lampGlow,
+                                     and accent; snow is ground or paper. Materials are cached and shared: clone one
+                                     (D.mat(c).clone()) before changing it for a single object
+     group.userData.terrain = true   ground other things stand on (a hill, a mountain): look's clash check skips it
      D.group(x, y, z, parent)        a Group placed at x, y, z
      D.box(w, h, d, c, x, y, z, parent, { shadow, mat, r })
      D.rbox(w, h, d, c, x, y, z, parent, { r })  a box with rounded edges
@@ -68,6 +77,8 @@
      D.wheel(r, w, c, x, y, z, parent)  a cylinder on its side, axle along z, so it rolls along x
      D.label(text, w, h, { color, bg, size, weight, font, rot })  a plane with text
      D.mat(c, opts)                  a cached material in the theme (opts: emissive, emissiveIntensity, roughness, metalness, transparent, opacity)
+     props are built for the solid themes: in line, a bush or a rock is an outline with little inside; use a
+     shape with flat faces (a box, a cylinder, a cone) when it has to read in line
      D.props.tree(x, z, parent, { r, kind: 'round' | 'pine' | 'tall', color, dark, light, trunk, yaw })
      D.props.bush(x, z, parent, { r, color, light })  three lobes
      D.props.rock(x, z, parent, { r, h, color, yaw })

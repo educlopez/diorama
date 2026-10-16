@@ -123,7 +123,7 @@ Diorama.figure({
     var ph = D.phase(t, 12);
     p.lights.forEach(function (l, k) { var q = (ph + (k % 2) * .5) % 1; l[0].emissiveIntensity = q < .45 ? 1 : .1; l[1].emissiveIntensity = q >= .45 && q < .55 ? 1 : .1; l[2].emissiveIntensity = q >= .55 ? 1 : .1; });
     p.walkers.forEach(function (w) { var W = D.phase(t, w.T), wd = W < .5 ? D.smooth(W * 2) : 1 - D.smooth((W - .5) * 2); D.place(w.g, w.p, wd * w.p.length); if (W >= .5) w.g.rotation.y += Math.PI; w.g.position.y = .05 * Math.abs(D.wave(t, .5)); });
-    p.cloud.position.x += .05 * ctx.dt; if (p.cloud.position.x > 24) p.cloud.position.x = -24;
+    p.cloud.position.x = ((-12 + .05 * t + 24) % 48 + 48) % 48 - 24;
     p.flag.cloth.rotation.y = .25 * D.wave(t, 2.1) + .1 * D.wave(t, .7);
     p.hot.forEach(function (g) { var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .3 : 0; s.step(ctx.dt); g.position.y = (g.userData.y0 == null ? (g.userData.y0 = g.position.y) : g.userData.y0) + s.x; });
   }

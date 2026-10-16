@@ -27,6 +27,7 @@
  *   clash     moving parts that pass through other parts over the first 40 s: the pair, how deep,
  *             when first. A vehicle through a tree or two cars in one lane is a bug; forks in a rack,
  *             a flag on its hinge or an arm holding a rocket is a contact on purpose. Judge it on the sheet.
+ *             Ground that things stand on (a hill, a mountain) is not tested: mark it `userData.terrain = true`.
  *
  * Exits 1 when the validator rejects the page, the console has an error, or
  * no WebGL context was made; 2 when it cannot run; 0 otherwise. Everything
@@ -96,7 +97,8 @@ const CLASH = ({ span, dt, tol }) => {
   const rootOf = (m) => { let r = null; for (let o = m; o && o !== world; o = o.parent) if (animated.has(o)) r = o; return r; };
   const roots = new Map(); meshes.forEach((m) => roots.set(m, rootOf(m)));
   world.updateMatrixWorld(true); const wb = new T.Box3().setFromObject(world); const area = (wb.max.x - wb.min.x) * (wb.max.z - wb.min.z);
-  const skip = new Set(); meshes.forEach((m) => { const b = new T.Box3().setFromObject(m); const a = (b.max.x - b.min.x) * (b.max.z - b.min.z); if (b.max.y <= 0.15 || a > 0.3 * area || !m.castShadow) skip.add(m); });
+  const skip = new Set(); meshes.forEach((m) => { const b = new T.Box3().setFromObject(m); const a = (b.max.x - b.min.x) * (b.max.z - b.min.z); let terrain = false; for (let o = m; o && o !== world; o = o.parent) if (o.userData.terrain) terrain = true;
+    if (terrain || b.max.y <= 0.15 || a > 0.3 * area || !m.castShadow) skip.add(m); });
   const wp = new T.Vector3();
   const label = (o) => o.name || (o.geometry ? o.geometry.type.replace("Geometry", "") : o.type) + "@" + (o.getWorldPosition(wp), [wp.x, wp.z].map((q) => +q.toFixed(1)).join(","));
   c.t = 0; c.step(0); world.updateMatrixWorld(true); const LAB = new Map(); objs.forEach((o) => LAB.set(o, label(o)));
@@ -126,15 +128,20 @@ const CLASH = ({ span, dt, tol }) => {
 };
 
 const MEASURE = async ([a, b]) => {
+  /* fill: the scene's silhouette, row by row from the first to the last pixel that differs from the
+     background, so a line drawing counts its white faces; changed: pixels that differ between a and b */
   const load = async (b64) => { const img = new Image(); img.src = "data:image/png;base64," + b64; await img.decode();
-    const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }), x = c.getContext("2d"); x.drawImage(img, 0, 0); return x.getImageData(0, 0, c.width, c.height).data; };
-  const A = await load(a), B = b ? await load(b) : null, n = A.length / 4; let inked = 0, changed = 0;
+    const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }), x = c.getContext("2d"); x.drawImage(img, 0, 0); return { d: x.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height }; };
+  const IA = await load(a), IB = b ? await load(b) : null, A = IA.d, B = IB && IB.d, w = IA.w, h = IA.h, n = w * h;
   const g = [A[4 * 6], A[4 * 6 + 1], A[4 * 6 + 2], A[4 * 6 + 3]];
-  for (let i = 0; i < n; i++) { const k = 4 * i;
-    const d = Math.max(Math.abs(A[k] - g[0]), Math.abs(A[k + 1] - g[1]), Math.abs(A[k + 2] - g[2]), Math.abs(A[k + 3] - g[3]));
-    if (d >= 18) inked++;
-    if (B) { const e = Math.max(Math.abs(A[k] - B[k]), Math.abs(A[k + 1] - B[k + 1]), Math.abs(A[k + 2] - B[k + 2]), Math.abs(A[k + 3] - B[k + 3])); if (e >= 18) changed++; } }
-  return { fill: inked / n, changed: changed / n };
+  const diff = (P, k, Q, l) => Math.max(Math.abs(P[k] - Q[l]), Math.abs(P[k + 1] - Q[l + 1]), Math.abs(P[k + 2] - Q[l + 2]), Math.abs(P[k + 3] - Q[l + 3]));
+  let filled = 0, changed = 0;
+  for (let y = 0; y < h; y++) { let first = -1, last = -1;
+    for (let x = 0; x < w; x++) { const k = 4 * (y * w + x);
+      if (diff(A, k, g, 0) >= 18) { if (first < 0) first = x; last = x; }
+      if (B && diff(A, k, B, k) >= 18) changed++; }
+    if (first >= 0) filled += last - first + 1; }
+  return { fill: filled / n, changed: changed / n };
 };
 
 async function main() {
