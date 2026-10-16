@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+  :root{--page:#f3f5fa;--ink:#1b2638;--ink-2:#56667f;--ink-3:#8796ab;--line:rgba(28,44,74,.10);--card:#ffffff;--accent:#2f5be0;
+    --f-display:'Bricolage Grotesque','Figtree',system-ui,sans-serif;--f-body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f-body);-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;display:grid;place-items:center;padding:28px 16px}
+  .wrap{width:100%;display:grid;gap:14px;justify-items:center}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(20,34,60,.05),0 12px 32px rgba(20,34,60,.08);overflow:hidden}
+  .head{display:flex;align-items:baseline;gap:10px;padding:14px 18px 0;font-family:var(--f-display)}
+  .head .n{font-weight:800;font-size:15px}
+  .head .k{font-size:12px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .stage{position:relative;width:100%;background:transparent}
+  .stage canvas{display:block}
+  .means{padding:10px 18px 16px;font-size:14px;color:var(--ink-2);line-height:1.45}
+  .means b{color:var(--ink)}
+  .hero{width:min(1100px,100%)}
+  .hero .stage{margin:12px 0 0}
+  .cardsize{width:min(520px,100%)}
+  .cardsize .stage{margin-top:12px}
+  .empty{width:min(420px,100%);padding:36px 28px 32px;text-align:center}
+  .empty .stage{width:200px;margin:0 auto 6px}
+  .empty h2{font-family:var(--f-display);font-weight:800;font-size:20px;margin:10px 0 6px}
+  .empty p{margin:0 0 18px;color:var(--ink-2);font-size:14px;line-height:1.45}
+  .empty button{font:inherit;font-weight:700;font-size:13px;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 16px;cursor:pointer}
+  .foot{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--ink-3)}
+  .foot button{font:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer}
+  .foot button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+  .foot .themes{display:inline-flex;gap:4px;padding-left:8px;border-left:1px solid var(--line)}
+  .err{color:#d24b42;font-size:13px;padding:12px 18px}
+  html.embed,body.embed{background:transparent}
+  body.embed{padding:0;display:block;min-height:0}
+  body.embed .wrap{gap:0}
+  body.embed .card{width:100%;border:0;border-radius:0;box-shadow:none;background:transparent;padding:0}
+  body.embed .head,body.embed .means,body.embed .foot,body.embed .empty h2,body.embed .empty p,body.embed .empty button{display:none}
+  body.embed .stage{margin:0;width:100%}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap"></div>
+<!--THREE-->
+<script>
+/*KERNEL*/
+</script>
+<script>
+/*FIGURE*/
+</script>
+<script>
+(function () {
+  var fig = World3D.figures[World3D.figures.length - 1];
+  var wrap = document.getElementById('wrap');
+  var q = new URLSearchParams(location.search);
+  if (!fig) { wrap.innerHTML = '<div class="card cardsize"><div class="err">No figure declared: the page needs one World3D.figure({ … }) call.</div></div>'; return; }
+  document.title = fig.name + ' · 3D World';
+  if (q.has('embed')) { document.body.classList.add('embed'); document.documentElement.classList.add('embed'); }
+  var card = document.createElement('div');
+  var stage = document.createElement('div'); stage.className = 'stage'; stage.id = 'stage';
+  var means = fig.means || '';
+  if (fig.size === 'mini') {
+    card.className = 'card empty';
+    var e = fig.empty || {};
+    card.appendChild(stage);
+    var h = document.createElement('h2'); h.textContent = e.title || 'Nothing here yet'; card.appendChild(h);
+    var p = document.createElement('p'); p.textContent = e.body || means; card.appendChild(p);
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = e.action || 'Get started'; card.appendChild(b);
+  } else {
+    card.className = 'card ' + (fig.size === 'hero' ? 'hero' : 'cardsize');
+    var head = document.createElement('div'); head.className = 'head';
+    head.innerHTML = '<span class="n"></span><span class="k"></span>';
+    head.querySelector('.n').textContent = fig.title || fig.name; head.querySelector('.k').textContent = fig.size || 'card';
+    card.appendChild(head); card.appendChild(stage);
+    var m = document.createElement('div'); m.className = 'means'; m.textContent = means; card.appendChild(m);
+  }
+  wrap.appendChild(card);
+  var foot = document.createElement('div'); foot.className = 'foot';
+  var still = document.createElement('button'); still.type = 'button'; still.textContent = 'Still frame'; still.setAttribute('aria-pressed', 'false');
+  var note = document.createElement('span'); note.textContent = 'Move the pointer over the scene.';
+  foot.appendChild(still); foot.appendChild(note); wrap.appendChild(foot);
+  var ctx;
+  function mountIt(reduced) {
+    if (ctx) ctx.destroy();
+    try { ctx = World3D.mount(fig, { el: stage, reduced: reduced, still: q.has('t') ? +q.get('t') : undefined, theme: themePick || undefined }); window.__world3d = ctx; }
+    catch (err) { stage.innerHTML = '<div class="err">' + (err && err.message || err) + '</div>'; console.error(err); }
+  }
+  var themePick = q.get('theme') || null;
+  var themes = Object.keys(World3D.THEMES), sel = document.createElement('span'); sel.className = 'themes';
+  themes.forEach(function (t) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.dataset.theme = t;
+    var current = themePick || (typeof fig.theme === 'object' ? fig.theme.base || 'toy' : fig.theme || 'toy');
+    b.setAttribute('aria-pressed', String(t === current));
+    b.addEventListener('click', function () { themePick = t; sel.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); mountIt(isStill); });
+    sel.appendChild(b);
+  });
+  foot.insertBefore(sel, note);
+  var isStill = q.has('still');
+  mountIt(isStill); still.setAttribute('aria-pressed', String(isStill));
+  still.addEventListener('click', function () { isStill = !isStill; still.setAttribute('aria-pressed', String(isStill)); mountIt(isStill); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+interface:
+  display_name: "3D World"
+  short_description: "Build a small animated isometric 3D world: hero, card or empty state"
