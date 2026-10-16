@@ -61,8 +61,8 @@ Claude offers two or three concepts, builds the one you choose, checks it in a h
 | **`launchpad`** · a card, in `night`. The rocket waits under floodlights and every so often the arm swings back and it lifts off. | **`server`** · a card, in `mono` with a teal accent. The racks blink in their own rhythms, the fan turns; hover a rack and all its lights come on. |
 | <img src="docs/media/rack.png" alt="An empty three-level pallet rack drawn in greys with yellow beams, a forklift waiting in front, on a rounded base"> | <img src="docs/media/mailbox.png" alt="A coral letterbox on a wooden post, door open and empty, a small tree, a fence and a rock beside it, on a grass tile"> |
 | **`rack`** · a card, in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. | **`mailbox`** · a mini. The flag lifts every few seconds to check, finds nothing, settles. |
-| <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can beside it, on a rounded tile"> | <img src="docs/media/desk.png" alt="A line drawing of a desk with a lamp, an empty tray, a mug and a swivel chair, on a rounded tile"> |
-| **`seedling`** · a mini, in `line` with the pot as the accent. The can tips now and then. | **`desk`** · a mini, in `line` with a coral accent. The chair swivels, the lamp nods. |
+| <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can lifted over it, drops falling from its rose onto the soil, on a rounded tile"> | <img src="docs/media/desk.png" alt="A line drawing of a desk with a lamp, an empty tray, a mug and a swivel chair, on a rounded tile"> |
+| **`seedling`** · a mini, in `line` with the pot as the accent. Now and then the can lifts, turns to the pot and waters the soil. | **`desk`** · a mini, in `line` with a coral accent. The chair swivels, the lamp nods. |
 | <img src="docs/media/powder.png" alt="An isometric ski village at the foot of a snowy mountain: a chairlift up the slope, chalets with lit windows, a hotel, pines, a frozen pond and a shuttle bus"> | <img src="docs/media/turntable.png" alt="A line drawing of a record player on a low cabinet with a speaker and an empty crate, the platter mat in purple, on a rounded tile"> |
 | **`powder`** · a hero. Chairs climb the slope, two skiers ride up and carve back down, a ski class snakes the nursery, the shuttle waits at the lift. | **`turntable`** · a mini, in `line` with a purple accent. Now and then the arm swings over, finds no record and goes back. |
 
@@ -155,7 +155,7 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/server.js`: a card in `mono` with a teal accent. Three racks that blink in their own rhythms, a cooling unit, a technician; hover a rack and its lights all come on.
 - `examples/rack.js`: a card in `mono` with one accent. A bare rack, a forklift whose forks rise and settle; hover a level and the forks go there.
 - `examples/mailbox.js`: a mini. A letterbox on a post, door open, a fence, a tree and a rock; the flag checks now and then.
-- `examples/seedling.js`: a mini in `line`. A pot of soil and a watering can that tips now and then.
+- `examples/seedling.js`: a mini in `line`. A pot of soil and a watering can that lifts, turns to the pot and waters it now and then.
 - `examples/desk.js`: a mini in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
 - `examples/powder.js`: a hero. A ski village under a snowy peak: a chairlift on a loop, two skiers who ride up and ski down in turns, a ski class, a shuttle bus, a skater on the pond, smoking chimneys.
 - `examples/turntable.js`: a mini in `line` with a purple accent. A record player and an empty crate; the tonearm looks for a record now and then.
