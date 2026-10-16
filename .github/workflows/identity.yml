@@ -1,0 +1,29 @@
+name: Identity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  authors:
+    name: Commits use the personal identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check authors, committers and co-authors
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          allowed='^(educlopez93@gmail\.com|[0-9]+\+educlopez@users\.noreply\.github\.com|noreply@github\.com|noreply@anthropic\.com)$'
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then range="$HEAD"; else range="$BASE..$HEAD"; fi
+          bad=0
+          for c in $(git rev-list "$range"); do
+            for e in $(git show -s --format='%ae%n%ce' "$c") $(git show -s --format='%B' "$c" | grep -i '^co-authored-by:' | sed -E 's/.*<([^>]+)>.*/\1/'); do
+              if ! echo "$e" | grep -Eq "$allowed"; then echo "::error::commit $c uses $e"; bad=1; fi
+            done
+          done
+          exit $bad
