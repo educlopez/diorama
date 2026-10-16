@@ -38,6 +38,14 @@ door.scale.y = 1 - .85 * open; door.position.y = 1.55 - 1.3 * open;
 
 A closed path (`D.path(points, true)`) loops seamlessly. An open path needs a return: drive out, turn (add π to `rotation.y`), drive back.
 
+## Corners, lanes and speed
+
+`D.path` rounds every corner with an arc (radius .5 by default; the third argument sets it, 0 is sharp), so a vehicle turns instead of snapping to the new heading. Give a long vehicle a wide arc: a truck of 7 needs `D.path(points, true, 4)`, and its nose and tail sweep outside the corner while it turns, so keep trees, lamps and parked things a vehicle-length away from a corner, and keep the corner itself that far from the base's edge. The arc shortens the path a little, so read stops from `path.length` or check the still frame rather than trusting a distance worked out on paper.
+
+One lane, one direction, and nothing shares it at two speeds: two vehicles in the same lane at different periods pass through each other once a minute. Either give every lane one vehicle, or run the ones that share a lane at the same speed, a fixed share of the lap apart: `T = path.length / speed` for all of them, with `D.phase(t, T, offset)`. Lanes side by side need the width of both vehicles between their centrelines plus a hand's breadth; at a corner the inner vehicle's arc should not cut into the outer lane.
+
+`scripts/look.mjs` prints `clash`: every moving part that passes through another part during the first 40 seconds, with its depth and the second it first happens. A vehicle through a tree, a car through a bus, a tractor inside a barn: fix the lane, the schedule or the furniture. Forks inside a rack, a flag on its hinge, an arm holding a rocket: contacts on purpose, leave them.
+
 ## A shuttle
 
 Out loaded, lift, set down, lower, back empty, reload: six legs of one 12 s cycle. Visibility and scale sell the hand-off: the load on the carriage shrinks to nothing as the one on the shelf grows.

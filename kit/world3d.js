@@ -85,7 +85,7 @@
      D.wave(t, period, offset)       −1..1 sine
      D.pulse(t, period, width)       0..1, a bump once per period lasting width·period
      D.spring(k, c)                  { x, v, t, step(dt), set(x) } a damped follow
-     D.path(points, closed)          polyline on the ground, points [[x, z], …]: { length, at(dist) → { x, z, yaw } }
+     D.path(points, closed, round)   polyline on the ground, points [[x, z], …], corners rounded by `round` (.5; 0 sharp): { length, at(dist) → { x, z, yaw } }
      D.place(group, path, dist)      put a group on a path, its local +x facing along it (build vehicles nose toward +x)
      D.spin(meshes, dist, r)         roll wheels by distance travelled
      D.stagger(i, from, step)        |i − from| · step
@@ -135,13 +135,35 @@ var World3D = (function () {
     s.set = function (x) { s.x = s.t = x; s.v = 0; return s; };
     return s;
   }
-  function path(points, closed) {
-    var pts = points.map(function (p) { return { x: p[0], z: p[1] }; });
-    if (closed) pts.push(pts[0]);
-    var seg = [], len = 0;
-    for (var i = 0; i < pts.length - 1; i++) {
-      var a = pts[i], b = pts[i + 1], l = Math.hypot(b.x - a.x, b.z - a.z);
-      seg.push({ a: a, b: b, l: l, s: len, yaw: Math.atan2(-(b.z - a.z), b.x - a.x) }); len += l;
+  function path(points, closed, round) {
+    /* a polyline on the ground with its corners rounded (arcs of radius `round`, .5 by default, 0 for sharp),
+       so a vehicle turns instead of snapping; at(dist) gives the point and the heading there */
+    var pts = points.map(function (p) { return { x: p[0], z: p[1] }; }), n = pts.length, R = round == null ? .5 : round;
+    var seg = [], len = 0, i;
+    function line(a, b) { var l = Math.hypot(b.x - a.x, b.z - a.z); if (l < 1e-6) return; seg.push({ a: a, b: b, l: l, s: len, yaw: Math.atan2(-(b.z - a.z), b.x - a.x) }); len += l; }
+    function arc(c, r, a0, da) { var l = Math.abs(da) * r; if (l < 1e-6) return; seg.push({ c: c, r: r, a0: a0, da: da, l: l, s: len }); len += l; }
+    var m = closed ? n : n - 2, cut = [];
+    for (i = 0; i < n; i++) cut.push(0);
+    var corners = [];
+    for (i = 0; i < m; i++) {
+      var k = closed ? (i + 1) % n : i + 1, P = pts[k], A = pts[(k - 1 + n) % n], B = pts[(k + 1) % n];
+      var u1 = { x: P.x - A.x, z: P.z - A.z }, u2 = { x: B.x - P.x, z: B.z - P.z }, l1 = Math.hypot(u1.x, u1.z), l2 = Math.hypot(u2.x, u2.z);
+      if (!l1 || !l2) continue;
+      u1.x /= l1; u1.z /= l1; u2.x /= l2; u2.z /= l2;
+      var cr = u1.x * u2.z - u1.z * u2.x, dot = clamp(u1.x * u2.x + u1.z * u2.z, -1, 1), th = Math.acos(dot);
+      if (R <= 0 || th < .02 || th > Math.PI - .02) continue;
+      var r = Math.min(R, .5 * Math.min(l1, l2) / Math.tan(th / 2)), t = r * Math.tan(th / 2), sgn = cr > 0 ? 1 : -1;
+      var T1 = { x: P.x - u1.x * t, z: P.z - u1.z * t }, T2 = { x: P.x + u2.x * t, z: P.z + u2.z * t };
+      var C = { x: T1.x - u1.z * sgn * r, z: T1.z + u1.x * sgn * r };
+      corners[k] = { T1: T1, T2: T2, C: C, r: r, a0: Math.atan2(T1.z - C.z, T1.x - C.x), da: th * sgn };
+      cut[k] = t;
+    }
+    var first = closed ? 0 : 0, count = closed ? n : n - 1;
+    for (i = 0; i < count; i++) {
+      var a = pts[i], b = pts[(i + 1) % n], ca = corners[i], cb = corners[(i + 1) % n];
+      if (i === 0 && closed && ca) arc(ca.C, ca.r, ca.a0, ca.da);
+      line(ca ? ca.T2 : a, cb ? cb.T1 : b);
+      if (cb && !(closed && (i + 1) % n === 0)) arc(cb.C, cb.r, cb.a0, cb.da);
     }
     return {
       length: len, closed: !!closed,
@@ -149,7 +171,11 @@ var World3D = (function () {
         if (closed) { d = d % len; if (d < 0) d += len; } else d = clamp(d, 0, len);
         for (var i = 0; i < seg.length; i++) {
           var s = seg[i];
-          if (d <= s.s + s.l || i === seg.length - 1) { var u = s.l ? (d - s.s) / s.l : 0; return { x: lerp(s.a.x, s.b.x, u), z: lerp(s.a.z, s.b.z, u), yaw: s.yaw }; }
+          if (d <= s.s + s.l || i === seg.length - 1) {
+            var u = s.l ? clamp((d - s.s) / s.l, 0, 1) : 0;
+            if (s.c) { var ang = s.a0 + s.da * u, sg = s.da > 0 ? 1 : -1; return { x: s.c.x + s.r * Math.cos(ang), z: s.c.z + s.r * Math.sin(ang), yaw: Math.atan2(-sg * Math.cos(ang), -sg * Math.sin(ang)) }; }
+            return { x: lerp(s.a.x, s.b.x, u), z: lerp(s.a.z, s.b.z, u), yaw: s.yaw };
+          }
         }
       }
     };
@@ -202,7 +228,7 @@ var World3D = (function () {
       if (!LINES[k]) {
         LINES[k] = new THREE.ShaderMaterial({
           uniforms: { color: { value: new THREE.Color(c).convertSRGBToLinear() }, w: { value: .02 } }, side: THREE.BackSide,
-          vertexShader: 'uniform float w; void main(){ vec3 p = position + normalize(normal) * w; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
+          vertexShader: 'uniform float w; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); mv.xyz += n * w; gl_Position = projectionMatrix * mv; }',
           fragmentShader: 'uniform vec3 color; void main(){ gl_FragColor = vec4(color, 1.0); }'
         });
         ctx.hulls.push(LINES[k]);
@@ -210,6 +236,22 @@ var World3D = (function () {
       return LINES[k];
     }
     function geo(k, make) { return GEOS[k] || (GEOS[k] = make()); }
+    var SMOOTH = {};
+    function smoothed(g) {
+      /* the same shape with one vertex per position and averaged normals, so the ink hull
+         offsets every surface by the same amount: flat faces, rounded corners and spheres alike */
+      if (SMOOTH[g.uuid]) return SMOOTH[g.uuid];
+      var pos = g.attributes.position, idx = g.index, n = idx ? idx.count : pos.count, map = {}, out = [], index = [], key, i, j, x, y, z;
+      for (i = 0; i < n; i++) {
+        j = idx ? idx.getX(i) : i; x = pos.getX(j); y = pos.getY(j); z = pos.getZ(j);
+        key = Math.round(x * 1e4) + ',' + Math.round(y * 1e4) + ',' + Math.round(z * 1e4);
+        if (map[key] === undefined) { map[key] = out.length / 3; out.push(x, y, z); }
+        index.push(map[key]);
+      }
+      var sg = new THREE.BufferGeometry();
+      sg.setAttribute('position', new THREE.Float32BufferAttribute(out, 3)); sg.setIndex(index); sg.computeVertexNormals();
+      return (SMOOTH[g.uuid] = sg);
+    }
     function mesh(g, c, x, y, z, parent, o, flat, angle) {
       var m = new THREE.Mesh(g, mat(c, o && o.mat));
       m.position.set(x || 0, y || 0, z || 0); m.castShadow = !(o && o.shadow === false); m.receiveShadow = true;
@@ -220,7 +262,7 @@ var World3D = (function () {
           var eg = EDGES[ek] || (EDGES[ek] = new THREE.EdgesGeometry(g, ang));
           var ls = new THREE.LineSegments(eg, lineMat(strokeC)); ls.userData.stroke = true; m.add(ls);
         }
-        if (theme.outline && !flat) { var h = new THREE.Mesh(g, hullMat(strokeC)); h.userData.stroke = true; m.add(h); }
+        if (theme.outline && !flat) { var h = new THREE.Mesh(smoothed(g), hullMat(strokeC)); h.userData.stroke = true; m.add(h); }
       }
       (parent || world).add(m); return m;
     }
@@ -407,7 +449,12 @@ var World3D = (function () {
       cam.position.set(center.x + R * Math.cos(e) * Math.sin(a), center.y + R * Math.sin(e), center.z + R * Math.cos(e) * Math.cos(a));
       cam.lookAt(center); cam.updateMatrixWorld(true);
     }
-    function strokeWidth() { var px = (frustum.r - frustum.l) / Math.max(1, el.clientWidth || 300); var w = px * (theme.strokeWidth || 1.1) * .5; for (var i = 0; i < ctx.hulls.length; i++) ctx.hulls[i].uniforms.w.value = w; }
+    function strokeWidth() {
+      /* the ink hull is as wide as the edge lines: one device pixel, or half the stroke width when that is more */
+      var px = (frustum.r - frustum.l) / Math.max(1, el.clientWidth || 300), dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+      var w = px * Math.max((theme.strokeWidth || 1.1) * .5, .7 / dpr);
+      for (var i = 0; i < ctx.hulls.length; i++) ctx.hulls[i].uniforms.w.value = w;
+    }
     function fit() {
       world.updateMatrixWorld(true);
       var box = new THREE.Box3();

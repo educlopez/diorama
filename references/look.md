@@ -13,6 +13,8 @@
 
 ## Another theme
 
+`clash` lists every moving part that passes through another part in the first 40 seconds, with the depth in world units and the second it starts. Read it with the sheet: a vehicle through a tree, two cars in one lane or a tractor inside a barn is a bug in the lane, the schedule or the furniture; forks in a rack, a flag on its hinge or a gantry arm against a rocket is a contact on purpose. Fix the bugs, keep the contacts.
+
 `node <skill>/scripts/look.mjs <name>.js --theme line` writes `3d-world-<name>-line-look.png`. Look at a figure in `mono` or `line` once even when it ships in `toy`: with the colour gone, do the shapes still say what the place is? Is the accent on the right thing? In `line`, does any cylinder show seams (too few segments), does any ground marking draw an edge (it forgot `{ shadow: false }`)?
 
 ## The measurements

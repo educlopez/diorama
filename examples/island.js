@@ -57,7 +57,7 @@ World3D.figure({
     var keeper = D.props.person(3.3, 0, pier, { shirt: pal.mustard, hat: pal.paper, yaw: 1.2 }); keeper.position.y = .61;
 
     /* the boat, on a lap that stops at the pier */
-    var boat = D.group(0, 0, 0); boat.scale.setScalar(1.25); var hull = D.rbox(3.2, .7, 1.3, pal.coral, 0, .25, 0, boat, { r: .18 });
+    var boat = D.group(0, 0, 0); var hull = D.rbox(3.2, .7, 1.3, pal.coral, 0, .25, 0, boat, { r: .18 });
     D.box(2.6, .1, 1.0, pal.paper, 0, .62, 0, boat);
     D.box(1.1, .7, .9, pal.paper, -.3, 1.0, 0, boat); D.box(.6, .3, .06, pal.ink, .26, 1.1, .46, boat); D.box(.6, .3, .06, pal.ink, .26, 1.1, -.46, boat);
     D.cyl(.04, .04, 1.6, pal.ink, .9, 1.4, 0, boat, 6);
@@ -65,7 +65,7 @@ World3D.figure({
     var skipper = D.props.person(-.75, 0, boat, { shirt: pal.teal, hat: false }); skipper.position.y = .6; skipper.scale.setScalar(.8);
     var wake = D.box(1.6, .02, .5, pal.line, -2.2, .04, 0, boat, { shadow: false, mat: { transparent: true, opacity: .7 } });
     boat.name = 'boat'; hot.push(boat);
-    var lap = D.path([[8.2, 6.6], [11.3, 1.5], [10.4, -6.2], [0, -7.3], [-10.6, -5.6], [-11.6, 3], [-5, 6.8], [3, 7.2]], true);
+    var lap = D.path([[8.4, 7.9], [12.0, 4.8], [10.4, -6.1], [0, -7.9], [-11.2, -6.2], [-11.4, 3], [-5, 6.6], [3, 7.9]], true);
 
     /* gulls and clouds */
     function gull(parent) { var g = D.group(0, 0, 0, parent); var l = D.box(.5, .03, .14, pal.paper, -.26, 0, 0, g, { shadow: false }), r = D.box(.5, .03, .14, pal.paper, .26, 0, 0, g, { shadow: false }); D.box(.18, .06, .12, pal.cloud, 0, 0, 0, g, { shadow: false }); return { g: g, l: l, r: r }; }

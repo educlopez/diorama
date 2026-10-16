@@ -46,7 +46,7 @@ World3D.figure({
     D.props.tree(-13.1, 0, null, { r: .6, kind: 'round' }); D.props.bush(-17, 0, null, { r: .3 });
     /* the north strip, beyond the top avenue: houses facing it */
     [[-18, -11.2, 0], [-14, -11.2, 0], [-10, -11.2, 0], [-2.4, -11.2, 0], [2.4, -11.2, 0], [10.5, -11.2, 0], [14.5, -11.2, 0], [18.5, -11.2, 0]].forEach(function (p, k) { house(p[0], p[1], p[2], ROOFS[(k * 4 + 1) % 6], 2.3 + rnd() * .6, 2.3, 1 + (k % 4 === 2 ? 1 : 0)); });
-    [[-16, -13.8, 'pine'], [-6, -13.6, 'round'], [6.2, -13.7, 'tall'], [16.6, -13.6, 'round'], [-12, -8.5, 'round'], [0, -8.6, 'pine'], [12.4, -8.5, 'round']].forEach(function (p, k) { D.props.tree(p[0], p[1], null, { r: .55 + (k % 3) * .1, kind: p[2], yaw: k }); });
+    [[-16, -13.8, 'pine'], [-6, -13.6, 'round'], [6.2, -13.7, 'tall'], [16.6, -13.6, 'round'], [-12, -8.5, 'round'], [0, -9.2, 'pine'], [12.4, -8.5, 'round']].forEach(function (p, k) { D.props.tree(p[0], p[1], null, { r: .55 + (k % 3) * .1, kind: p[2], yaw: k }); });
     /* N block: shops on the avenue, the tower behind */
     shop(-3.5, 3.6, 0, pal.coral, 3.0); shop(3.5, 3.6, 0, pal.teal, 3.0); shop(0, 3.6, 0, pal.mustard, 3.4);
     var tower = D.group(0, 0, -2.2); tower.name = 'office tower'; hot.push(tower);
@@ -59,7 +59,7 @@ World3D.figure({
     D.cyl(1.7, 1.7, .06, pal.sky, 1.6, .05, -1.4, park, 24); D.cyl(1.6, 1.6, .04, pal.water, 1.6, .09, -1.4, park, 24);
     var fountain = D.group(-1.8, 0, 1.6, park); D.cyl(1.0, 1.0, .3, pal.cloud, 0, .15, 0, fountain, 20); D.cyl(.9, .9, .1, pal.water, 0, .3, 0, fountain, 20); D.cyl(.12, .16, .9, pal.cloud, 0, .7, 0, fountain, 10);
     var splash = []; [0, 1, 2, 3].forEach(function (k) { splash.push(D.ball(.08, pal.sky, 0, 1.2, 0, fountain)); });
-    [[-3.2, -3.2, 'round'], [3.3, 3.1, 'pine'], [-3.4, 1.8, 'tall'], [3.4, -3.3, 'round'], [0.4, 3.4, 'pine'], [-0.6, -3.3, 'round']].forEach(function (p, k) { D.props.tree(p[0], p[1], park, { r: .6 + (k % 3) * .1, kind: p[2], yaw: k }); });
+    [[-3.2, -3.2, 'round'], [3.3, 3.1, 'pine'], [-3.4, 1.8, 'tall'], [3.4, -3.3, 'round'], [0.4, 3.1, 'pine'], [-0.6, -3.3, 'round']].forEach(function (p, k) { D.props.tree(p[0], p[1], park, { r: .6 + (k % 3) * .1, kind: p[2], yaw: k }); });
     [[-.6, 1.4, 0], [.9, 3.0, Math.PI / 2]].forEach(function (b) { var g = D.group(b[0], 0, b[1], park); g.rotation.y = b[2]; D.box(1.2, .08, .4, pal.wood, 0, .45, 0, g); D.box(1.2, .4, .08, pal.wood, 0, .7, -.18, g); D.box(.08, .45, .4, pal.ink, -.5, .22, 0, g); D.box(.08, .45, .4, pal.ink, .5, .22, 0, g); });
     fountain.name = 'fountain'; hot.push(fountain);
     /* SW block: the station and a tram line */
@@ -87,31 +87,34 @@ World3D.figure({
     var jib = D.group(0, 7.1, 0, crane); D.box(7, .35, .4, pal.mustard, 1.8, 0, 0, jib); D.box(1.6, .5, .6, pal.steel, -1.6, 0, 0, jib); var hook = D.group(3.8, 0, 0, jib); D.cyl(.02, .02, 3, pal.ink, 0, -1.5, 0, hook, 6); D.box(.5, .4, .5, pal.coral, 0, -3.2, 0, hook);
     D.props.person(-3.4, -2.2, site, { shirt: pal.coral, hat: pal.mustard, yaw: .8 });
     /* streets' furniture: trees, lamps, lights */
-    [[-10.5, 4.6], [-3.5, -4.6], [3.6, 4.6], [10.6, -4.6], [-10.6, 8.4], [10.6, 8.4], [-3.5, 8.4], [3.5, -8.4], [-19.5, 8.4], [19.5, -8.4]].forEach(function (p, k) { D.props.tree(p[0], p[1], null, { r: .55 + (k % 3) * .08, kind: k % 4 === 1 ? 'pine' : k % 4 === 3 ? 'tall' : 'round', yaw: k * .7 }); });
+    [[-10.5, 4.75], [-3.9, -4.5], [3.6, 4.4], [10.6, -4.6], [-10.6, 9.0], [11.4, 9.0], [-3.5, 9.0], [3.5, -9.0], [-19.5, 8.4], [19.5, -8.4]].forEach(function (p, k) { D.props.tree(p[0], p[1], null, { r: (k === 1 || k === 2) ? .4 : .55 + (k % 3) * .08, kind: k % 4 === 1 ? 'pine' : k % 4 === 3 ? 'tall' : 'round', yaw: k * .7 }); });
     [[-14, 4.6], [14, -4.6], [-1, -8.4], [1, 8.4], [-19.5, -8.4], [19.5, 8.4]].forEach(function (p) { D.props.lamp(p[0], p[1]); });
     var lights = [];
     [[-9.2, -4.5, 0], [-4.8, 4.5, Math.PI], [4.8, -4.5, 0], [9.2, 4.5, Math.PI]].forEach(function (p) { var g = D.group(p[0], 0, p[1]); g.rotation.y = p[2]; D.cyl(.06, .07, 2.6, pal.ink, 0, 1.3, 0, g, 8); D.box(.3, .9, .3, pal.ink, 0, 2.6, 0, g); var r = D.box(.16, .16, .05, pal.bad, 0, 2.9, .17, g, { mat: { emissive: pal.bad, emissiveIntensity: 1 }, shadow: false }), y = D.box(.16, .16, .05, pal.mustard, 0, 2.6, .17, g, { mat: { emissive: pal.mustard, emissiveIntensity: .1 }, shadow: false }), gr = D.box(.16, .16, .05, pal.ok, 0, 2.3, .17, g, { mat: { emissive: pal.ok, emissiveIntensity: .1 }, shadow: false }); lights.push([r.material, y.material, gr.material]); });
     /* vehicles: cars on three laps, a bus on the big one */
     function car(c) { var g = D.group(0, 0, 0), w = []; D.rbox(2.1, .6, 1.1, c, 0, .5, 0, g, { r: .12 }); D.rbox(1.1, .5, 1.0, pal.paper, -.15, 1.0, 0, g, { r: .12 }); D.box(.05, .35, .9, pal.ink, .42, 1.0, 0, g, { shadow: false }); [.7, -.7].forEach(function (x) { [-.55, .55].forEach(function (z) { w.push(D.wheel(.24, .2, pal.tyre, x, .24, z, g)); }); }); g.name = 'car'; hot.push(g); return { g: g, w: w }; }
     var cars = [
-      { v: car(pal.coral), p: D.path([[-7.7, -5.8], [7.7, -5.8], [7.7, 5.8], [-7.7, 5.8]], true), T: 26, off: 0 },
-      { v: car(pal.plum), p: D.path([[6.3, 5.8], [-6.3, 5.8], [-6.3, -5.8], [6.3, -5.8]], true), T: 22, off: .4 },
-      { v: car(pal.mustard), p: D.path([[-20, -5.8], [20, -5.8], [20, -7.2], [-20, -7.2]], true), T: 36, off: .2 },
-      { v: car(pal.teal), p: D.path([[7.7, -13], [7.7, 13], [6.3, 13], [6.3, -13]], true), T: 24, off: .7 }
+      { v: car(pal.coral), p: D.path([[6.1, 5.6], [-6.1, 5.6], [-6.1, -5.6], [6.1, -5.6]], true), off: .5 },
+      { v: car(pal.plum), p: D.path([[6.1, 5.6], [-6.1, 5.6], [-6.1, -5.6], [6.1, -5.6]], true), off: 0 },
+      { v: car(pal.mustard), p: D.path([[-7.9, 7.4], [7.9, 7.4], [7.9, -7.4], [-7.9, -7.4]], true), off: .33 },
+      { v: car(pal.teal), p: D.path([[-7.9, 7.4], [7.9, 7.4], [7.9, -7.4], [-7.9, -7.4]], true), off: .66 }
     ];
+    cars.forEach(function (c) { c.T = c.p.length / 2.2; });
+    /* parked cars on the outer stretches, nose along their lane */
+    [[-15, 7.4, 0, pal.rose], [16.5, -7.4, Math.PI, pal.sage], [7.9, -11, Math.PI / 2, pal.plum]].forEach(function (q) { var v = car(q[3]); v.g.position.set(q[0], 0, q[1]); v.g.rotation.y = q[2]; });
     var bus = D.group(0, 0, 0), bw = []; bus.name = 'bus'; hot.push(bus);
     D.rbox(4.6, 1.6, 1.4, pal.sage, 0, 1.05, 0, bus, { r: .14 }); D.box(4.2, .55, 1.44, pal.sky, .1, 1.3, 0, bus, { shadow: false }); D.box(.05, .7, 1.2, pal.ink, 2.32, 1.1, 0, bus, { shadow: false });
     [1.5, -1.5].forEach(function (x) { [-.7, .7].forEach(function (z) { bw.push(D.wheel(.3, .22, pal.tyre, x, .3, z, bus)); }); });
-    var busLap = D.path([[-20, 5.8], [20, 5.8], [20, 7.2], [-20, 7.2]], true);
+    var busLap = D.path([[-7.9, 7.4], [7.9, 7.4], [7.9, -7.4], [-7.9, -7.4]], true, .8);
     /* walkers and a cloud */
-    var walkers = [[[-19, 4.7], [-9.5, 4.7]], [[5, -4.7], [-5, -4.7]], [[11.2, 2.4], [18, 2.4]]].map(function (w, k) { return { g: D.props.person(0, 0, null, { shirt: [pal.plum, pal.teal, pal.rose][k], hat: k === 2 ? pal.paper : false }), p: D.path(w), T: 12 + k * 3 }; });
+    var walkers = [[[-19, 3.9], [-9.5, 3.9]], [[3, -4.3], [-2.8, -4.3]], [[10.4, 4.4], [19.2, 4.4]]].map(function (w, k) { return { g: D.props.person(0, 0, null, { shirt: [pal.plum, pal.teal, pal.rose][k], hat: k === 2 ? pal.paper : false }), p: D.path(w), T: 12 + k * 3 }; });
     var cloud = D.props.cloud(-12, 10.5, -10, null, { r: 1.1 });
     return { hot: hot, cars: cars, bus: bus, bw: bw, busLap: busLap, tram: tram, tw: tw, jib: jib, hook: hook, splash: splash, lights: lights, walkers: walkers, cloud: cloud, flag: flag, lift: {} };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;
     p.cars.forEach(function (c) { var d = D.phase(t, c.T, c.off) * c.p.length; D.place(c.v.g, c.p, d); D.spin(c.v.w, d, .24); });
-    var B = D.phase(t, 40) * 40, L = p.busLap.length, bd = B < 4 ? D.inOut(B / 4) * 5.5 : B < 9 ? 5.5 : 5.5 + D.inOut((B - 9) / 31) * (L - 5.5);
+    var bd = D.phase(t, p.busLap.length / 2.2) * p.busLap.length;
     D.place(p.bus, p.busLap, bd); D.spin(p.bw, bd, .3);
     var T = D.phase(t, 28), td = T < .5 ? D.inOut(T * 2) : 1 - D.inOut((T - .5) * 2);
     p.tram.position.x = -15 + td * 30; p.tram.rotation.y = T < .5 ? 0 : Math.PI; D.spin(p.tw, td * 30, .28);

@@ -24,9 +24,11 @@ World3D.figure({
     D.cone(.5, 1.2, pal.coral, 0, 4.7, 0, rocket, 20); D.cyl(.3, .45, .5, pal.steel, 0, .5, 0, rocket, 14);
     [0, 1, 2, 3].forEach(function (k) { var f = D.wedge(.08, .9, .7, pal.coral, 0, .4, 0, rocket); f.position.set(Math.cos(k * Math.PI / 2) * .62, .35, Math.sin(k * Math.PI / 2) * .62); f.rotation.y = -k * Math.PI / 2 + Math.PI / 2; });
     D.box(.5, .4, .06, pal.sky, 0, 3.1, .5, rocket, { shadow: false, mat: { emissive: pal.sky, emissiveIntensity: .4 } });
-    var flame = D.group(0, .2, 0, rocket); var f1 = D.cone(.42, 1.6, pal.mustard, 0, -.8, 0, flame, 12); f1.rotation.x = Math.PI; f1.material = D.mat(pal.mustard, { emissive: pal.mustard, emissiveIntensity: 1.6 });
-    var f2 = D.cone(.26, 2.4, pal.coral, 0, -1.2, 0, flame, 12); f2.rotation.x = Math.PI; f2.material = D.mat(pal.coral, { emissive: pal.coral, emissiveIntensity: 1.2 });
+    var flame = D.group(0, .2, 0, rocket); var f1 = D.cone(.42, 1.6, pal.mustard, 0, -.8, 0, flame, 12); f1.rotation.x = Math.PI; f1.castShadow = false; f1.material = D.mat(pal.mustard, { emissive: pal.mustard, emissiveIntensity: 1.6 });
+    var f2 = D.cone(.26, 2.4, pal.coral, 0, -1.2, 0, flame, 12); f2.rotation.x = Math.PI; f2.castShadow = false; f2.material = D.mat(pal.coral, { emissive: pal.coral, emissiveIntensity: 1.2 });
     var smoke = []; [0, 1, 2, 3, 4].forEach(function (k) { var s = D.ball(.35, pal.cloud, 0, 0, 0, null); s.castShadow = false; smoke.push(s); });
+    /* the tank vents a wisp of vapour all the time, so the pad is never quite still */
+    var vent = []; [0, 1, 2].forEach(function (k) { var v = D.ball(.16, pal.cloud, 0, 0, 0, null); v.castShadow = false; vent.push(v); });
     /* the gantry and its arm */
     var gantry = D.group(-.6, 0, .6); gantry.name = 'gantry'; hot.push(gantry);
     [[-.4, -.4], [.4, -.4], [-.4, .4], [.4, .4]].forEach(function (p) { D.box(.12, 6.2, .12, pal.steel, p[0], 3.1, p[1], gantry); });
@@ -39,10 +41,13 @@ World3D.figure({
     var bunker = D.group(-3.2, 0, -2.4); bunker.rotation.y = .3; bunker.name = 'control room'; hot.push(bunker);
     D.box(3.2, 1.4, 2.2, pal.paper, 0, .7, 0, bunker); D.box(3.4, .2, 2.4, pal.slate, 0, 1.5, 0, bunker);
     [-.9, 0, .9].forEach(function (x) { D.box(.6, .5, .06, pal.sky, x, .8, 1.12, bunker, { shadow: false, mat: { emissive: pal.sky, emissiveIntensity: .9 } }); });
+    var dish = D.group(-1.1, 1.6, -.5, bunker); D.cyl(.05, .05, .5, pal.steel, 0, .25, 0, dish, 6); var disc = D.cyl(.42, .3, .1, pal.cloud, 0, .55, 0, dish, 14); disc.rotation.x = -.9; D.cyl(.03, .03, .4, pal.steel, 0, .6, .25, dish, 6).rotation.x = -.9;
     D.cyl(.04, .04, 1.6, pal.steel, 1.2, 2.3, -.6, bunker, 6); D.ball(.12, pal.bad, 1.2, 3.1, -.6, bunker).material = D.mat(pal.bad, { emissive: pal.bad, emissiveIntensity: 1.5 });
     D.props.person(-1.2, 1.9, bunker, { shirt: pal.teal, hat: pal.paper, yaw: .4 });
+    /* a technician walks the apron between the bunker and the pad */
+    var tech = D.props.person(0, 0, null, { shirt: pal.mustard, hat: pal.paper }), walk = D.path([[-3.0, 3.5], [1.6, 3.5]]);
     D.props.rock(-4.2, 3.4, null, { r: .3 }); D.props.bush(4.6, -3.6, null, { r: .35 }); D.props.bush(-4.4, -3.6, null, { r: .28 });
-    return { hot: hot, rocket: rocket, flame: flame, smoke: smoke, arm: arm, beacon: beacon, lift: {} };
+    return { hot: hot, rocket: rocket, flame: flame, smoke: smoke, vent: vent, dish: dish, tech: tech, walk: walk, arm: arm, beacon: beacon, lift: {} };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;
@@ -53,6 +58,10 @@ World3D.figure({
     p.rocket.position.y = .3 + rise;
     var back = D.smooth((T - 18) / 1.5); if (T >= 18) p.rocket.position.y = .3 + 16 * (1 - back);
     p.beacon.material.emissiveIntensity = D.phase(t, 1.2) < .5 ? 1.6 : .15;
+    p.dish.rotation.y = t * .5;
+    var W = D.phase(t, 11), wd = W < .5 ? D.smooth(W * 2) : 1 - D.smooth((W - .5) * 2);
+    D.place(p.tech, p.walk, wd * p.walk.length); if (W >= .5) p.tech.rotation.y += Math.PI; p.tech.position.y = .05 * Math.abs(D.wave(t, .5));
+    p.vent.forEach(function (v, k) { var w = D.phase(t, 2.4, k * .33); v.position.set(4.0 + .35 + .1 * D.wave(t, 1.3, k), 2.55 + w * 1.1, 2.6 - .3 + .08 * D.wave(t, .9, k)); v.scale.setScalar((.5 + w) * (1 - w) * 2 + .1); });
     p.flame.visible = burn; p.flame.scale.set(1, .8 + .5 * Math.abs(D.wave(t, .15)) + .6 * u, 1);
     p.smoke.forEach(function (s, k) { var on = burn && u < .8; var v = D.phase(t, 1.1, k * .2); s.visible = on; s.position.set(1.2 + Math.cos(k * 1.26) * (.4 + v * 1.6), .5 + v * .6, .6 + Math.sin(k * 1.26) * (.4 + v * 1.6)); s.scale.setScalar(.5 + v * 1.1); });
     p.hot.forEach(function (g) { var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .25 : 0; s.step(ctx.dt); if (g !== p.rocket) g.position.y = s.x; else p.rocket.position.y += s.x; });

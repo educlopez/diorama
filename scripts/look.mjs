@@ -24,6 +24,9 @@
  *   motion    the share of stage pixels that change between t+1.5s and t+4s
  *   answer    the share that changes when the pointer arrives
  *   frame     milliseconds per tick+render in this headless browser (a budget hint, not a verdict)
+ *   clash     moving parts that pass through other parts over the first 40 s: the pair, how deep,
+ *             when first. A vehicle through a tree or two cars in one lane is a bug; forks in a rack,
+ *             a flag on its hinge or an arm holding a rocket is a contact on purpose. Judge it on the sheet.
  *
  * Exits 1 when the validator rejects the page, the console has an error, or
  * no WebGL context was made; 2 when it cannot run; 0 otherwise. Everything
@@ -77,6 +80,51 @@ async function launch(chromium) {
 }
 
 /** Pixels of a PNG that differ from the stage's clear colour, and between two PNGs, measured inside the page. */
+/* Moving parts against everything else, over the first `span` seconds: every mesh is an oriented box (its
+   geometry's bounds under its world matrix); a part is "moving" when its own transform changes; two boxes
+   from different movers (or a mover and a static part) that overlap by more than `tol` on every separating
+   axis are a clash. The slab, the ground zones and shadowless decoration (particles, windows) are skipped. */
+const CLASH = ({ span, dt, tol }) => {
+  const c = window.__world3d, T = window.THREE; c.stop(); const world = c.world;
+  const objs = []; world.traverse((o) => { if (o !== world) objs.push(o); });
+  const meshes = objs.filter((o) => o.isMesh && !o.userData.stroke);
+  meshes.forEach((m) => { if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); });
+  const sig = (o) => [o.position.x, o.position.y, o.position.z, o.rotation.x, o.rotation.y, o.rotation.z, o.scale.x, o.scale.y, o.scale.z, o.visible ? 1 : 0].map((v) => +v.toFixed(4)).join(",");
+  const frames = Math.round(span / dt), base = new Map(), animated = new Set();
+  c.t = 0; c.step(0); world.updateMatrixWorld(true); objs.forEach((o) => base.set(o, sig(o)));
+  for (let f = 1; f <= frames; f++) { c.step(dt); objs.forEach((o) => { if (!animated.has(o) && sig(o) !== base.get(o)) animated.add(o); }); }
+  const rootOf = (m) => { let r = null; for (let o = m; o && o !== world; o = o.parent) if (animated.has(o)) r = o; return r; };
+  const roots = new Map(); meshes.forEach((m) => roots.set(m, rootOf(m)));
+  world.updateMatrixWorld(true); const wb = new T.Box3().setFromObject(world); const area = (wb.max.x - wb.min.x) * (wb.max.z - wb.min.z);
+  const skip = new Set(); meshes.forEach((m) => { const b = new T.Box3().setFromObject(m); const a = (b.max.x - b.min.x) * (b.max.z - b.min.z); if (b.max.y <= 0.15 || a > 0.3 * area || !m.castShadow) skip.add(m); });
+  const wp = new T.Vector3();
+  const label = (o) => o.name || (o.geometry ? o.geometry.type.replace("Geometry", "") : o.type) + "@" + (o.getWorldPosition(wp), [wp.x, wp.z].map((q) => +q.toFixed(1)).join(","));
+  c.t = 0; c.step(0); world.updateMatrixWorld(true); const LAB = new Map(); objs.forEach((o) => LAB.set(o, label(o)));
+  const rootLabel = (m) => { const r = roots.get(m); return r ? LAB.get(r) : "static " + LAB.get(m); };
+  const boxOf = (m) => { const bb = m.geometry.boundingBox, M = m.matrixWorld.elements;
+    const ctr = new T.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5).applyMatrix4(m.matrixWorld);
+    const ax = [new T.Vector3(M[0], M[1], M[2]), new T.Vector3(M[4], M[5], M[6]), new T.Vector3(M[8], M[9], M[10])];
+    const e = [(bb.max.x - bb.min.x) / 2 * ax[0].length(), (bb.max.y - bb.min.y) / 2 * ax[1].length(), (bb.max.z - bb.min.z) / 2 * ax[2].length()];
+    ax.forEach((a) => a.normalize()); return { c: ctr, ax, e }; };
+  const d = new T.Vector3(), L = new T.Vector3();
+  const overlap = (A, B) => { let best = Infinity; d.subVectors(B.c, A.c);
+    const test = (v) => { const l = v.length(); if (l < 1e-6) return; v.multiplyScalar(1 / l); let ra = 0, rb = 0;
+      for (let k = 0; k < 3; k++) { ra += A.e[k] * Math.abs(A.ax[k].dot(v)); rb += B.e[k] * Math.abs(B.ax[k].dot(v)); }
+      const o = ra + rb - Math.abs(d.dot(v)); if (o < best) best = o; };
+    for (let k = 0; k < 3; k++) { test(L.copy(A.ax[k])); test(L.copy(B.ax[k])); }
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) test(L.crossVectors(A.ax[i], B.ax[j]));
+    return best; };
+  const visible = (m) => { for (let o = m; o && o !== world; o = o.parent) if (!o.visible) return false; return true; };
+  const movers = meshes.filter((m) => roots.get(m) && !skip.has(m)), others = meshes.filter((m) => !skip.has(m)), pairs = new Map();
+  for (let f = 0; f <= frames; f++) { if (f) c.step(dt); world.updateMatrixWorld(true);
+    const bx = new Map(); others.forEach((m) => { if (visible(m)) bx.set(m, boxOf(m)); });
+    for (const a of movers) { const A = bx.get(a); if (!A) continue; const ra = roots.get(a);
+      for (const o of others) { if (o === a || roots.get(o) === ra) continue; if (roots.get(o) && o.id < a.id) continue; const B = bx.get(o); if (!B) continue;
+        const depth = overlap(A, B); if (depth <= tol) continue;
+        const key = rootLabel(a) + " × " + rootLabel(o); const e = pairs.get(key) || { n: 0, max: 0, first: c.t }; e.n++; e.max = Math.max(e.max, depth); pairs.set(key, e); } } }
+  return [...pairs].map(([pair, e]) => ({ pair, frames: e.n, depth: +e.max.toFixed(2), first: +e.first.toFixed(1) })).sort((x, y) => y.depth - x.depth);
+};
+
 const MEASURE = async ([a, b]) => {
   const load = async (b64) => { const img = new Image(); img.src = "data:image/png;base64," + b64; await img.decode();
     const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }), x = c.getContext("2d"); x.drawImage(img, 0, 0); return x.getImageData(0, 0, c.width, c.height).data; };
@@ -150,6 +198,9 @@ async function main() {
   await page.waitForTimeout(80);
   await goto(2.5); shots.thumb = await stageShot();
 
+  await fresh();
+  const clashes = await page.evaluate(CLASH, { span: 40, dt: 0.1, tol: 0.2 });
+
   const m = {};
   m.fill = await page.evaluate(MEASURE, [shots.rest, null]);
   m.motion = await page.evaluate(MEASURE, [shots["t+1.5s"], shots["t+4s"]]);
@@ -187,6 +238,8 @@ async function main() {
   console.log(`${m.motion.changed < 0.003 ? "STILL" : "ok  "} motion: ${pct(m.motion.changed)} of the stage changes between t+1.5s and t+4s`);
   console.log(`${m.answer.changed < 0.003 ? "FAINT" : "ok  "} answer: ${pct(m.answer.changed)} of the stage changes when the pointer arrives`);
   console.log(`info frame: ${frameMs.toFixed(1)} ms per tick+render here (software GL; a real GPU is far faster)`);
+  if (clashes.length) { console.log(`CLASH clash: ${clashes.length} pair${clashes.length > 1 ? "s" : ""} pass through each other (depth in world units; look at the sheet at that second)`); for (const c of clashes.slice(0, 8)) console.log(`      ${c.pair}  depth ${c.depth}  from ${c.first}s  ${c.frames} frames`); }
+  else console.log("ok   clash: nothing moving passes through anything else");
   if (logs.some((l) => l.startsWith("error")) || !ok) fail = true;
   process.exit(fail ? 1 : 0);
 }

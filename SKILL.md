@@ -52,7 +52,7 @@ Offer two or three when there is someone to ask, and wait. If there is nobody to
 
 ## 3. Check
 
-1. `node <skill>/scripts/look.mjs <name>.js`. It builds the page, validates it, opens it in headless Chromium with WebGL, and writes `3d-world-<name>-look.png`: the still frame, three moments of the loop, the pointer's answer, the camera tilt, the thumbnail and the whole page. It prints the console, the fill, the motion and the answer as numbers. Fix every `FAIL`, and read the `SMALL`, `STILL` and `FAINT` lines as questions, until it exits 0. Add `--theme line` (or any name) to look at the same figure in another theme; a figure that reads in `toy` and in `line` is built right.
+1. `node <skill>/scripts/look.mjs <name>.js`. It builds the page, validates it, opens it in headless Chromium with WebGL, and writes `3d-world-<name>-look.png`: the still frame, three moments of the loop, the pointer's answer, the camera tilt, the thumbnail and the whole page. It prints the console, the fill, the motion and the answer as numbers. Fix every `FAIL`, and read the `SMALL`, `STILL` and `FAINT` lines as questions, until it exits 0. Add `--theme line` (or any name) to look at the same figure in another theme; a figure that reads in `toy` and in `line` is built right. It also prints `clash`: moving parts that pass through other parts; a vehicle through a tree or a car through a bus is a bug to fix, forks in a rack or a flag on its hinge is fine.
 2. Read `references/look.md`, then the sheet, and answer its questions. Fix what fails, then go back to 1.
 
 `look.mjs` needs a browser; it finds Playwright's or installs `playwright-core` once outside this folder. Without a browser, run `node <skill>/scripts/validate.mjs 3d-world-<name>.html` after each build and do the look as `look.md` says under "Without a browser". Do not hand over a page the validator rejects. Do not say the look is done if you did not look.
@@ -86,6 +86,8 @@ When the person asks for a change, edit only `<name>.js`, then run `look.mjs` ag
 | a mini with eight things in it | one object holding nothing, one ambient motion (`concepts.md`, "An empty state") |
 | a hero where everything moves at the same tempo | three loops with different periods, and one thing that only moves now and then (rule 09) |
 | a vehicle that drives sideways | build it nose toward +x; `D.place` faces +x along the path |
+| a vehicle that snaps round a corner, or two that meet in one lane | round the corner for its length (`D.path(points, true, r)`, 3–4 for a truck); one direction per lane, one speed for everything that shares a lane (`T = path.length / speed`) |
+| `look.mjs` prints `clash` | a moving part passes through something: move the tree, the lane or the stop; forks in a rack or a hinge are contacts on purpose |
 | editing the kernel or the bench to make something work | the figure is wrong; change the figure |
 
 ## References

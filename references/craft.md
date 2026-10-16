@@ -55,8 +55,8 @@ One loop, in the kernel, sleeps offscreen and when the tab is hidden, and render
 
 A vehicle is believable when it follows a road, turns at corners, stops for a reason and starts again, and its wheels turn with the ground.
 
-- **Keep it:** `D.path([[x, z], …], closed)` on the road's centreline; in `tick`, turn the lap's phase into a distance with an ease per leg (drive, wait, drive), then `D.place(group, path, dist)` and `D.spin(wheels, dist, r)`. Build the vehicle nose toward +x. Give a stop a cause: a door opens, forks lift, a light changes.
-- **Rejected when:** a vehicle slides without turning its wheels; it moves at one speed forever; it passes through a building; it teleports at the end of the lap (an open path needs a return leg, or a closed path).
+- **Keep it:** `D.path([[x, z], …], closed, round)` on the lane's centreline, with corners rounded wide enough for the vehicle's length (.5 for a car, 3–4 for a truck); in `tick`, turn the lap's phase into a distance with an ease per leg (drive, wait, drive), then `D.place(group, path, dist)` and `D.spin(wheels, dist, r)`. Build the vehicle nose toward +x. One lane carries one direction, and vehicles that share a lane run at one speed (`T = path.length / speed`), a fixed share of the lap apart. Keep furniture a vehicle-length from every corner: the nose and tail sweep outside it. Give a stop a cause: a door opens, forks lift, a light changes.
+- **Rejected when:** a vehicle slides without turning its wheels; it moves at one speed forever; two vehicles meet head-on or pass through each other in one lane; it passes through a building, a tree or a parked car (`look.mjs` lists these as `clash`); it turns around in its own length; it teleports at the end of the lap (an open path needs a return leg, or a closed path).
 
 ## 09 · tempo: a few loops, different periods, something rare
 
