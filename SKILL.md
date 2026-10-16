@@ -87,6 +87,7 @@ When the person asks for a change, edit only `<name>.js`, then run `look.mjs` ag
 | a hero where everything moves at the same tempo | three loops with different periods, and one thing that only moves now and then (rule 09) |
 | a vehicle that drives sideways | build it nose toward +x; `D.place` faces +x along the path |
 | a vehicle that snaps round a corner, or two that meet in one lane | round the corner for its length (`D.path(points, true, r)`, 3–4 for a truck); one direction per lane, one speed for everything that shares a lane (`T = path.length / speed`) |
+| the empty-state button is not the brand colour | the page paints its button with the figure's `accent`; in the person's own app the button is theirs to style, so say so when you hand the figure over |
 | `look.mjs` prints `clash` | a moving part passes through something: move the tree, the lane or the stop; forks in a rack or a hinge are contacts on purpose |
 | editing the kernel or the bench to make something work | the figure is wrong; change the figure |
 

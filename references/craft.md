@@ -130,4 +130,4 @@ Every example is built from these. Positions are in the object's own group, nose
 
 **A cart or a kiosk.** A `D.rbox` body on four wheels, a wooden counter, two posts and a striped canopy of alternating boxes, a `pal.steel` machine with a steam of three small balls rising in `tick`, cups as short cylinders with an ink lid.
 
-**Clouds and gulls.** `D.props.cloud` (three balls, no shadow) drifting with `position.x += speed · dt` and wrapping; a gull is two thin boxes as wings that flap from a short wave, on a path above the scene.
+**Clouds and gulls.** `D.props.cloud` (three balls, no shadow) drifting from the clock, `position.x = wrap(x0 + speed · t)` with the start kept in `userData` (never `+= speed · dt`, which breaks the still frame and the loop); a gull is two thin boxes as wings that flap from a short wave, on a path above the scene.

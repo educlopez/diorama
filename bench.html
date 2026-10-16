@@ -84,10 +84,13 @@
   var still = document.createElement('button'); still.type = 'button'; still.textContent = 'Still frame'; still.setAttribute('aria-pressed', 'false');
   var note = document.createElement('span'); note.textContent = 'Move the pointer over the scene.';
   foot.appendChild(still); foot.appendChild(note); wrap.appendChild(foot);
-  var ctx;
+  var ctx, figAccent = fig.theme && typeof fig.theme === 'object' ? fig.theme.accent : null;
+  /* a theme picked here swaps the look and keeps the figure's own accent, which is the brand's colour */
+  function picked() { return themePick ? (figAccent ? { base: themePick, accent: figAccent } : themePick) : undefined; }
+  if (figAccent) document.documentElement.style.setProperty('--accent', figAccent);
   function mountIt(reduced) {
     if (ctx) ctx.destroy();
-    try { ctx = Diorama.mount(fig, { el: stage, reduced: reduced, still: q.has('t') ? +q.get('t') : undefined, theme: themePick || undefined }); window.__diorama = ctx; }
+    try { ctx = Diorama.mount(fig, { el: stage, reduced: reduced, still: q.has('t') ? +q.get('t') : undefined, theme: picked() }); window.__diorama = ctx; }
     catch (err) { stage.innerHTML = '<div class="err">' + (err && err.message || err) + '</div>'; console.error(err); }
   }
   var themePick = q.get('theme') || null;

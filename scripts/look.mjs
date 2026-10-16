@@ -126,15 +126,20 @@ const CLASH = ({ span, dt, tol }) => {
 };
 
 const MEASURE = async ([a, b]) => {
+  /* fill: the scene's silhouette, row by row from the first to the last pixel that differs from the
+     background, so a line drawing counts its white faces; changed: pixels that differ between a and b */
   const load = async (b64) => { const img = new Image(); img.src = "data:image/png;base64," + b64; await img.decode();
-    const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }), x = c.getContext("2d"); x.drawImage(img, 0, 0); return x.getImageData(0, 0, c.width, c.height).data; };
-  const A = await load(a), B = b ? await load(b) : null, n = A.length / 4; let inked = 0, changed = 0;
+    const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }), x = c.getContext("2d"); x.drawImage(img, 0, 0); return { d: x.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height }; };
+  const IA = await load(a), IB = b ? await load(b) : null, A = IA.d, B = IB && IB.d, w = IA.w, h = IA.h, n = w * h;
   const g = [A[4 * 6], A[4 * 6 + 1], A[4 * 6 + 2], A[4 * 6 + 3]];
-  for (let i = 0; i < n; i++) { const k = 4 * i;
-    const d = Math.max(Math.abs(A[k] - g[0]), Math.abs(A[k + 1] - g[1]), Math.abs(A[k + 2] - g[2]), Math.abs(A[k + 3] - g[3]));
-    if (d >= 18) inked++;
-    if (B) { const e = Math.max(Math.abs(A[k] - B[k]), Math.abs(A[k + 1] - B[k + 1]), Math.abs(A[k + 2] - B[k + 2]), Math.abs(A[k + 3] - B[k + 3])); if (e >= 18) changed++; } }
-  return { fill: inked / n, changed: changed / n };
+  const diff = (P, k, Q, l) => Math.max(Math.abs(P[k] - Q[l]), Math.abs(P[k + 1] - Q[l + 1]), Math.abs(P[k + 2] - Q[l + 2]), Math.abs(P[k + 3] - Q[l + 3]));
+  let filled = 0, changed = 0;
+  for (let y = 0; y < h; y++) { let first = -1, last = -1;
+    for (let x = 0; x < w; x++) { const k = 4 * (y * w + x);
+      if (diff(A, k, g, 0) >= 18) { if (first < 0) first = x; last = x; }
+      if (B && diff(A, k, B, k) >= 18) changed++; }
+    if (first >= 0) filled += last - first + 1; }
+  return { fill: filled / n, changed: changed / n };
 };
 
 async function main() {

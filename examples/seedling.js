@@ -26,8 +26,7 @@ Diorama.figure({
     var handle = D.torus(.26, .035, pal.steel, 0, .85, 0, body); handle.rotation.y = Math.PI / 2;
     var drops = []; [0, 1, 2].forEach(function (k) { drops.push(D.ball(.035, pal.sky, 0, 0, 0, null)); });
     D.props.rock(.95, -.8, null, { r: .16 }); D.props.rock(-.85, .8, null, { r: .12, yaw: 2 });
-    var shoot = D.group(.3, 1.0, .15); var stem = D.cyl(.02, .02, .3, pal.leafDark, 0, .15, 0, shoot, 6); var leaf = D.ball(.08, pal.leaf, .07, .3, 0, shoot); leaf.scale.set(1.4, .5, .8);
-    return { body: body, drops: drops, shoot: shoot };
+    return { body: body, drops: drops };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;
@@ -37,6 +36,5 @@ Diorama.figure({
       var u = D.phase(t, .6, k * .33), on = tip > .7;
       d.visible = on; d.position.set(.05 + u * .35, 1.45 - u * .6, -.3 + u * .35);
     });
-    p.shoot.scale.setScalar(.001);
   }
 });

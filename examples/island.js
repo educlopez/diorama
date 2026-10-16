@@ -88,8 +88,9 @@ Diorama.figure({
       g.g.position.set(s.x, 7.5 + k * .8 + .3 * D.wave(t, 3, k), s.z); g.g.rotation.y = s.yaw;
       var flap = .6 * D.wave(t, .45, k * .3); g.l.rotation.x = flap; g.r.rotation.x = -flap;
     });
-    p.clouds.forEach(function (c, k) { c.position.x += (k ? -.08 : .06) * ctx.dt; if (c.position.x > 12) c.position.x = -12; if (c.position.x < -12) c.position.x = 12; });
-    p.waves.forEach(function (w, k) { w.scale.x = .6 + .5 * (D.wave(t, 3.5, k * .17) * .5 + .5); w.position.x += .25 * ctx.dt * (k % 2 ? 1 : -1); if (w.position.x > 12) w.position.x = -12; if (w.position.x < -12) w.position.x = 12; });
+    var wrap = function (x) { return ((x + 12) % 24 + 24) % 24 - 12; };
+    p.clouds.forEach(function (c, k) { var x0 = c.userData.x0 == null ? (c.userData.x0 = c.position.x) : c.userData.x0; c.position.x = wrap(x0 + (k ? -.08 : .06) * t); });
+    p.waves.forEach(function (w, k) { w.scale.x = .6 + .5 * (D.wave(t, 3.5, k * .17) * .5 + .5); var x0 = w.userData.x0 == null ? (w.userData.x0 = w.position.x) : w.userData.x0; w.position.x = wrap(x0 + .25 * t * (k % 2 ? 1 : -1)); });
     p.hot.forEach(function (g) {
       var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .35 : 0; s.step(ctx.dt);
       if (g === p.boat) p.boat.position.y += s.x; else g.position.y = (g.userData.y0 == null ? (g.userData.y0 = g.position.y) : g.userData.y0) + s.x;
