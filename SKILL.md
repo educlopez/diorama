@@ -1,6 +1,6 @@
 ---
 name: diorama
-description: Build small animated 3D worlds for the web (isometric camera, blocks on a rounded base, soft shadows, little vehicles and people that move) in one of five themes you can tune: toy (pastel blocks, warm sun), soft, mono (one accent, the rest tints of ink), line (a hairline drawing, white fills and ink edges) and night. A hero scene for a landing page, a card-sized illustration for docs or a blog, or a mini figure for an empty state ("no messages yet", "nothing in stock", "no results"). Use this whenever someone asks for a 3D illustration, an isometric scene, a low-poly or "toy town" animation, a monochrome or line-art 3D figure, a blank/empty-state illustration with some life in it, a three.js scene for marketing, or a little game-like world, even if they never say "3D" or "isometric". Ships one self-contained HTML file (three.js from a CDN or inlined), checked in a headless browser, and can be dropped into React.
+description: Build small animated 3D worlds for the web (isometric camera, blocks on a rounded base, soft shadows, little vehicles and people that move) in one of five themes you can tune: toy (pastel blocks, warm sun), soft, mono (one accent, the rest tints of ink), line (a hairline drawing, white fills and ink edges) and night. A hero scene for a landing page, a card-sized illustration for docs or a blog, or a mini figure for any small spot (an empty state, a feature in a list, a 404). Use this whenever someone asks for a 3D illustration, an isometric scene, a low-poly or "toy town" animation, a monochrome or line-art 3D figure, a blank/empty-state illustration with some life in it, a three.js scene for marketing, or a little game-like world, even if they never say "3D" or "isometric". Ships one self-contained HTML file (three.js from a CDN or inlined), checked in a headless browser, and can be dropped into React.
 license: MIT
 compatibility: Written for Claude Code; runs in any agent that reads skills. Needs Node.js 20+ for the build and checks, and Chrome or Chromium for the look.
 metadata:
@@ -23,7 +23,7 @@ First decide the size, because it sets the budget:
 | --- | --- | --- | --- | --- | --- |
 | `hero` | top of a landing page, a README, a product tour | 3:2, full width | 150–400 primitives | ≤ 420 | three or four independent loops, something always moving |
 | `card` | a docs page, a blog post, a feature section | 4:3, ~500px | 60–150 | ≤ 240 | one or two loops and a pointer answer |
-| `mini` | an empty state above a heading and a button | 1:1, 160–240px | 15–40 | ≤ 150 | one quiet ambient motion |
+| `mini` | any small spot: an empty state, a feature in a list, a 404, a settings section | 1:1, 160–240px | 15–40 | ≤ 150 | one quiet ambient motion |
 
 Then read `references/concepts.md` and write the concept in one line, with the theme at the end:
 
@@ -43,7 +43,7 @@ Offer two or three when there is someone to ask, and wait. If there is nobody to
    - `theme`: a name, or `{ base: 'mono', accent: '#f2c230', shadows: false, … }` to override any field (palette, accent, lights, shadows, finish, tone, tint, edges, outline, stroke, strokeWidth, round, glow). Build once; the theme is applied by the kernel to every primitive, so a figure never branches on it.
    - `means`: one sentence, ≤ 140 characters, shown under the stage. It says what the scene shows and what moves.
    - `hint`: one line, ≤ 90 characters, what the pointer does ("Hover the boat, the lighthouse or the house"). The page shows it so a visitor knows to play.
-   - `title` (hero and card) or `empty: { title, body, action }` (mini): the words the page puts around the stage. They do the talking; the scene does not.
+   - `title`: the figure's name, which the page shows above the stage. The words the person's own UI puts around the figure (a heading, a line, a button) are theirs to write; the scene carries none.
    - `camera`: `{ az, el, pad }` in degrees. `az` 45 is the isometric default; 30–40 shows a wide base in a 3:2 hero. Leave `el` at 35.264 unless the scene is tall.
    - `still`: the second of the loop that reduced motion and thumbnails show. Choose a moment where everything is in a telling place (the truck at the dock, the forks up).
    - `build({ D, pal })`: build the scene once with the toolkit and return `parts`: every group and mesh `tick` will move, plus `parts.hot`, the groups the pointer may pick. Give each hot group a `.name` (`boat.name = 'boat'`): the page shows it as a read-out while the pointer is on it.
@@ -77,17 +77,16 @@ When the person asks for a change, edit only `<name>.js`, then run `look.mjs` ag
 | writing `new THREE.Mesh`, a light, a camera or a renderer | the kernel has it; use `D.box`, `D.cyl`, `D.props.*` and `ctx` |
 | writing `requestAnimationFrame`, `setInterval` or a CSS animation | pose everything from `ctx.t` in `tick` (rule 07) |
 | moving a thing with `position.x += speed * dt` | put it on a `D.path` and read its distance from `D.phase(t, period)`, so the loop is seamless and the still frame is reproducible (rule 08) |
-| writing a word, a number or an arrow into the scene | say it with the title, the `means` or the `empty` text; the scene carries no words at all, not even a sign (rule 10) |
+| writing a word, a number or an arrow into the scene | say it with the title or the `means`; the scene carries no words at all, not even a sign (rule 10) |
 | reaching for a texture, a gradient, a glow or a 15th colour | one more block in a palette colour; `pal.*` has what you need (rules 03 and 04) |
 | writing `if (theme === 'line')` in the figure | the kernel tones, strokes and lights every primitive by theme; a figure is the same in all five |
 | a brand colour pasted on twenty parts | `accent` (mono, line) or `palette: { cobalt: … }` (toy, soft, night), once, in the declaration |
 | building the base after the scene, or not at all | `D.slab` first: the shadows need somewhere to land (rule 01) |
 | a scene that reads as a grid of identical cubes | give every object the two or three features that make it what it is (rule 05) |
-| a mini with eight things in it | one object holding nothing, one ambient motion (`concepts.md`, "An empty state") |
+| a mini with eight things in it | one object, one ambient motion (`concepts.md`, "A mini") |
 | a hero where everything moves at the same tempo | three loops with different periods, and one thing that only moves now and then (rule 09) |
 | a vehicle that drives sideways | build it nose toward +x; `D.place` faces +x along the path |
 | a vehicle that snaps round a corner, or two that meet in one lane | round the corner for its length (`D.path(points, true, r)`, 3–4 for a truck); one direction per lane, one speed for everything that shares a lane (`T = path.length / speed`) |
-| the empty-state button is not the brand colour | the page paints its button with the figure's `accent`; in the person's own app the button is theirs to style, so say so when you hand the figure over |
 | `look.mjs` prints `clash` | a moving part passes through something: move the tree, the lane or the stop; forks in a rack or a hinge are contacts on purpose |
 | editing the kernel or the bench to make something work | the figure is wrong; change the figure |
 

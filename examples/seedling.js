@@ -1,4 +1,4 @@
-/* seedling · a mini empty state: "Nothing planted yet".
+/* seedling · a mini in line.
    A terracotta pot full of soil and nothing growing, a watering can beside
    it. Now and then the can tips and a few drops fall on the soil. Drawn in
    the line theme, with the pot as the accent. */
@@ -8,7 +8,7 @@ Diorama.figure({
   theme: { base: 'line', accent: '#cf6a4c' },
   means: 'A pot of soil with nothing growing and a watering can that tips now and then.',
   hint: 'Wait for the can to tip.',
-  empty: { title: 'Nothing planted yet', body: 'Add your first project and watch it grow here.', action: 'Plant a project' },
+  title: 'Pot and can',
   still: 1.6,
   build: function (o) {
     var D = o.D, pal = o.pal;

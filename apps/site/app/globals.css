@@ -120,6 +120,8 @@ a { color: inherit; }
 .stage::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--stage-border); pointer-events: none; z-index: 10; }
 .frame { display: block; width: 100%; border: 0; background: transparent; }
 .frame-mini { width: 200px; }
+/* a mini sits centred on the stage, at the size it will usually live at */
+.mini-stage { display: grid; place-items: center; padding: 28px 24px; width: 100%; }
 .fig-meta { display: flex; align-items: center; gap: 12px; padding: 14px 8px 16px; flex-wrap: wrap; }
 .fig-ico { width: 46px; height: 46px; border-radius: 14px; overflow: hidden; background: var(--color-stage); box-shadow: inset 0 0 0 1px var(--stage-border); flex: none; }
 .fig-ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -144,10 +146,6 @@ a { color: inherit; }
 .chip--icon { width: 28px; padding: 0; justify-content: center; }
 .chip--icon svg { width: 14px; height: 14px; display: block; }
 .hot-list { flex-basis: 100%; font-size: 12px; color: var(--color-faint); padding-top: 2px; }
-.empty-mock { display: grid; justify-items: center; text-align: center; padding: 40px 24px 28px; width: 100%; }
-.empty-mock h3 { font-size: 17px; font-weight: 500; margin: 8px 0 4px; }
-.empty-mock p { color: var(--color-muted); font-size: 13px; line-height: 18px; margin: 0 0 14px; max-width: 30ch; }
-.empty-mock .btn { height: 36px; }
 
 /* ---- sections, how to, faq ---- */
 .section { width: 100%; max-width: 1008px; margin: 96px auto 0; }

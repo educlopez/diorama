@@ -3,7 +3,7 @@
  * The prebuild: every figure in ../../examples becomes a page in
  * public/examples/<name>.html (the skill's own build, three.js from cdnjs),
  * and lib/figures.json lists them with what the site needs to show: name,
- * size, theme, title, means, the empty-state words and the line count.
+ * size, theme, title, means, hint and the line count.
  */
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -23,10 +23,6 @@ const themeOf = (src) => {
   if (t.startsWith("{")) return { base: field(t, "base") ?? "toy", accent: field(t, "accent") };
   return { base: t.slice(1, -1), accent: null };
 };
-const emptyOf = (src) => {
-  const m = /\bempty:\s*\{([^}]*)\}/.exec(src);
-  return m ? { title: field(m[1], "title"), body: field(m[1], "body"), action: field(m[1], "action") } : null;
-};
 
 mkdirSync(OUT, { recursive: true });
 const figures = [];
@@ -36,7 +32,7 @@ for (const file of readdirSync(EXAMPLES).filter((f) => f.endsWith(".js"))) {
   writeFileSync(join(OUT, `${name}.html`), assemble(src));
   const head = src.slice(0, src.indexOf("build:"));
   figures.push({
-    name, size: field(head, "size") ?? "card", title: field(head, "title"), means: field(head, "means"), hint: field(head, "hint"), theme: themeOf(head), empty: emptyOf(head),
+    name, size: field(head, "size") ?? "card", title: field(head, "title"), means: field(head, "means"), hint: field(head, "hint"), theme: themeOf(head),
     lines: src.split("\n").length, blurb: (/^\/\*\s*[a-z-]+\s*·\s*([\s\S]*?)\*\//.exec(src)?.[1] ?? "").replace(/\s+/g, " ").trim(),
   });
 }

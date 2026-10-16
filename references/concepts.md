@@ -9,7 +9,7 @@ A diorama concept is four things: **a place**, **what is in it**, **what moves o
 3. **Find the loops.** A diorama is alive because two or three things keep their own time: a vehicle on a lap, a door that opens when it arrives, a worker walking back and forth, a flag in the wind, a light that blinks. Give each a period, and make them different (24 s, 12 s, 16 s, 2 s), so the scene never repeats as a whole.
 4. **Give the pointer something.** The kernel tilts the camera toward it already. On a hero or a card, add one answer: the object under the pointer lifts, a shelf lights up, the forks go to the level you point at. One answer, not a menu.
 5. **Design the still frame.** Reduced motion, thumbnails and the first paint show one second of the loop. Pick the second where the story is visible (truck at the dock, forks raised, flag out) and set `still` to it.
-6. **Choose the words.** They go around the stage, not in it: a `title` and a `means` for a hero or card, an `empty` heading, body and button for a mini.
+6. **Choose the words.** They go around the stage, not in it: a `title` and a `means`. Whatever the person's UI puts next to the figure (a heading, a button) is theirs.
 7. **Choose the theme from the page.** `toy` on a warm product page, `soft` on cream, `mono` beside dense text or inside a UI with its own accent, `line` on a minimal or technical page, `night` on a dark one. Then the one accent: the thing the eye should find.
 
 ## Three sizes, three jobs
@@ -18,17 +18,24 @@ A diorama concept is four things: **a place**, **what is in it**, **what moves o
 | --- | --- | --- |
 | **hero** | the first thing on a landing page or a README | hold attention for ten seconds: several loops, a lap long enough to be watched, a pointer answer |
 | **card** | a figure beside text | show one process in a place, readable at 500px, with one pointer answer |
-| **mini** | an empty state | read at 160px as a thumbnail, say "nothing here" without a word, move once in a while |
+| **mini** | any small spot: an empty state, a feature in a list, a 404, a section of settings | read at 160px as a thumbnail, say its one thing without a word, move once in a while |
 
-## An empty state
+## A mini
+
+A mini is one object on a small base, read at 160px. What it stands for is the person's: a feature (a lock for security, a rocket for deploys), a place in the app (a desk for tasks, a letterbox for messages), a state (a 404, an empty list, a success).
+
+- **One object, composed.** The thing the mini stands for, whole and recognisable at a thumbnail, with one or two props that place it. Not a scene of eight things.
+- **Rest is the whole figure.** A mini sits small beside other things, and most people never bring the pointer to it. Judge the still frame first, at 160px.
+- **One quiet motion.** A flag that lifts now and then, a beacon that blinks, forks that rise and settle, a door that sways. Not a vehicle doing laps.
+- **One accent** says where to look.
+
+### When it stands for an absence
 
 Asked for an empty state (no results, nothing here yet, no messages, nothing in stock, not found), draw the absence, not a sad face.
 
 - **The subject is absence.** Pick the thing that would hold or bring what is missing, and show it holding none: an empty rack with a forklift waiting, a letterbox with its door open, a bare conveyor, a harbour with no boat at the pier, a desk with a lamp and no papers.
-- **Rest is the whole figure.** An empty state sits small above a heading and a button, and most people never bring the pointer to it. Judge the still frame first, at 160px.
-- **Empty is not blank.** The object is all there and composed; what is missing is what it would hold. One accent colour says where to look.
-- **One quiet motion.** A flag that lifts now and then, a beacon that blinks, forks that rise and settle, a door that sways. Not a vehicle doing laps.
-- **The words count to zero.** `empty.title` says what is missing ("No messages yet"), `empty.body` says what will fill it, `empty.action` is the one thing to do.
+- **Empty is not blank.** The object is all there and composed; what is missing is what it would hold.
+- **The words are the UI's.** The heading ("No messages yet"), the line under it and the button belong to the person's own interface, not to the figure; offer them in your hand-over if they help.
 
 ## A scene from a product
 

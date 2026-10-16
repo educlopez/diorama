@@ -1,4 +1,4 @@
-/* desk · a mini empty state: "No tasks today", drawn in ink.
+/* desk · a mini, drawn in ink.
    A desk with a lamp, an empty tray, a mug and a chair. The chair swivels
    a little now and then, and the mug steams. */
 Diorama.figure({
@@ -7,7 +7,7 @@ Diorama.figure({
   theme: { base: 'line', accent: '#e8714f' },
   means: 'A desk with a lamp, an empty tray and a mug; the chair swivels now and then and the mug steams.',
   hint: 'Wait for the chair to swivel.',
-  empty: { title: 'No tasks today', body: 'When something needs doing, it shows up here.', action: 'Add a task' },
+  title: 'Desk',
   still: 1,
   build: function (o) {
     var D = o.D, pal = o.pal;

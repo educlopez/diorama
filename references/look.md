@@ -9,7 +9,7 @@
 5. **pointer** · the pointer near the centre after a settle. Is there an answer (a lift, a light, a move), and is it one answer? Is anything popping rather than easing?
 6. **corner** · the pointer at the top-right. The camera has tilted a few degrees. Is the scene still inside the frame? Does nothing clip the edge?
 7. **thumb** · the stage at 160px (mini) or 390px (hero, card). Can you tell what the place is and what is missing? Do the objects still read, or have they become a grid of dots?
-8. **page** · the whole bench. Do the title and the `means` (or the empty state's heading, body and button) say what the scene cannot? Is the stage the right size for where it will live?
+8. **page** · the whole bench. Do the title and the `means` say what the scene cannot? Is the stage the right size for where it will live?
 
 ## Another theme
 

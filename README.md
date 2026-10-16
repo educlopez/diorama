@@ -58,11 +58,11 @@ Claude offers two or three concepts, builds the one you choose, checks it in a h
 | <img src="docs/media/warehouse.png" alt="An isometric warehouse yard: a white building with a terracotta roof and three dock doors, a truck at the dock, a forklift by yellow racks, trees along a road, a parked van"> | <img src="docs/media/cafe.png" alt="A coffee cart with a striped awning on a cream street corner, a barista, a customer, a bistro table, a cat on a chair, two trees"> |
 | **`warehouse`** · a hero. A truck does a lap and docks, a forklift carries pallets to the racks, a worker walks the aisle. | **`cafe`** · a card in `soft`. The barista pulls shots, a customer comes for a cup, the cat flicks its tail. |
 | <img src="docs/media/launchpad.png" alt="A rocket on its pad at night beside a gantry, floodlights on, a control room with lit windows, on a dark rounded base"> | <img src="docs/media/server.png" alt="Three server racks in greys with blinking lights, a cooling unit, a technician and a terminal, on a white tiled floor"> |
-| **`launchpad`** · a card for "No deployments yet", in `night`. The rocket waits under floodlights and every so often the arm swings back and it lifts off. | **`server`** · a card for "No logs yet", in `mono` with a teal accent. The racks blink in their own rhythms, the fan turns; hover a rack and all its lights come on. |
+| **`launchpad`** · a card, in `night`. The rocket waits under floodlights and every so often the arm swings back and it lifts off. | **`server`** · a card, in `mono` with a teal accent. The racks blink in their own rhythms, the fan turns; hover a rack and all its lights come on. |
 | <img src="docs/media/rack.png" alt="An empty three-level pallet rack drawn in greys with yellow beams, a forklift waiting in front, on a rounded base"> | <img src="docs/media/mailbox.png" alt="A coral letterbox on a wooden post, door open and empty, a small tree, a fence and a rock beside it, on a grass tile"> |
-| **`rack`** · a card for "No items in stock", in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. | **`mailbox`** · a mini for "No messages yet". The flag lifts every few seconds to check, finds nothing, settles. |
+| **`rack`** · a card, in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. | **`mailbox`** · a mini. The flag lifts every few seconds to check, finds nothing, settles. |
 | <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can beside it, on a rounded tile"> | <img src="docs/media/desk.png" alt="A line drawing of a desk with a lamp, an empty tray, a mug and a swivel chair, on a rounded tile"> |
-| **`seedling`** · a mini for "Nothing planted yet", in `line` with the pot as the accent. The can tips now and then. | **`desk`** · a mini for "No tasks today", in `line` with a coral accent. The chair swivels, the lamp nods. |
+| **`seedling`** · a mini, in `line` with the pot as the accent. The can tips now and then. | **`desk`** · a mini, in `line` with a coral accent. The chair swivels, the lamp nods. |
 
 Open them live in the gallery on the site: every figure answers the pointer, names what is under it, switches theme and pauses to its still frame.
 
@@ -74,7 +74,7 @@ Three sizes, one format:
 | --- | --- | --- | --- |
 | **hero** | the top of a landing page or README | 3:2, full width | three or four loops with different periods, a pointer answer |
 | **card** | beside text in docs or a post | 4:3, ~500px | one process, one pointer answer |
-| **mini** | an empty state above a heading and a button | 1:1, 160–240px | one quiet ambient motion |
+| **mini** | any small spot: an empty state, a feature in a list, a 404 | 1:1, 160–240px | one quiet ambient motion |
 
 ### Themes
 
@@ -149,12 +149,12 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/farm.js`: a hero. Fields, a farmhouse, a barn, a silo, a windmill, a pond with sheep; a tractor on a lap that stops at the barn.
 - `examples/warehouse.js`: a hero. A building with docks and a flag, racks, a truck on a lap with a stop, a forklift shuttle with a hand-off, a walker, trees and lamps.
 - `examples/cafe.js`: a card in `soft`. A coffee cart with a striped canopy, a barista and steam, a customer who comes for a cup and goes, a cat on a chair.
-- `examples/launchpad.js`: a card, an empty state, in `night`. A rocket on its pad under floodlights, a gantry whose arm swings back, a control room; a launch now and then.
-- `examples/server.js`: a card, an empty state, in `mono` with a teal accent. Three racks that blink in their own rhythms, a cooling unit, a technician; hover a rack and its lights all come on.
-- `examples/rack.js`: a card, an empty state, in `mono` with one accent. A bare rack, a forklift whose forks rise and settle; hover a level and the forks go there.
-- `examples/mailbox.js`: a mini, an empty state. A letterbox on a post, door open, a fence, a tree and a rock; the flag checks now and then.
-- `examples/seedling.js`: a mini, an empty state, in `line`. A pot of soil and a watering can that tips now and then.
-- `examples/desk.js`: a mini, an empty state, in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
+- `examples/launchpad.js`: a card in `night`. A rocket on its pad under floodlights, a gantry whose arm swings back, a control room; a launch now and then.
+- `examples/server.js`: a card in `mono` with a teal accent. Three racks that blink in their own rhythms, a cooling unit, a technician; hover a rack and its lights all come on.
+- `examples/rack.js`: a card in `mono` with one accent. A bare rack, a forklift whose forks rise and settle; hover a level and the forks go there.
+- `examples/mailbox.js`: a mini. A letterbox on a post, door open, a fence, a tree and a rock; the flag checks now and then.
+- `examples/seedling.js`: a mini in `line`. A pot of soil and a watering can that tips now and then.
+- `examples/desk.js`: a mini in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
 
 Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
@@ -163,7 +163,7 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
 - `kit/diorama.js` is the kernel: the orthographic isometric camera fitted to the scene, four lights (hemisphere, warm sun with PCF soft shadows, cool fill, ambient) in sRGB, the five themes with toning, edges and silhouette outlines, cached matte materials, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths), the pointer with picking and camera tilt, and the loop that sleeps.
 - `kit/three.min.js` is three.js r128, vendored for `--inline` builds and the offline look.
-- `bench.html` is the page: a card for a hero or card figure, a mock empty state for a mini.
+- `bench.html` is the page: a card for every figure, sized to it.
 - `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs nine checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer); `scripts/look.mjs` takes the sheet in headless Chromium and measures fill, motion and the pointer's answer.
 - `references/` hold the long form: concepts, the ten craft rules with the themes and recipes, motion patterns, the look, and embedding in React.
 - `apps/site/` is the website (see below).

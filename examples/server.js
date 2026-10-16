@@ -1,4 +1,4 @@
-/* server · a card empty state: "No logs yet", in mono with teal lights.
+/* server · a card in mono with teal lights.
    A small server room: three racks of units with status lights, a raised
    floor, a cable tray, a cooling unit whose fan turns, a technician who
    walks the aisle with a laptop. The lights blink in their own rhythms;
@@ -7,7 +7,7 @@ Diorama.figure({
   name: 'server',
   size: 'card',
   theme: { base: 'mono', accent: '#4aa3a0' },
-  title: 'No logs yet',
+  title: 'Server room',
   means: 'Three racks blink in their own rhythms, the fan turns, a technician walks the aisle with a laptop.',
   hint: 'Hover a rack and all its lights turn on.',
   camera: { az: 40, el: 34, pad: 1.06 },

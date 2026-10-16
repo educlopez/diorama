@@ -23,7 +23,7 @@ export default function Page() {
           <section key={size} className="col mt-10" aria-labelledby={`size-${size}`}>
             <div className="flex items-baseline gap-3 mb-4">
               <h2 id={`size-${size}`} className="section-title" style={{ margin: 0, textAlign: "left", fontSize: 22 }}>{size === "hero" ? "Heroes" : size === "card" ? "Cards" : "Minis"}</h2>
-              <span className="text-[13px] text-muted">{size === "hero" ? "the top of a landing page or a README" : size === "card" ? "beside text in docs or a post" : "an empty state above a heading and a button"}</span>
+              <span className="text-[13px] text-muted">{size === "hero" ? "the top of a landing page or a README" : size === "card" ? "beside text in docs or a post" : "a small spot in an app or a page: an empty state, a feature, a 404"}</span>
             </div>
             <div className="cards">
               {list.map((fig) => <FigureCard key={fig.name} fig={fig} index={FIGURES.indexOf(fig) + 1} wide={size === "hero"} lazy />)}
