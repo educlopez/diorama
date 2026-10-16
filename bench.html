@@ -77,7 +77,7 @@
     head.innerHTML = '<span class="n"></span><span class="k"></span>';
     head.querySelector('.n').textContent = fig.title || fig.name; head.querySelector('.k').textContent = fig.size || 'card';
     card.appendChild(head); card.appendChild(stage);
-    var m = document.createElement('div'); m.className = 'means'; m.textContent = means; card.appendChild(m);
+    var m = document.createElement('div'); m.className = 'means'; m.textContent = means + (fig.hint ? ' ' : ''); if (fig.hint) { var hb = document.createElement('b'); hb.textContent = fig.hint; m.appendChild(hb); } card.appendChild(m);
   }
   wrap.appendChild(card);
   var foot = document.createElement('div'); foot.className = 'foot';
@@ -103,6 +103,19 @@
   var isStill = q.has('still');
   mountIt(isStill); still.setAttribute('aria-pressed', String(isStill));
   still.addEventListener('click', function () { isStill = !isStill; still.setAttribute('aria-pressed', String(isStill)); mountIt(isStill); });
+  /* in a frame: tell the parent what the pointer is over, and take a theme or a still request from it */
+  if (q.has('embed') && window.parent !== window) {
+    var lastHover = null;
+    (function watch() { var h = ctx && ctx.hover ? (ctx.hover.name || 'something') : ''; if (h !== lastHover) { lastHover = h; try { window.parent.postMessage({ type: '3d-world', name: fig.name, hover: h }, '*'); } catch (e) {} } requestAnimationFrame(watch); })();
+    window.addEventListener('message', function (e) {
+      var d = e.data; if (!d || d.type !== '3d-world') return;
+      if (d.theme !== undefined) { themePick = d.theme || null; sel.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.theme === (themePick || 'toy'))); }); mountIt(isStill); }
+      if (d.still !== undefined) { isStill = !!d.still; still.setAttribute('aria-pressed', String(isStill)); mountIt(isStill); }
+    });
+    var hello = function () { try { window.parent.postMessage({ type: '3d-world', name: fig.name, ready: true, hint: fig.hint || '', hot: (ctx && ctx.parts && ctx.parts.hot ? ctx.parts.hot.map(function (g) { return g.name; }).filter(Boolean) : []) }, '*'); } catch (e) {} };
+    window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === '3d-world' && d.hello) hello(); });
+    hello();
+  }
 })();
 </script>
 </body>

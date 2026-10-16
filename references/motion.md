@@ -71,7 +71,7 @@ The kernel gives three things without a line of code: `ctx.pointer` (`x`, `y` in
 - **Send something there.** The forks' spring target becomes the hovered level's height; with no hover it goes back to the ambient value.
 - **Look at it.** A driver's head turns toward `ctx.pointer.world`.
 
-Springs make the answer and the return calm; never set a pose directly from the pointer. Test the pick against what is at rest (`parts.hot` are groups; a lifted group is still picked where it stands).
+Springs make the answer and the return calm; never set a pose directly from the pointer. Test the pick against what is at rest (`parts.hot` are groups; a lifted group is still picked where it stands). Name every hot group (`g.name = 'tram'`): the bench and the site show the name as a read-out while the pointer is on it, which is how a visitor learns what answers.
 
 ## The still frame
 

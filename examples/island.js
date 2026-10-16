@@ -7,6 +7,7 @@ World3D.figure({
   size: 'hero',
   title: 'Gull Rock',
   means: 'A boat circles the island and ties up at the pier, the lamp turns, gulls cross, the waves breathe.',
+  hint: 'Hover the boat, the lighthouse or the house.',
   camera: { az: 36, el: 33, pad: 1.05 },
   still: 11,
   build: function (o) {
@@ -38,7 +39,7 @@ World3D.figure({
     var beam = D.box(7, .18, .5, pal.lampGlow, 3.5, 6.15, 0, lh, { mat: { emissive: pal.lampGlow, emissiveIntensity: .9, transparent: true, opacity: .35 }, shadow: false });
     var beamPivot = D.group(0, 0, 0, lh); beamPivot.add(beam);
     D.box(.9, 1.1, .08, pal.ink, 0, .6, 1.0, lh);
-    hot.push(lh);
+    lh.name = 'lighthouse'; hot.push(lh);
 
     /* the keeper's house, the path, the pier */
     var house = D.group(-3.6, .92, 1.2); house.rotation.y = .25;
@@ -47,7 +48,7 @@ World3D.figure({
     D.box(.5, .7, .5, pal.mist, .8, 2.55, -.5, house);
     D.box(.5, .9, .06, pal.ink, -.5, .45, 1.21, house);
     D.box(.6, .5, .06, pal.sky, .7, 1.0, 1.21, house); D.box(.6, .5, .06, pal.sky, -1.61, 1.0, 0, house).rotation.y = Math.PI / 2;
-    hot.push(house);
+    house.name = "keeper's house"; hot.push(house);
     [[-1.2, 2.6], [.1, 3.0], [1.4, 3.3], [2.6, 3.8]].forEach(function (p) { D.box(.5, .04, .35, pal.cloud, p[0], .8, p[1], null, { shadow: false }).rotation.y = .3; });
     var pier = D.group(4.2, 0, 4.0); pier.rotation.y = -.5;
     for (var i = 0; i < 5; i++) { D.box(1.1, .12, 1.6, pal.wood, i * 1.1, .55, 0, pier); }
@@ -63,7 +64,7 @@ World3D.figure({
     D.box(.3, .06, .3, pal.mustard, -1.2, .7, 0, boat);
     var skipper = D.props.person(-.75, 0, boat, { shirt: pal.teal, hat: false }); skipper.position.y = .6; skipper.scale.setScalar(.8);
     var wake = D.box(1.6, .02, .5, pal.line, -2.2, .04, 0, boat, { shadow: false, mat: { transparent: true, opacity: .7 } });
-    hot.push(boat);
+    boat.name = 'boat'; hot.push(boat);
     var lap = D.path([[8.2, 6.6], [11.3, 1.5], [10.4, -6.2], [0, -7.3], [-10.6, -5.6], [-11.6, 3], [-5, 6.8], [3, 7.2]], true);
 
     /* gulls and clouds */

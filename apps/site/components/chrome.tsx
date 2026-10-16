@@ -3,9 +3,9 @@ import { AUTHOR, REPO } from "@/lib/site";
 export function Mark({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M32 8 56 21v26L32 60 8 47V21z" fill="#0d0d0d" />
-      <path d="M32 34v22L12 45V25z" fill="#e8714f" />
-      <path d="M32 34v22l20-11V25z" fill="#9a9a9a" />
+      <path d="M32 6 56 19v26L32 58 8 45V19z" fill="#e8714f" />
+      <path d="M32 6 56 19 32 32 8 19z" fill="#f3f3f3" />
+      <path d="M8 19l24 13v26L8 45z" fill="#0d0d0d" />
     </svg>
   );
 }

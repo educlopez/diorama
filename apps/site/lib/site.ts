@@ -41,5 +41,5 @@ export const SKILL_FILES = [
   ["scripts/validate.mjs", "nine checks: declaration, length, clock, self-contained, kernel, words, colours, base, pointer"],
   ["scripts/look.mjs", "a sheet of eight pictures and the numbers, in headless Chromium; --theme for another theme"],
   ["references/", "concepts, the ten craft rules and the themes, motion, the look, React"],
-  ["examples/", "seven figures across sizes and themes, the format to write"],
+  ["examples/", "eleven figures across sizes and themes, the format to write"],
 ];

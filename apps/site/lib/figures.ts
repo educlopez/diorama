@@ -5,6 +5,7 @@ export type Figure = {
   size: "hero" | "card" | "mini";
   title: string | null;
   means: string | null;
+  hint: string | null;
   theme: { base: string; accent: string | null };
   empty: { title: string | null; body: string | null; action: string | null } | null;
   lines: number;

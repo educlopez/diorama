@@ -13,7 +13,7 @@ import { assemble, nameOf } from "../../../scripts/build.mjs";
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const EXAMPLES = here("../../../examples");
 const OUT = here("../public/examples");
-const ORDER = ["town", "island", "warehouse", "cafe", "rack", "mailbox", "seedling"];
+const ORDER = ["town", "island", "farm", "warehouse", "cafe", "launchpad", "server", "rack", "mailbox", "seedling", "desk"];
 
 const field = (src, key) => new RegExp(`\\b${key}:\\s*["'\`]([^"'\`]*)["'\`]`).exec(src)?.[1] ?? null;
 const themeOf = (src) => {
@@ -36,7 +36,7 @@ for (const file of readdirSync(EXAMPLES).filter((f) => f.endsWith(".js"))) {
   writeFileSync(join(OUT, `${name}.html`), assemble(src));
   const head = src.slice(0, src.indexOf("build:"));
   figures.push({
-    name, size: field(head, "size") ?? "card", title: field(head, "title"), means: field(head, "means"), theme: themeOf(head), empty: emptyOf(head),
+    name, size: field(head, "size") ?? "card", title: field(head, "title"), means: field(head, "means"), hint: field(head, "hint"), theme: themeOf(head), empty: emptyOf(head),
     lines: src.split("\n").length, blurb: (/^\/\*\s*[a-z-]+\s*·\s*([\s\S]*?)\*\//.exec(src)?.[1] ?? "").replace(/\s+/g, " ").trim(),
   });
 }

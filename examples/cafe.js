@@ -8,6 +8,7 @@ World3D.figure({
   theme: 'soft',
   title: 'Corner coffee',
   means: 'A barista pulls shots, a customer comes for a cup and goes, a cat minds the chair.',
+  hint: 'Hover the cart, the table or the cat.',
   camera: { az: 40, el: 34, pad: 1.06 },
   still: 5,
   build: function (o) {
@@ -31,19 +32,19 @@ World3D.figure({
     var cups = []; [[-1.1, -.3], [-.7, -.3], [-.3, -.3]].forEach(function (c) { var g = D.group(c[0], 1.75, c[1], cart); D.cyl(.14, .11, .26, pal.paper, 0, .13, 0, g, 12); D.cyl(.15, .15, .04, pal.ink, 0, .28, 0, g, 12); cups.push(g); });
     var steam = []; [0, 1, 2].forEach(function (k) { var b = D.ball(.08, pal.cloud, .9 + k * .1 - .1, 2.6, -.3, cart); b.castShadow = false; steam.push(b); });
     var barista = D.props.person(0, 0, cart, { shirt: pal.teal, hat: pal.ink, yaw: Math.PI }); barista.position.set(.1, .0, -1.0); barista.scale.setScalar(1.15);
-    hot.push(cart);
+    cart.name = 'coffee cart'; hot.push(cart);
 
     /* a bistro table, two chairs, the cat, a planter and a sign */
     var table = D.group(2.6, 0, .4);
     D.cyl(.7, .7, .06, pal.paper, 0, .78, 0, table, 18); D.cyl(.05, .05, .76, pal.ink, 0, .4, 0, table, 8); D.cyl(.3, .3, .04, pal.ink, 0, .02, 0, table, 12);
     D.cyl(.1, .08, .2, pal.sky, .2, .9, .1, table, 10);
-    hot.push(table);
+    table.name = 'table'; hot.push(table);
     function chair(x, z, yaw) { var g = D.group(x, 0, z); g.rotation.y = yaw; D.box(.6, .05, .6, pal.wood, 0, .5, 0, g); D.box(.6, .55, .05, pal.wood, 0, .8, -.28, g); [[-.25, -.25], [.25, -.25], [-.25, .25], [.25, .25]].forEach(function (l) { D.cyl(.03, .03, .5, pal.ink, l[0], .25, l[1], g, 6); }); return g; }
     chair(3.6, 1.0, -.8); var seat = chair(1.7, 1.4, .9);
     var cat = D.group(0, .53, 0, seat); var catBody = D.ball(.22, pal.mustard, 0, .16, 0, cat); catBody.scale.set(1.3, .8, 1);
     D.ball(.15, pal.mustard, .25, .3, 0, cat); D.cone(.06, .12, pal.mustard, .2, .42, .08, cat, 6); D.cone(.06, .12, pal.mustard, .3, .42, -.08, cat, 6);
     var tail = D.group(-.28, .18, 0, cat); D.cyl(.03, .04, .45, pal.mustard, 0, .2, 0, tail, 6);
-    hot.push(seat);
+    seat.name = 'the cat'; hot.push(seat);
     var planter = D.group(-3.9, 0, 1.2); D.box(.9, .7, .9, pal.terracotta, 0, .35, 0, planter); D.props.bush(0, 0, planter, { r: .38 }).position.y = .6;
     D.props.tree(3.9, -2.4, null, { r: .7, kind: 'round', yaw: .6 }); D.props.tree(-3.6, -2.6, null, { r: .55, kind: 'tall' });
     var board = D.group(-2.9, 0, .4); board.rotation.y = .4; D.box(.7, 1.0, .05, pal.ink, 0, .6, 0, board); D.box(.5, .08, .05, pal.paper, 0, .75, .03, board, { shadow: false }); D.box(.3, .08, .05, pal.paper, 0, .55, .03, board, { shadow: false });

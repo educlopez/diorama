@@ -7,28 +7,37 @@ import { INSTALL, THEMES } from "@/lib/site";
 const TILES = [
   ["town", "a", "Town"],
   ["island", "b", "Island"],
-  ["cafe", "c", "Corner coffee"],
-  ["mailbox", "d", "Mailbox"],
-  ["seedling", "e", "Seedling"],
+  ["launchpad", "c", "Launchpad"],
+  ["cafe", "d", "Corner coffee"],
+  ["desk", "e", "Desk"],
+] as const;
+
+const STRIP = ["island", "launchpad", "cafe", "server", "mailbox", "desk"];
+
+const PLAYS = [
+  ["Move the pointer", "The camera tilts a few degrees toward it and settles back on a spring. Nothing is a video: every frame is drawn as you watch."],
+  ["Hover a part", "What answers lifts, lights or turns. The read-out in the corner names it, and the list under the figure says what else answers."],
+  ["Switch the theme", "The chips swap the whole look without reloading: toy, soft, mono, line, night. A figure carries one; a page may pass another."],
+  ["Pause it", "The still frame is the pose the figure chose for reduced motion and thumbnails. Play again and the loop picks up where its clock is."],
 ] as const;
 
 /**
- * The home: a hero with a badge, a short title,
- * one line, two buttons and floating tiles; the cards; how to use; FAQ.
+ * The home: who made what, one figure to play with and how, a strip of the
+ * rest, the install line, three steps and a few answers.
  */
 export default function Page() {
   const town = byName("town");
-  const rest = FIGURES.filter((f) => f.name !== "town");
+  const strip = STRIP.map(byName);
   return (
     <main id="main" className="app">
       <Topbar />
       <header className="header header--tiles">
-        <p className="badge"><span>{FIGURES.length} figures</span><span className="badge-dim">· {THEMES.length} themes · one file</span></p>
-        <h1 className="title">Small 3D worlds that move, for AI agents</h1>
-        <p className="subtitle">Animated isometric scenes for landing pages, docs and empty states, built by your coding agent from one prompt.</p>
+        <p className="badge"><span>A Claude Code skill</span><span className="badge-dim">· {FIGURES.length} examples · {THEMES.length} themes</span></p>
+        <h1 className="title">Small 3D worlds that move, built by your agent</h1>
+        <p className="subtitle">Install the skill, describe a place, get one HTML file: an animated isometric scene for a landing page, a doc or an empty state. Everything on this site was made with it.</p>
         <div className="cta-row">
-          <a className="btn btn--primary" href="#components">Browse figures</a>
-          <a className="btn btn--secondary" href="/docs">Get the skill</a>
+          <a className="btn btn--primary" href="/docs">Get the skill</a>
+          <a className="btn btn--secondary" href="/figures">See the examples</a>
         </div>
         <div className="float-row" id="float-tiles">
           <div className="float-box">
@@ -46,9 +55,35 @@ export default function Page() {
         <div className="mx-auto max-w-[664px]"><CodeRow code={INSTALL} label="Copy install command" /></div>
       </section>
 
-      <section className="cards mt-16" id="components" aria-label="Figures" style={{ scrollMarginTop: 24 }}>
-        <FigureCard fig={town} full />
-        {rest.map((fig, i) => <FigureCard key={fig.name} fig={fig} wide={fig.size === "hero"} lazy={i > 1} />)}
+      <section className="section" id="play" aria-labelledby="play-title" style={{ scrollMarginTop: 24 }}>
+        <div className="steps-head">
+          <h2 className="steps-title" id="play-title">Play with one.<br /><span className="steps-title-dim">It answers the pointer</span></h2>
+          <p className="steps-lede">This is the town, the first example in the skill, as the agent wrote it: one file, no build step. Try it before reading on.</p>
+        </div>
+        <div className="cards">
+          <FigureCard fig={town} index={1} full />
+        </div>
+        <ol className="plays" aria-label="What to try">
+          {PLAYS.map(([t, body], i) => (
+            <li key={t} className="play">
+              <span className="play-num" aria-hidden="true">{i + 1}</span>
+              <span className="play-text"><strong>{t}.</strong> {body}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="section" id="components" aria-labelledby="made-title" style={{ scrollMarginTop: 24 }}>
+        <div className="steps-head">
+          <h2 className="steps-title" id="made-title">Made with the skill.<br /><span className="steps-title-dim">Heroes, cards and empty states</span></h2>
+          <p className="steps-lede">Three sizes, five themes, and a different place each time: an island, a launchpad, a coffee bar, a server, a mailbox, a desk. The gallery has all {FIGURES.length}, live.</p>
+        </div>
+        <div className="cards">
+          {strip.map((fig, i) => <FigureCard key={fig.name} fig={fig} index={FIGURES.indexOf(fig) + 1} chips={false} lazy />)}
+        </div>
+        <div className="cta-row" style={{ marginTop: 28 }}>
+          <a className="btn btn--secondary" href="/figures">Open the gallery <Arrow /></a>
+        </div>
       </section>
 
       <section className="section" id="how-to-use" aria-labelledby="how-to-use-title" style={{ scrollMarginTop: 24 }}>
@@ -59,7 +94,7 @@ export default function Page() {
         <ol className="steps">
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">1</span><h3 className="step-title">Install the skill</h3></div>
-            <p className="step-text">One command adds 3D World to Claude Code, Cursor or Codex: the kernel, the themes, seven examples and the checks.</p>
+            <p className="step-text">One command adds 3D World to Claude Code, Cursor or Codex: the kernel, the themes, {FIGURES.length} examples and the checks.</p>
           </li>
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">2</span><h3 className="step-title">Ask for a place</h3></div>
@@ -76,6 +111,7 @@ export default function Page() {
         <h2 className="section-title" id="faq-title">FAQs</h2>
         <div className="faq-list">
           {[
+            ["What is this, exactly?", "A skill: a folder of instructions, a small three.js kernel, themes, examples and checks that a coding agent reads when you ask it for a 3D scene. We made it, and every figure on this site is its output. The site is the gallery and the manual."],
             ["Is it free?", "Yes. The skill, the kernel and the examples are MIT. Use them in any project, commercial or not."],
             ["What do I need?", "Claude Code or another agent that reads skills, Node.js 20 or later for the scripts, and Chrome or Chromium for the look. A finished page needs nothing: it loads three.js r128 from cdnjs or carries it inline."],
             ["Does it work in React?", "Yes. The kernel takes a three.js instance and an element; mount a figure in an effect, destroy it on unmount, and pass a theme. Plain pages use two script tags."],

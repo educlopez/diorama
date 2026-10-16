@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "3D World · small 3D worlds that move", template: "%s · 3D World" },
   description: "A Claude Code skill that builds animated isometric 3D scenes for the web: a hero, a card, an empty state. One HTML file, five themes, all yours to tune.",
-  icons: { icon: "/icon.svg" },
+  icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: "/icon.svg" },
   openGraph: { title: "3D World · small 3D worlds that move", description: "Animated isometric 3D scenes for the web, built by your agent. One HTML file, five themes.", type: "website" },
 };
 

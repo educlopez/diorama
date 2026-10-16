@@ -52,14 +52,18 @@ Claude offers two or three concepts, builds the one you choose, checks it in a h
 
 | | |
 |---|---|
-| <img src="docs/media/island.png" alt="An isometric island on pale water: a red and white lighthouse, a keeper's house, pines, a pier and a small red boat"> | <img src="docs/media/warehouse.png" alt="An isometric warehouse yard: a white building with a terracotta roof and three dock doors, a truck at the dock, a forklift by yellow racks, trees along a road, a parked van"> |
-| **`island`** · a hero. The boat circles and ties up at the pier, the lamp turns, gulls cross, the waves breathe. | **`warehouse`** · a hero. A truck does a lap and docks, a forklift carries pallets to the racks, a worker walks the aisle. |
-| <img src="docs/media/cafe.png" alt="A coffee cart with a striped awning on a cream street corner, a barista, a customer, a bistro table, a cat on a chair, two trees"> | <img src="docs/media/rack.png" alt="An empty three-level pallet rack drawn in greys with yellow beams, a forklift waiting in front, on a rounded base"> |
-| **`cafe`** · a card in `soft`. The barista pulls shots, a customer comes for a cup, the cat flicks its tail. | **`rack`** · a card for "No items in stock", in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. |
-| <img src="docs/media/mailbox.png" alt="A coral letterbox on a wooden post, door open and empty, a small tree, a fence and a rock beside it, on a grass tile"> | <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can beside it, on a rounded tile"> |
-| **`mailbox`** · a mini for "No messages yet". The flag lifts every few seconds to check, finds nothing, settles. | **`seedling`** · a mini for "Nothing planted yet", in `line` with the pot as the accent. The can tips now and then. |
+| <img src="docs/media/island.png" alt="An isometric island on pale water: a red and white lighthouse, a keeper's house, pines, a pier and a small red boat"> | <img src="docs/media/farm.png" alt="An isometric farm: fields of crops, a yellow farmhouse, a red barn and a silo, a windmill, a pond with sheep, a tractor on the lane"> |
+| **`island`** · a hero. The boat circles and ties up at the pier, the lamp turns, gulls cross, the waves breathe. | **`farm`** · a hero. The tractor laps the fields and stops at the barn, the windmill turns, the sheep graze. |
+| <img src="docs/media/warehouse.png" alt="An isometric warehouse yard: a white building with a terracotta roof and three dock doors, a truck at the dock, a forklift by yellow racks, trees along a road, a parked van"> | <img src="docs/media/cafe.png" alt="A coffee cart with a striped awning on a cream street corner, a barista, a customer, a bistro table, a cat on a chair, two trees"> |
+| **`warehouse`** · a hero. A truck does a lap and docks, a forklift carries pallets to the racks, a worker walks the aisle. | **`cafe`** · a card in `soft`. The barista pulls shots, a customer comes for a cup, the cat flicks its tail. |
+| <img src="docs/media/launchpad.png" alt="A rocket on its pad at night beside a gantry, floodlights on, a control room with lit windows, on a dark rounded base"> | <img src="docs/media/server.png" alt="Three server racks in greys with blinking lights, a cooling unit, a technician and a terminal, on a white tiled floor"> |
+| **`launchpad`** · a card for "No deployments yet", in `night`. The rocket waits under floodlights and every so often the arm swings back and it lifts off. | **`server`** · a card for "No logs yet", in `mono` with a teal accent. The racks blink in their own rhythms, the fan turns; hover a rack and all its lights come on. |
+| <img src="docs/media/rack.png" alt="An empty three-level pallet rack drawn in greys with yellow beams, a forklift waiting in front, on a rounded base"> | <img src="docs/media/mailbox.png" alt="A coral letterbox on a wooden post, door open and empty, a small tree, a fence and a rock beside it, on a grass tile"> |
+| **`rack`** · a card for "No items in stock", in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. | **`mailbox`** · a mini for "No messages yet". The flag lifts every few seconds to check, finds nothing, settles. |
+| <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can beside it, on a rounded tile"> | <img src="docs/media/desk.png" alt="A line drawing of a desk with a lamp, an empty tray, a mug and a swivel chair, on a rounded tile"> |
+| **`seedling`** · a mini for "Nothing planted yet", in `line` with the pot as the accent. The can tips now and then. | **`desk`** · a mini for "No tasks today", in `line` with a coral accent. The chair swivels, the lamp nods. |
 
-Open them live on the site, with a theme switcher on every figure.
+Open them live in the gallery on the site: every figure answers the pointer, names what is under it, switches theme and pauses to its still frame.
 
 ## What it makes
 
@@ -141,11 +145,15 @@ node ~/.claude/skills/3d-world/scripts/look.mjs mailbox.js             # the she
 
 - `examples/town.js`: a hero, the big one. Six blocks on two avenues and two streets: houses with gabled roofs, shops with awnings, an office tower, a park with a pond and a fountain, a station with a tram, a building site with a crane; four cars, a bus and a tram on their own laps, walkers, traffic lights, a cloud.
 - `examples/island.js`: a hero. A lighthouse island on water: a boat on a lap that ties up at the pier, the lamp turning, gulls, drifting clouds, breathing waves; the pointer lifts the boat, the lighthouse or the house.
+- `examples/farm.js`: a hero. Fields, a farmhouse, a barn, a silo, a windmill, a pond with sheep; a tractor on a lap that stops at the barn.
 - `examples/warehouse.js`: a hero. A building with docks and a flag, racks, a truck on a lap with a stop, a forklift shuttle with a hand-off, a walker, trees and lamps.
 - `examples/cafe.js`: a card in `soft`. A coffee cart with a striped canopy, a barista and steam, a customer who comes for a cup and goes, a cat on a chair.
+- `examples/launchpad.js`: a card, an empty state, in `night`. A rocket on its pad under floodlights, a gantry whose arm swings back, a control room; a launch now and then.
+- `examples/server.js`: a card, an empty state, in `mono` with a teal accent. Three racks that blink in their own rhythms, a cooling unit, a technician; hover a rack and its lights all come on.
 - `examples/rack.js`: a card, an empty state, in `mono` with one accent. A bare rack, a forklift whose forks rise and settle; hover a level and the forks go there.
 - `examples/mailbox.js`: a mini, an empty state. A letterbox on a post, door open, a fence, a tree and a rock; the flag checks now and then.
 - `examples/seedling.js`: a mini, an empty state, in `line`. A pot of soil and a watering can that tips now and then.
+- `examples/desk.js`: a mini, an empty state, in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
 
 Build any of them with `node scripts/build.mjs examples/<name>.js`.
 

@@ -10,6 +10,7 @@ World3D.figure({
   theme: { base: 'mono', accent: '#f2c230' },
   title: 'No items in stock',
   means: 'A three-level rack with nothing on it and a forklift waiting. Hover a level and the forks go to it.',
+  hint: 'Hover a level and the forks go to it.',
   still: 3,
   build: function (o) {
     var D = o.D, pal = o.pal;
@@ -27,7 +28,7 @@ World3D.figure({
       beams.push(D.box(6.9, .14, .1, pal.safety, 0, 0, -.72, g));
       beams.push(D.box(6.9, .14, .1, pal.safety, 0, 0, .72, g));
       for (var b = -1.5; b <= 1.5; b++) D.box(1.5, .04, 1.4, pal.cloud, b * 1.7, .07, 0, g, { shadow: false });
-      levels.push({ g: g, beams: beams, y: y });
+      g.name = 'level ' + (k + 1); levels.push({ g: g, beams: beams, y: y });
     });
     D.box(6.9, .1, .1, pal.steel, 0, 4.05, -.72, rack); D.box(6.9, .1, .1, pal.steel, 0, 4.05, .72, rack);
     for (var b = -1.5; b <= 1.5; b++) { D.box(.3, .08, .3, pal.ink, b * 1.7 - .78, .04, -.72, rack); D.box(.3, .08, .3, pal.ink, b * 1.7 + .78, .04, .72, rack); }

@@ -7,6 +7,7 @@ World3D.figure({
   size: 'hero',
   title: 'Northgate DC',
   means: 'A truck circles the yard and docks, a forklift carries pallets to the racks, and the yard keeps its own time.',
+  hint: 'Hover the truck, the forklift or the building.',
   camera: { az: 38, el: 35.264, pad: 1.05 },
   still: 9,
   build: function (o) {
@@ -49,7 +50,7 @@ World3D.figure({
       D.box(.3, .5, .4, pal.ink, x - 1.1, .3, 5.3, bld); D.box(.3, .5, .4, pal.ink, x + 1.1, .3, 5.3, bld);
       var lamp = D.box(.22, .12, .14, pal.ok, x + 1.4, 3.5, 5.12, bld, { mat: { emissive: pal.ok, emissiveIntensity: .8 }, shadow: false }); dr.userData.lamp = lamp;
     });
-    hot.push(bld);
+    bld.name = 'warehouse'; hot.push(bld);
     var flag = D.props.flag(-8.4, 0, bld, { h: 2.6, color: pal.coral }); flag.group.position.y = 5.8;
 
     /* racks: four bays, three levels, a few loads */
@@ -72,7 +73,7 @@ World3D.figure({
     D.box(1.5, .5, 2.2, pal.teal, 3.05, 3.05, 0, truck);
     D.box(.08, .8, 2, pal.ink, 4.31, 2.1, 0, truck);
     [4, 2.2, -3.2, -4.3].forEach(function (x) { [-1.05, 1.05].forEach(function (z) { tw.push(D.wheel(.46, .36, pal.tyre, x, .46, z, truck)); D.wheel(.2, .4, pal.hub, x, .46, z, truck); }); });
-    hot.push(truck);
+    truck.name = 'truck'; hot.push(truck);
     var loop = D.path([[-14.8, 7.4], [14.8, 7.4], [14.8, -9.4], [-14.8, -9.4]], true);
 
     /* the forklift: body, mast, forks; a pallet rides the carriage when loaded */
@@ -89,7 +90,7 @@ World3D.figure({
     D.box(.07, .6, .82, pal.steel, 0, .3, 0, carriage);
     [-.26, .26].forEach(function (z) { D.box(1.1, .05, .14, pal.steel, .55, .02, z, carriage); });
     var load = D.props.pallet(.55, .04, 0, carriage, { h: .7, color: pal.mint }); load.rotation.y = Math.PI / 2;
-    hot.push(fl);
+    fl.name = 'forklift'; hot.push(fl);
     var run = D.path([[-1.3, 2.2], [-6.2, 2.2], [-6.2, 7.2], [slot.x, 7.2]]);
 
     /* people */

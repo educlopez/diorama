@@ -7,6 +7,7 @@ World3D.figure({
   size: 'mini',
   theme: { base: 'line', accent: '#cf6a4c' },
   means: 'A pot of soil with nothing growing and a watering can that tips now and then.',
+  hint: 'Wait for the can to tip.',
   empty: { title: 'Nothing planted yet', body: 'Add your first project and watch it grow here.', action: 'Plant a project' },
   still: 1.6,
   build: function (o) {

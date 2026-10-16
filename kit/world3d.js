@@ -15,6 +15,7 @@
      name      lowercase-hyphen, the file and page name
      size      'hero' | 'card' | 'mini'            (frame and detail budget)
      means     one sentence, ≤140 chars, shown under the stage
+     hint      one line, ≤90 chars: what the pointer does ("Hover the boat or the lighthouse"), shown with means
      theme     'toy' (default) | 'soft' | 'mono' | 'line' | 'night',
                or { base: 'mono', …overrides } with any of the theme fields:
                  bg          css colour | 'transparent'
@@ -35,7 +36,8 @@
      fog       true | { near, far } | false         default false
      still     seconds into the loop for the reduced-motion frame, default 2
      build({ D, world, pal, ctx })  build the scene once; return parts (any object);
-                                    parts.hot = [groups the pointer may pick]
+                                    parts.hot = [groups the pointer may pick]; give each a .name ('boat'),
+                                    the page shows it as a read-out while the pointer is on it
      tick(ctx)                      per frame; ctx.t, ctx.dt, ctx.parts, ctx.pointer, ctx.hover
 
    World3D.mount(fig, { el, THREE, theme, reduced, still })  mount into an element; returns ctx:

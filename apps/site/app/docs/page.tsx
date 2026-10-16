@@ -92,7 +92,7 @@ export default function Page() {
       <Topbar active="docs" />
       <header className="header" style={{ paddingBottom: 56 }}>
         <h1 className="title" style={{ marginTop: 24 }}>3D World Skill</h1>
-        <p className="subtitle">The skill teaches your agent to build a small animated 3D world in one file: the kernel, five themes, seven examples, a validator and a browser check.</p>
+        <p className="subtitle">The skill teaches your agent to build a small animated 3D world in one file: the kernel, five themes, eleven examples, a validator and a browser check.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="#installation">Get started</a>
           <a className="btn btn--secondary" href={`${REPO}/blob/main/SKILL.md`} target="_blank" rel="noopener noreferrer"><GitHub /><span>View SKILL.md</span></a>

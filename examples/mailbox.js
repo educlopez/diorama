@@ -5,6 +5,7 @@ World3D.figure({
   name: 'mailbox',
   size: 'mini',
   means: 'An open letterbox with nothing inside. The flag lifts now and then to check, and settles again.',
+  hint: 'Wait for the flag to check.',
   empty: { title: 'No messages yet', body: 'When someone writes to you, their letter lands here.', action: 'Write a message' },
   still: 1,
   build: function (o) {

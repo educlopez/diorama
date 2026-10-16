@@ -92,7 +92,8 @@ export function validate(text) {
   check(8, "base", /\bD\.slab\s*\(/.test(strip), "no D.slab: the scene needs a base");
 
   const answers = /\bctx\.(pointer|hover)\b|\bhot\s*[:=]/.test(strip);
-  check(9, "pointer", s === "mini" || answers, "a hero or card should read ctx.pointer / ctx.hover or set parts.hot");
+  const named = !/\bhot\s*[:=]/.test(strip) || /\.name\s*=/.test(strip);
+  check(9, "pointer", s === "mini" || (answers && named), !answers ? "a hero or card should read ctx.pointer / ctx.hover or set parts.hot" : "hot groups need a .name for the read-out");
 
   return out;
 }
