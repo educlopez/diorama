@@ -13,7 +13,7 @@ import { assemble, nameOf } from "../../../scripts/build.mjs";
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const EXAMPLES = here("../../../examples");
 const OUT = here("../public/examples");
-const ORDER = ["town", "island", "farm", "warehouse", "cafe", "launchpad", "server", "rack", "mailbox", "seedling", "desk"];
+const ORDER = ["town", "powder", "island", "farm", "warehouse", "cafe", "launchpad", "server", "rack", "mailbox", "seedling", "desk", "turntable"];
 
 const field = (src, key) => new RegExp(`\\b${key}:\\s*["'\`]([^"'\`]*)["'\`]`).exec(src)?.[1] ?? null;
 const themeOf = (src) => {
