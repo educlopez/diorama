@@ -6,7 +6,7 @@
  *
  * It builds the page as build.mjs does, validates it as validate.mjs does,
  * opens it in headless Chromium with WebGL, and writes one sheet of pictures,
- * 3d-world-<name>-look.png:
+ * diorama-<name>-look.png:
  *
  *   rest      the still frame (what reduced motion and a thumbnail show)
  *   t+1.5s    early in the loop
@@ -34,7 +34,7 @@
  *
  * Playwright: it looks for playwright-core (or playwright) next to the working
  * directory, globally, or in a cache folder of the user's, and installs
- * playwright-core there once if none is found (WORLD3D_LOOK_CACHE moves the
+ * playwright-core there once if none is found (DIORAMA_LOOK_CACHE moves the
  * folder). It drives Playwright's Chromium, with software GL when there is no GPU.
  */
 import { spawnSync } from "node:child_process";
@@ -54,7 +54,7 @@ function arg(name, dflt) { const i = process.argv.indexOf(name); return i > 0 ? 
 
 async function playwright() {
   const req = createRequire(import.meta.url);
-  const cache = process.env.WORLD3D_LOOK_CACHE || join(homedir(), ".cache", "3d-world-look");
+  const cache = process.env.DIORAMA_LOOK_CACHE || join(homedir(), ".cache", "diorama-look");
   const globalRoot = spawnSync("npm", ["root", "-g"], { encoding: "utf8" }).stdout?.trim();
   const paths = [process.cwd(), cache, here("."), globalRoot].filter(Boolean).map((p) => join(p, "node_modules", "x.js"));
   for (const pkg of ["playwright-core", "playwright"]) {
@@ -63,7 +63,7 @@ async function playwright() {
     }
   }
   mkdirSync(cache, { recursive: true });
-  if (!existsSync(join(cache, "package.json"))) writeFileSync(join(cache, "package.json"), '{"name":"3d-world-look","private":true}');
+  if (!existsSync(join(cache, "package.json"))) writeFileSync(join(cache, "package.json"), '{"name":"diorama-look","private":true}');
   console.error(`installing playwright-core into ${cache} (once)…`);
   const r = spawnSync("npm", ["install", "playwright-core", "--no-audit", "--no-fund", "--silent"], { cwd: cache, stdio: "inherit" });
   if (r.status !== 0) throw new Error("could not install playwright-core");
@@ -85,7 +85,7 @@ async function launch(chromium) {
    from different movers (or a mover and a static part) that overlap by more than `tol` on every separating
    axis are a clash. The slab, the ground zones and shadowless decoration (particles, windows) are skipped. */
 const CLASH = ({ span, dt, tol }) => {
-  const c = window.__world3d, T = window.THREE; c.stop(); const world = c.world;
+  const c = window.__diorama, T = window.THREE; c.stop(); const world = c.world;
   const objs = []; world.traverse((o) => { if (o !== world) objs.push(o); });
   const meshes = objs.filter((o) => o.isMesh && !o.userData.stroke);
   meshes.forEach((m) => { if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); });
@@ -145,7 +145,7 @@ async function main() {
   const outDir = resolve(arg("--out", "."));
   mkdirSync(outDir, { recursive: true });
   const html = assemble(figure);
-  const pageFile = join(outDir, `3d-world-${name}.html`);
+  const pageFile = join(outDir, `diorama-${name}.html`);
   writeFileSync(pageFile, html);
   console.log(pageFile);
   const valid = report(validate(html));
@@ -167,22 +167,22 @@ async function main() {
   await page.goto(pathToFileURL(pageFile).href + (themeName ? "?theme=" + encodeURIComponent(themeName) : ""));
   await page.waitForTimeout(400);
 
-  const ok = await page.evaluate(() => !!(window.__world3d && window.__world3d.renderer && window.__world3d.renderer.getContext()));
+  const ok = await page.evaluate(() => !!(window.__diorama && window.__diorama.renderer && window.__diorama.renderer.getContext()));
   const stage = page.locator("#stage");
   const shots = {};
   const stageShot = async () => (await stage.screenshot({ omitBackground: false })).toString("base64");
 
   const goto = async (t, pt) => {
     await page.evaluate(([t, pt, STEP]) => {
-      const c = window.__world3d; c.stop();
+      const c = window.__diorama; c.stop();
       if (pt) { c.pointer.inside = true; c.pointer.x = pt[0]; c.pointer.y = pt[1]; } else { c.pointer.inside = false; }
       while (c.t < t - 1e-9) c.step(Math.min(STEP, t - c.t));
       c.render();
     }, [t, pt, STEP]);
   };
-  const fresh = async () => { await page.evaluate(() => { const c = window.__world3d; c.destroy(); window.__world3d = World3D.mount(c.fig, { el: document.getElementById("stage"), reduced: false, theme: new URLSearchParams(location.search).get("theme") || undefined }); window.__world3d.stop(); window.__world3d.t = 0; }); await page.waitForTimeout(50); };
+  const fresh = async () => { await page.evaluate(() => { const c = window.__diorama; c.destroy(); window.__diorama = Diorama.mount(c.fig, { el: document.getElementById("stage"), reduced: false, theme: new URLSearchParams(location.search).get("theme") || undefined }); window.__diorama.stop(); window.__diorama.t = 0; }); await page.waitForTimeout(50); };
 
-  await page.evaluate(() => { const c = window.__world3d; c.stop(); c.stillFrame(); });
+  await page.evaluate(() => { const c = window.__diorama; c.stop(); c.stillFrame(); });
   shots.rest = await stageShot();
   await fresh(); await goto(1.5); shots["t+1.5s"] = await stageShot();
   await goto(4); shots["t+4s"] = await stageShot();
@@ -190,11 +190,11 @@ async function main() {
   await fresh(); await goto(4); const before = await stageShot();
   await goto(4 + SETTLE, pointer); shots.pointer = await stageShot();
   await goto(4 + 2 * SETTLE, [0.95, 0.95]); shots.corner = await stageShot();
-  const frameMs = await page.evaluate(() => { const c = window.__world3d; const t0 = performance.now(); for (let i = 0; i < 20; i++) { c.step(1 / 60); c.render(); } return (performance.now() - t0) / 20; });
+  const frameMs = await page.evaluate(() => { const c = window.__diorama; const t0 = performance.now(); for (let i = 0; i < 20; i++) { c.step(1 / 60); c.render(); } return (performance.now() - t0) / 20; });
   await fresh(); await goto(2); shots.page = (await page.screenshot({ fullPage: true })).toString("base64");
 
   const thumbW = size === "mini" ? 160 : 390;
-  await page.evaluate((w) => { const s = document.getElementById("stage"); s.style.width = w + "px"; s.style.height = ""; delete s.dataset.world3dHeight; }, thumbW);
+  await page.evaluate((w) => { const s = document.getElementById("stage"); s.style.width = w + "px"; s.style.height = ""; delete s.dataset.dioramaHeight; }, thumbW);
   await page.waitForTimeout(80);
   await goto(2.5); shots.thumb = await stageShot();
 
@@ -213,7 +213,7 @@ async function main() {
     const cell = 420, pad = 16, label = 26, cols = 4, rows = Math.ceil(order.length / cols);
     const c = Object.assign(document.createElement("canvas"), { width: cols * (cell + pad) + pad, height: rows * (cell + label + pad) + pad + 30 });
     const x = c.getContext("2d"); x.fillStyle = "#f3f5fa"; x.fillRect(0, 0, c.width, c.height);
-    x.fillStyle = "#1b2638"; x.font = "700 16px system-ui, sans-serif"; x.fillText("3d-world · " + name + (new URLSearchParams(location.search).get("theme") ? "" : ""), pad, 22);
+    x.fillStyle = "#1b2638"; x.font = "700 16px system-ui, sans-serif"; x.fillText("diorama · " + name + (new URLSearchParams(location.search).get("theme") ? "" : ""), pad, 22);
     order.forEach((k, i) => {
       const img = imgs[k], col = i % cols, row = Math.floor(i / cols), ox = pad + col * (cell + pad), oy = 30 + pad + row * (cell + label + pad);
       x.fillStyle = "#56667f"; x.font = "600 13px system-ui, sans-serif"; x.fillText(k, ox, oy + 16);
@@ -225,7 +225,7 @@ async function main() {
     return [c.width, c.height];
   }, [shots, order, name + (themeName ? " · " + themeName : "")]);
   await page.setViewportSize({ width: sheet[0], height: sheet[1] });
-  const sheetFile = join(outDir, `3d-world-${name}${themeName ? "-" + themeName : ""}-look.png`);
+  const sheetFile = join(outDir, `diorama-${name}${themeName ? "-" + themeName : ""}-look.png`);
   await page.locator("canvas").first().screenshot({ path: sheetFile });
   await browser.close();
 

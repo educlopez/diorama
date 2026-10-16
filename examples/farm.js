@@ -3,7 +3,7 @@
    that turns, a pond, sheep that graze along the fence. A tractor does a lap
    of the fields and stops at the barn; the farmer walks the lane. The
    pointer tilts the camera and lifts what it rests on. */
-World3D.figure({
+Diorama.figure({
   name: 'farm',
   size: 'hero',
   title: 'Hollow Farm',

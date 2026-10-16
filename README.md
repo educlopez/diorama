@@ -1,4 +1,4 @@
-<h1 align="center">3D World</h1>
+<h1 align="center">Diorama</h1>
 
 <p align="center"><b>A Claude Code skill that builds small animated 3D worlds for the web.</b><br>Isometric scenes made of blocks and soft shadows, with little trucks, forklifts and people that keep their own time. A hero for a landing page, a card for your docs, or a mini figure for an empty state. Five themes, from pastel toy to a hairline drawing, all of them yours to tune.</p>
 
@@ -23,7 +23,7 @@
 
 ---
 
-Ask Claude for a 3D illustration and 3D World has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun with soft shadows. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
+Ask Claude for a 3D illustration and Diorama has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun with soft shadows. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
 
 The default look is an isometric camera, matte blocks, one warm sun with soft shadows and a few accents, built into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing, or a night scene with the lamps on.
 
@@ -35,15 +35,15 @@ The default look is an isometric camera, matte blocks, one warm sun with soft sh
 ## Quick start
 
 ```sh
-npx skills add educlopez/3D-world -g
+npx skills add educlopez/diorama -g
 ```
 
 Then, in Claude Code:
 
 ```text
-/3d-world a hero illustration for our logistics landing page: a warehouse yard with trucks docking and forklifts moving pallets
-/3d-world an empty state for the inbox when there are no messages, small and cute
-/3d-world a card-sized scene for the docs explaining how the build queue works
+/diorama a hero illustration for our logistics landing page: a warehouse yard with trucks docking and forklifts moving pallets
+/diorama an empty state for the inbox when there are no messages, small and cute
+/diorama a card-sized scene for the docs explaining how the build queue works
 ```
 
 Claude offers two or three concepts, builds the one you choose, checks it in a headless browser, and hands you one HTML file.
@@ -94,7 +94,7 @@ theme: { base: 'mono', accent: '#5b4ae0', shadows: false, strokeWidth: 1.4 }
 
 `tone` makes any theme monochrome, `edges` and `outline` draw ink on any theme, `round` turns every box into a rounded solid, `lights` replaces any of the four lights. The bench page has a theme switcher, and `look.mjs --theme line` writes the sheet for another theme.
 
-Every diorama ships as `3d-world-<name>.html`: three.js from cdnjs (or inlined with `--inline`), the kernel, the figure and a small bench page. The figure is a single `World3D.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `World3D.mount(fig, { el })`.
+Every diorama ships as `diorama-<name>.html`: three.js from cdnjs (or inlined with `--inline`), the kernel, the figure and a small bench page. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
 
 It honours `prefers-reduced-motion` with one still frame, sleeps when offscreen or in a hidden tab, and never allocates in the loop.
 
@@ -103,25 +103,25 @@ It honours `prefers-reduced-motion` with one still frame, sleeps when offscreen 
 With the skills CLI:
 
 ```sh
-npx skills add educlopez/3D-world -g -a claude-code
+npx skills add educlopez/diorama -g -a claude-code
 ```
 
 With git:
 
 ```sh
-git clone https://github.com/educlopez/3D-world.git ~/.claude/skills/3d-world
+git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama
 ```
 
 Without git:
 
 ```sh
-mkdir -p ~/.claude/skills/3d-world && curl -L https://github.com/educlopez/3D-world/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/3d-world
+mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/diorama/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/diorama
 ```
 
 ### Requirements
 
 - Node.js 20 or later, for `build.mjs`, `validate.mjs` and `look.mjs`.
-- Chrome or Chromium for the look. `look.mjs` finds Playwright's browser or installs `playwright-core` once into `~/.cache/3d-world-look`.
+- Chrome or Chromium for the look. `look.mjs` finds Playwright's browser or installs `playwright-core` once into `~/.cache/diorama-look`.
 - Nothing at runtime: the page loads three.js r128 from cdnjs, or carries it inline.
 
 ## Usage
@@ -135,10 +135,10 @@ Three habits help:
 Then run the scripts yourself when you want to:
 
 ```sh
-node ~/.claude/skills/3d-world/scripts/build.mjs mailbox.js            # writes 3d-world-mailbox.html
-node ~/.claude/skills/3d-world/scripts/build.mjs mailbox.js --inline   # no network at all
-node ~/.claude/skills/3d-world/scripts/validate.mjs 3d-world-mailbox.html
-node ~/.claude/skills/3d-world/scripts/look.mjs mailbox.js             # the sheet and the numbers
+node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js            # writes diorama-mailbox.html
+node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --inline   # no network at all
+node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html
+node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the sheet and the numbers
 ```
 
 ## Examples
@@ -160,7 +160,7 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 ## How it works
 
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
-- `kit/world3d.js` is the kernel: the orthographic isometric camera fitted to the scene, four lights (hemisphere, warm sun with PCF soft shadows, cool fill, ambient) in sRGB, the five themes with toning, edges and silhouette outlines, cached matte materials, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths), the pointer with picking and camera tilt, and the loop that sleeps.
+- `kit/diorama.js` is the kernel: the orthographic isometric camera fitted to the scene, four lights (hemisphere, warm sun with PCF soft shadows, cool fill, ambient) in sRGB, the five themes with toning, edges and silhouette outlines, cached matte materials, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths), the pointer with picking and camera tilt, and the loop that sleeps.
 - `kit/three.min.js` is three.js r128, vendored for `--inline` builds and the offline look.
 - `bench.html` is the page: a card for a hero or card figure, a mock empty state for a mini.
 - `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs nine checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer); `scripts/look.mjs` takes the sheet in headless Chromium and measures fill, motion and the pointer's answer.
@@ -179,7 +179,7 @@ To deploy on Vercel, import the repository and set the project's **Root Director
 
 ## Limits
 
-- One scene per page, one `World3D.figure` call per file. Several dioramas on a page are several mounts.
+- One scene per page, one `Diorama.figure` call per file. Several dioramas on a page are several mounts.
 - No textures, no glass, no particles: the look is matte blocks, shadows and ink lines on purpose.
 - Software GL in a sandbox renders a hero in a few milliseconds per frame; a phone with a real GPU is faster than that. Keep heroes under ~400 primitives.
 - three.js r128 is the vendored build. Newer versions work with the kernel's `{ THREE }` option but are not what the look tests.

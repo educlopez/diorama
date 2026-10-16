@@ -6,7 +6,7 @@ import { CodeRow, CodeRows } from "@/components/install";
 import { byName } from "@/lib/figures";
 import { INSTALL, REPO, SIZES, SKILL_FILES, THEME_FIELDS, THEME_ROWS } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Skill", description: "Install the 3D World skill, ask for a figure, the sizes, the themes, the figure file, the scripts and how to embed a scene." };
+export const metadata: Metadata = { title: "Skill", description: "Install the Diorama skill, ask for a figure, the sizes, the themes, the figure file, the scripts and how to embed a scene." };
 
 const SECTIONS = [
   { id: "installation", title: "Installation" },
@@ -35,7 +35,7 @@ const Block = ({ title, children }: { title?: string; children: string }) => (
   <div className="code-block">{title && <div className="code-title">{title}</div>}<pre><code>{children}</code></pre></div>
 );
 
-const FIGURE = `World3D.figure({
+const FIGURE = `Diorama.figure({
   name: 'mailbox',
   size: 'mini',                          // hero | card | mini
   theme: 'toy',                          // or { base: 'line', accent: '#cf6a4c' }
@@ -62,24 +62,24 @@ const FIGURE = `World3D.figure({
 
 const EMBED = `<div id="hero" style="width:100%"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/3d-world/kit/world3d.js"></script>
-<script src="/3d-world/island.js"></script>
+<script src="/diorama/kit/diorama.js"></script>
+<script src="/diorama/island.js"></script>
 <script>
-  var fig = World3D.figures[World3D.figures.length - 1];
-  var ctx = World3D.mount(fig, { el: document.getElementById('hero'), theme: 'night' });
+  var fig = Diorama.figures[Diorama.figures.length - 1];
+  var ctx = Diorama.mount(fig, { el: document.getElementById('hero'), theme: 'night' });
 </script>`;
 
 const REACT = `"use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";          // npm i three@0.128
-import World3D from "./world3d.js";
+import Diorama from "./diorama.js";
 import "./island.js";                   // registers the figure
 
 export function Hero({ theme = "toy" }) {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const fig = World3D.figures[World3D.figures.length - 1];
-    const ctx = World3D.mount(fig, { el: el.current!, THREE, theme });
+    const fig = Diorama.figures[Diorama.figures.length - 1];
+    const ctx = Diorama.mount(fig, { el: el.current!, THREE, theme });
     return () => ctx.destroy();
   }, [theme]);
   return <div ref={el} style={{ width: "100%", aspectRatio: "3 / 2" }} aria-hidden />;
@@ -91,7 +91,7 @@ export default function Page() {
     <main id="main" className="app">
       <Topbar active="docs" />
       <header className="header" style={{ paddingBottom: 56 }}>
-        <h1 className="title" style={{ marginTop: 24 }}>3D World Skill</h1>
+        <h1 className="title" style={{ marginTop: 24 }}>Diorama Skill</h1>
         <p className="subtitle">The skill teaches your agent to build a small animated 3D world in one file: the kernel, five themes, eleven examples, a validator and a browser check.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="#installation">Get started</a>
@@ -107,17 +107,17 @@ export default function Page() {
         <Section id="installation">
           <CodeRows rows={[
             { code: INSTALL, note: "Installs the skill for every agent the skills CLI knows. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
-            { code: "git clone https://github.com/educlopez/3D-world.git ~/.claude/skills/3d-world", note: "The same, with git. Nothing is needed at runtime: a finished page loads three.js r128 from cdnjs, or carries it inline with --inline." },
+            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page loads three.js r128 from cdnjs, or carries it inline with --inline." },
           ]} />
         </Section>
 
         <Section id="prompts">
-          <p className="note">Type <C>/3d-world</C> and describe the place. Say where it will live (a hero, a card, an empty state), name the place or the product, and give a colour if you have one. The agent offers two or three concepts, builds the one you pick, runs the validator and the look, and hands you <C>3d-world-&lt;name&gt;.html</C>.</p>
+          <p className="note">Type <C>/diorama</C> and describe the place. Say where it will live (a hero, a card, an empty state), name the place or the product, and give a colour if you have one. The agent offers two or three concepts, builds the one you pick, runs the validator and the look, and hands you <C>diorama-&lt;name&gt;.html</C>.</p>
           <CodeRows rows={[
-            { code: "/3d-world a hero for our logistics landing page: a yard with trucks docking" },
-            { code: "/3d-world an empty state for the inbox, small and quiet, line-drawing style" },
-            { code: "/3d-world a card for the docs: jobs wait in line, one runner takes them" },
-            { code: "/3d-world a harbour at dusk for the top of our README, brand colour #5b4ae0" },
+            { code: "/diorama a hero for our logistics landing page: a yard with trucks docking" },
+            { code: "/diorama an empty state for the inbox, small and quiet, line-drawing style" },
+            { code: "/diorama a card for the docs: jobs wait in line, one runner takes them" },
+            { code: "/diorama a harbour at dusk for the top of our README, brand colour #5b4ae0" },
           ]} />
         </Section>
 
@@ -151,16 +151,16 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
         </Section>
 
         <Section id="figure">
-          <p className="note">One <C>World3D.figure</C> call: a declaration, a <C>build</C> that makes the scene once with the toolkit and returns the parts that move, and a <C>tick</C> that poses them from <C>ctx.t</C>. No timers, no <C>new THREE.*</C>, no words inside the scene.</p>
+          <p className="note">One <C>Diorama.figure</C> call: a declaration, a <C>build</C> that makes the scene once with the toolkit and returns the parts that move, and a <C>tick</C> that poses them from <C>ctx.t</C>. No timers, no <C>new THREE.*</C>, no words inside the scene.</p>
           <Block title="mailbox.js, abridged">{FIGURE}</Block>
-          <p className="note">The toolkit: <C>D.box</C>, <C>D.rbox</C>, <C>D.cyl</C>, <C>D.cone</C>, <C>D.ball</C>, <C>D.dome</C>, <C>D.wedge</C>, <C>D.slab</C>, <C>D.torus</C>, <C>D.wheel</C>, <C>D.label</C>; the props <C>tree</C>, <C>bush</C>, <C>rock</C>, <C>cloud</C>, <C>person</C>, <C>lamp</C>, <C>crate</C>, <C>pallet</C>, <C>cone</C>, <C>flag</C>; for motion <C>phase</C>, <C>pulse</C>, <C>wave</C>, the eases, <C>spring</C>, <C>path</C>, <C>place</C>, <C>spin</C>, <C>stagger</C>. The index at the top of <a href={`${REPO}/blob/main/kit/world3d.js`}>kit/world3d.js</a> lists them all.</p>
+          <p className="note">The toolkit: <C>D.box</C>, <C>D.rbox</C>, <C>D.cyl</C>, <C>D.cone</C>, <C>D.ball</C>, <C>D.dome</C>, <C>D.wedge</C>, <C>D.slab</C>, <C>D.torus</C>, <C>D.wheel</C>, <C>D.label</C>; the props <C>tree</C>, <C>bush</C>, <C>rock</C>, <C>cloud</C>, <C>person</C>, <C>lamp</C>, <C>crate</C>, <C>pallet</C>, <C>cone</C>, <C>flag</C>; for motion <C>phase</C>, <C>pulse</C>, <C>wave</C>, the eases, <C>spring</C>, <C>path</C>, <C>place</C>, <C>spin</C>, <C>stagger</C>. The index at the top of <a href={`${REPO}/blob/main/kit/diorama.js`}>kit/diorama.js</a> lists them all.</p>
         </Section>
 
         <Section id="scripts">
           <CodeRows rows={[
-            { code: "node ~/.claude/skills/3d-world/scripts/build.mjs mailbox.js", note: "Writes 3d-world-mailbox.html: three.js from cdnjs, the kernel, the figure and the bench page. Add --inline to paste three.js in." },
-            { code: "node ~/.claude/skills/3d-world/scripts/validate.mjs 3d-world-mailbox.html", note: "Nine checks: the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base and the pointer." },
-            { code: "node ~/.claude/skills/3d-world/scripts/look.mjs mailbox.js --theme line", note: "Opens the page in headless Chromium and writes one sheet: the still frame, three moments, the pointer, the tilt, the thumbnail and the page, plus the console, the fill, the motion and the answer as numbers." },
+            { code: "node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js", note: "Writes diorama-mailbox.html: three.js from cdnjs, the kernel, the figure and the bench page. Add --inline to paste three.js in." },
+            { code: "node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html", note: "Nine checks: the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base and the pointer." },
+            { code: "node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js --theme line", note: "Opens the page in headless Chromium and writes one sheet: the still frame, three moments, the pointer, the tilt, the thumbnail and the page, plus the console, the fill, the motion and the answer as numbers." },
           ]} />
         </Section>
 

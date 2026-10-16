@@ -2,7 +2,7 @@
    A terracotta pot full of soil and nothing growing, a watering can beside
    it. Now and then the can tips and a few drops fall on the soil. Drawn in
    the line theme, with the pot as the accent. */
-World3D.figure({
+Diorama.figure({
   name: 'seedling',
   size: 'mini',
   theme: { base: 'line', accent: '#cf6a4c' },

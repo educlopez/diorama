@@ -27,16 +27,16 @@ export function Frame({ fig, index, chips = true, chrome = true, lazy = false }:
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       const d = e.data;
-      if (!d || d.type !== "3d-world" || d.name !== fig.name || e.source !== ref.current?.contentWindow) return;
+      if (!d || d.type !== "diorama" || d.name !== fig.name || e.source !== ref.current?.contentWindow) return;
       if (typeof d.hover === "string") setHover(d.hover);
       if (Array.isArray(d.hot)) setHot(d.hot.filter((n: string, i: number, a: string[]) => a.indexOf(n) === i));
     };
     window.addEventListener("message", onMessage);
-    ref.current?.contentWindow?.postMessage({ type: "3d-world", hello: true }, "*");
+    ref.current?.contentWindow?.postMessage({ type: "diorama", hello: true }, "*");
     return () => window.removeEventListener("message", onMessage);
   }, [fig.name]);
 
-  const send = (msg: Record<string, unknown>) => ref.current?.contentWindow?.postMessage({ type: "3d-world", ...msg }, "*");
+  const send = (msg: Record<string, unknown>) => ref.current?.contentWindow?.postMessage({ type: "diorama", ...msg }, "*");
   const pickTheme = (t: string) => { setTheme(t); send({ theme: t === fig.theme.base ? null : t }); };
   const toggleStill = () => { const s = !still; setStill(s); send({ still: s }); };
 

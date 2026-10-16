@@ -2,7 +2,7 @@
    A boat circles the island and ties up at the pier for a while, the lamp
    turns, two gulls cross, clouds drift, the waves breathe. The pointer tilts
    the camera and lifts the boat, the lighthouse or the keeper's house. */
-World3D.figure({
+Diorama.figure({
   name: 'island',
   size: 'hero',
   title: 'Gull Rock',

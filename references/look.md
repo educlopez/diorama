@@ -1,6 +1,6 @@
 # The look
 
-`scripts/look.mjs` writes one sheet, `3d-world-<name>-look.png`, with eight pictures, and prints the measurements. Read the sheet as the owner would, then answer each question. A "no" is a fix, then another look.
+`scripts/look.mjs` writes one sheet, `diorama-<name>-look.png`, with eight pictures, and prints the measurements. Read the sheet as the owner would, then answer each question. A "no" is a fix, then another look.
 
 ## The eight pictures
 
@@ -15,7 +15,7 @@
 
 `clash` lists every moving part that passes through another part in the first 40 seconds, with the depth in world units and the second it starts. Read it with the sheet: a vehicle through a tree, two cars in one lane or a tractor inside a barn is a bug in the lane, the schedule or the furniture; forks in a rack, a flag on its hinge or a gantry arm against a rocket is a contact on purpose. Fix the bugs, keep the contacts.
 
-`node <skill>/scripts/look.mjs <name>.js --theme line` writes `3d-world-<name>-line-look.png`. Look at a figure in `mono` or `line` once even when it ships in `toy`: with the colour gone, do the shapes still say what the place is? Is the accent on the right thing? In `line`, does any cylinder show seams (too few segments), does any ground marking draw an edge (it forgot `{ shadow: false }`)?
+`node <skill>/scripts/look.mjs <name>.js --theme line` writes `diorama-<name>-line-look.png`. Look at a figure in `mono` or `line` once even when it ships in `toy`: with the colour gone, do the shapes still say what the place is? Is the accent on the right thing? In `line`, does any cylinder show seams (too few segments), does any ground marking draw an edge (it forgot `{ shadow: false }`)?
 
 ## The measurements
 
@@ -32,4 +32,4 @@ Go down `craft.md`'s ten rules with the pictures: base whole and uncut (01); cam
 
 ## Without a browser
 
-Run `node <skill>/scripts/validate.mjs 3d-world-<name>.html` after each build: it checks the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base and the pointer. Then answer the eight questions above from the code, honestly: walk the loop at 1.5, 4 and 8 seconds by hand and say where each part is. Tell the person the look was not seen, and ask them to open the page and press "Still frame" to judge the rest pose.
+Run `node <skill>/scripts/validate.mjs diorama-<name>.html` after each build: it checks the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base and the pointer. Then answer the eight questions above from the code, honestly: walk the loop at 1.5, 4 and 8 seconds by hand and say where each part is. Tell the person the look was not seen, and ask them to open the page and press "Still frame" to judge the rest pose.

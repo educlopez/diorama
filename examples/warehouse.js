@@ -2,7 +2,7 @@
    A truck circles the yard and pauses at the dock, a forklift shuttles pallets
    from the dock to the racks, a worker walks the aisle, the roof flag stirs.
    The pointer tilts the camera and lifts whatever it rests on. */
-World3D.figure({
+Diorama.figure({
   name: 'warehouse',
   size: 'hero',
   title: 'Northgate DC',

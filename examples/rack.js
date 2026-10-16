@@ -4,7 +4,7 @@
    pointer picks a level; its beams light up and the forklift looks there.
    Drawn in the mono theme: everything a tint of ink except one accent, the
    safety yellow of the beams, so the bare shelves are what the eye finds. */
-World3D.figure({
+Diorama.figure({
   name: 'rack',
   size: 'card',
   theme: { base: 'mono', accent: '#f2c230' },

@@ -1,10 +1,10 @@
-export const REPO = "https://github.com/educlopez/3D-world";
+export const REPO = "https://github.com/educlopez/diorama";
 export const AUTHOR = { name: "Eduardo Calvo", url: "https://github.com/educlopez" };
-export const INSTALL = "npx skills add educlopez/3D-world -g";
+export const INSTALL = "npx skills add educlopez/diorama -g";
 export const INSTALL_ALL = [
-  { label: "skills", code: "npx skills add educlopez/3D-world -g" },
-  { label: "claude-code", code: "npx skills add educlopez/3D-world -g -a claude-code" },
-  { label: "git", code: "git clone https://github.com/educlopez/3D-world.git ~/.claude/skills/3d-world" },
+  { label: "skills", code: "npx skills add educlopez/diorama -g" },
+  { label: "claude-code", code: "npx skills add educlopez/diorama -g -a claude-code" },
+  { label: "git", code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama" },
 ];
 export const THEMES = ["toy", "soft", "mono", "line", "night"] as const;
 export type Theme = (typeof THEMES)[number];
@@ -35,9 +35,9 @@ export const THEME_FIELDS = [
 ];
 export const SKILL_FILES = [
   ["SKILL.md", "the workflow: size and concept, build, check, hand over, adjust"],
-  ["kit/world3d.js", "the kernel: camera, lights, shadows, themes, primitives, props, paths, springs, the loop"],
+  ["kit/diorama.js", "the kernel: camera, lights, shadows, themes, primitives, props, paths, springs, the loop"],
   ["bench.html", "the page a figure is built into; a theme switcher and a still-frame toggle"],
-  ["scripts/build.mjs", "writes 3d-world-<name>.html; --inline pastes three.js in"],
+  ["scripts/build.mjs", "writes diorama-<name>.html; --inline pastes three.js in"],
   ["scripts/validate.mjs", "nine checks: declaration, length, clock, self-contained, kernel, words, colours, base, pointer"],
   ["scripts/look.mjs", "a sheet of eight pictures and the numbers, in headless Chromium; --theme for another theme"],
   ["references/", "concepts, the ten craft rules and the themes, motion, the look, React"],

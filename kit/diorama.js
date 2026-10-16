@@ -1,5 +1,5 @@
 /* ============================================================================
-   3D World kernel · one global `World3D`, on top of three.js r128.
+   Diorama kernel · one global `Diorama`, on top of three.js r128.
 
    A diorama is a small world built from blocks (boxes, cylinders, balls,
    cones) on a rounded base, seen through an orthographic isometric camera,
@@ -11,7 +11,7 @@
 
    INDEX · what a figure may call. Do not read below the hash line.
 
-   World3D.figure(spec)       declare a figure; spec is:
+   Diorama.figure(spec)       declare a figure; spec is:
      name      lowercase-hyphen, the file and page name
      size      'hero' | 'card' | 'mini'            (frame and detail budget)
      means     one sentence, ≤140 chars, shown under the stage
@@ -19,7 +19,7 @@
      theme     'toy' (default) | 'soft' | 'mono' | 'line' | 'night',
                or { base: 'mono', …overrides } with any of the theme fields:
                  bg          css colour | 'transparent'
-                 palette     { …overrides of World3D.PAL } (also spec.palette)
+                 palette     { …overrides of Diorama.PAL } (also spec.palette)
                  accent      the one colour mono and line keep (default pal.coral)
                  lights      { hemi: [sky, ground, i], sun: [colour, i], fill: [colour, i] | null, ambient: [colour, i] }
                  shadows     true | false
@@ -40,7 +40,7 @@
                                     the page shows it as a read-out while the pointer is on it
      tick(ctx)                      per frame; ctx.t, ctx.dt, ctx.parts, ctx.pointer, ctx.hover
 
-   World3D.mount(fig, { el, THREE, theme, reduced, still })  mount into an element; returns ctx:
+   Diorama.mount(fig, { el, THREE, theme, reduced, still })  mount into an element; returns ctx:
      ctx.t ctx.dt         seconds; dt is 0 on the still frame
      ctx.pointer          { x, y (−1..1), inside, world: Vector3|null on the ground plane }
      ctx.hover            the group under the pointer among parts.hot, or null
@@ -79,7 +79,7 @@
      D.props.cone(x, z, parent)      a traffic cone
      D.props.flag(x, z, parent, { h, color })  a pole and a flag; returns { group, pole, cloth }
 
-   Motion (also on World3D):
+   Motion (also on Diorama):
      D.clamp(v, a, b)  D.lerp(a, b, t)  D.smooth(t)  D.out(t)  D.inOut(t)
      D.phase(t, period, offset)      0..1 sawtooth
      D.wave(t, period, offset)       −1..1 sine
@@ -90,7 +90,7 @@
      D.spin(meshes, dist, r)         roll wheels by distance travelled
      D.stagger(i, from, step)        |i − from| · step
    ============================================================================ */
-var World3D = (function () {
+var Diorama = (function () {
   'use strict';
   var TAU = Math.PI * 2;
   var PAL = {
@@ -397,8 +397,8 @@ var World3D = (function () {
   function mount(fig, opts) {
     opts = opts || {};
     var THREE = opts.THREE || (typeof window !== 'undefined' && window.THREE);
-    if (!THREE) throw new Error('3D World needs three.js (r128): load it before the kernel or pass { THREE }.');
-    var el = opts.el; if (!el) throw new Error('World3D.mount needs { el }.');
+    if (!THREE) throw new Error('Diorama needs three.js (r128): load it before the kernel or pass { THREE }.');
+    var el = opts.el; if (!el) throw new Error('Diorama.mount needs { el }.');
     var size = SIZES[fig.size] || SIZES.card;
     var theme = resolveTheme(opts.theme, fig);
     var pal = Object.assign({}, PAL, theme.palette);
@@ -482,7 +482,7 @@ var World3D = (function () {
       var w = el.clientWidth || 300, h = Math.round(w / size.aspect);
       renderer.setSize(w, h, false);
       renderer.domElement.style.height = h + 'px';
-      if (el.style.height === '' || el.dataset.world3dHeight) { el.style.height = h + 'px'; el.dataset.world3dHeight = '1'; }
+      if (el.style.height === '' || el.dataset.dioramaHeight) { el.style.height = h + 'px'; el.dataset.dioramaHeight = '1'; }
       strokeWidth();
     }
     resize(); fit();
@@ -567,12 +567,12 @@ var World3D = (function () {
   }
 
   function figure(spec) {
-    if (!spec || !spec.name) throw new Error('World3D.figure needs a name.');
-    if (typeof spec.build !== 'function') throw new Error('World3D.figure needs build().');
+    if (!spec || !spec.name) throw new Error('Diorama.figure needs a name.');
+    if (typeof spec.build !== 'function') throw new Error('Diorama.figure needs build().');
     figures.push(spec); return spec;
   }
 
   return { PAL: PAL, SIZES: SIZES, THEMES: THEMES, figures: figures, figure: figure, mount: mount, toolkit: toolkit, resolveTheme: resolveTheme,
     clamp: clamp, lerp: lerp, smooth: smooth, out: out, inOut: inOut, phase: phase, wave: wave, pulse: pulse, spring: spring, path: path, place: place, spin: spin, stagger: stagger };
 })();
-if (typeof module !== 'undefined' && module.exports) module.exports = World3D;
+if (typeof module !== 'undefined' && module.exports) module.exports = Diorama;

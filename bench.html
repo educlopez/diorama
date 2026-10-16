@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3D World</title>
+<title>Diorama</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
@@ -55,11 +55,11 @@
 </script>
 <script>
 (function () {
-  var fig = World3D.figures[World3D.figures.length - 1];
+  var fig = Diorama.figures[Diorama.figures.length - 1];
   var wrap = document.getElementById('wrap');
   var q = new URLSearchParams(location.search);
-  if (!fig) { wrap.innerHTML = '<div class="card cardsize"><div class="err">No figure declared: the page needs one World3D.figure({ … }) call.</div></div>'; return; }
-  document.title = fig.name + ' · 3D World';
+  if (!fig) { wrap.innerHTML = '<div class="card cardsize"><div class="err">No figure declared: the page needs one Diorama.figure({ … }) call.</div></div>'; return; }
+  document.title = fig.name + ' · Diorama';
   if (q.has('embed')) { document.body.classList.add('embed'); document.documentElement.classList.add('embed'); }
   var card = document.createElement('div');
   var stage = document.createElement('div'); stage.className = 'stage'; stage.id = 'stage';
@@ -87,11 +87,11 @@
   var ctx;
   function mountIt(reduced) {
     if (ctx) ctx.destroy();
-    try { ctx = World3D.mount(fig, { el: stage, reduced: reduced, still: q.has('t') ? +q.get('t') : undefined, theme: themePick || undefined }); window.__world3d = ctx; }
+    try { ctx = Diorama.mount(fig, { el: stage, reduced: reduced, still: q.has('t') ? +q.get('t') : undefined, theme: themePick || undefined }); window.__diorama = ctx; }
     catch (err) { stage.innerHTML = '<div class="err">' + (err && err.message || err) + '</div>'; console.error(err); }
   }
   var themePick = q.get('theme') || null;
-  var themes = Object.keys(World3D.THEMES), sel = document.createElement('span'); sel.className = 'themes';
+  var themes = Object.keys(Diorama.THEMES), sel = document.createElement('span'); sel.className = 'themes';
   themes.forEach(function (t) {
     var b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.dataset.theme = t;
     var current = themePick || (typeof fig.theme === 'object' ? fig.theme.base || 'toy' : fig.theme || 'toy');
@@ -106,14 +106,14 @@
   /* in a frame: tell the parent what the pointer is over, and take a theme or a still request from it */
   if (q.has('embed') && window.parent !== window) {
     var lastHover = null;
-    (function watch() { var h = ctx && ctx.hover ? (ctx.hover.name || 'something') : ''; if (h !== lastHover) { lastHover = h; try { window.parent.postMessage({ type: '3d-world', name: fig.name, hover: h }, '*'); } catch (e) {} } requestAnimationFrame(watch); })();
+    (function watch() { var h = ctx && ctx.hover ? (ctx.hover.name || 'something') : ''; if (h !== lastHover) { lastHover = h; try { window.parent.postMessage({ type: 'diorama', name: fig.name, hover: h }, '*'); } catch (e) {} } requestAnimationFrame(watch); })();
     window.addEventListener('message', function (e) {
-      var d = e.data; if (!d || d.type !== '3d-world') return;
+      var d = e.data; if (!d || d.type !== 'diorama') return;
       if (d.theme !== undefined) { themePick = d.theme || null; sel.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.theme === (themePick || 'toy'))); }); mountIt(isStill); }
       if (d.still !== undefined) { isStill = !!d.still; still.setAttribute('aria-pressed', String(isStill)); mountIt(isStill); }
     });
-    var hello = function () { try { window.parent.postMessage({ type: '3d-world', name: fig.name, ready: true, hint: fig.hint || '', hot: (ctx && ctx.parts && ctx.parts.hot ? ctx.parts.hot.map(function (g) { return g.name; }).filter(Boolean) : []) }, '*'); } catch (e) {} };
-    window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === '3d-world' && d.hello) hello(); });
+    var hello = function () { try { window.parent.postMessage({ type: 'diorama', name: fig.name, ready: true, hint: fig.hint || '', hot: (ctx && ctx.parts && ctx.parts.hot ? ctx.parts.hot.map(function (g) { return g.name; }).filter(Boolean) : []) }, '*'); } catch (e) {} };
+    window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'diorama' && d.hello) hello(); });
     hello();
   }
 })();

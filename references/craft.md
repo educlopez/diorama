@@ -84,7 +84,7 @@ A theme is a set of fields the kernel applies to every primitive; a figure never
 | `line` | a hairline drawing: white fills, ink edges, silhouettes, no shadows | the `accent`, as a stroke with a faint fill | `edges`, `outline`, `stroke`, `strokeWidth`, optional `round` | minimal or technical pages, quiet empty states |
 | `night` | dusk: dark base, cool sky, warm lamps and windows | all colours, darker world | `glow` 2.6 | dark pages, hero sections on black |
 
-Fields every theme takes, in the figure's `theme: { … }` or on `World3D.mount(fig, { theme })`:
+Fields every theme takes, in the figure's `theme: { … }` or on `Diorama.mount(fig, { theme })`:
 
 - `bg`, `palette`, `accent`: the stage colour, palette overrides, the one colour mono and line keep.
 - `lights: { hemi: [sky, ground, i], sun: [c, i], fill: [c, i] | null, ambient: [c, i] }`: four lights, any of them replaceable.

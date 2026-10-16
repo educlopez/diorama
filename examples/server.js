@@ -3,7 +3,7 @@
    floor, a cable tray, a cooling unit whose fan turns, a technician who
    walks the aisle with a laptop. The lights blink in their own rhythms;
    hover a rack and it lifts and its lights all turn on. */
-World3D.figure({
+Diorama.figure({
   name: 'server',
   size: 'card',
   theme: { base: 'mono', accent: '#4aa3a0' },

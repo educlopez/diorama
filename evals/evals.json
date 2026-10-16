@@ -1,10 +1,10 @@
 {
-  "skill_name": "3d-world",
+  "skill_name": "diorama",
   "evals": [
     {
       "id": 1,
       "prompt": "I'm building the landing page for Shipwise, a shipment tracking SaaS. I want a hero illustration at the top: a little 3D warehouse yard with trucks arriving and forklifts moving pallets, animated, that reacts a bit to the mouse. Our brand colour is #5b4ae0. Give me one HTML file I can open and later embed in Next.js.",
-      "expected_output": "One self-contained 3d-world-<name>.html built with the kit: a hero-size scene on a rounded base with a building, docks, racks, a road loop inside the base, a truck on a lap that stops at a dock with a door that opens, a forklift shuttle, trees and lamps; three or more loops of different periods; the pointer tilts the camera and has one answer (a lift or a light). Brand colour passed through palette, not new hex literals. look.mjs ran, the sheet was read, console clean. The hand-over names the concept, the still second, and points to references/react.md for Next.js.",
+      "expected_output": "One self-contained diorama-<name>.html built with the kit: a hero-size scene on a rounded base with a building, docks, racks, a road loop inside the base, a truck on a lap that stops at a dock with a door that opens, a forklift shuttle, trees and lamps; three or more loops of different periods; the pointer tilts the camera and has one answer (a lift or a light). Brand colour passed through palette, not new hex literals. look.mjs ran, the sheet was read, console clean. The hand-over names the concept, the still second, and points to references/react.md for Next.js.",
       "files": []
     },
     {

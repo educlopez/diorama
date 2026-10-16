@@ -5,7 +5,7 @@ export const dynamic = "force-static";
 
 /** A plain-text summary for agents and crawlers, in the llms.txt convention. */
 export function GET() {
-  const text = `# 3D World
+  const text = `# Diorama
 
 > A Claude Code skill that builds small animated isometric 3D scenes for the web: a hero for a landing page, a card for docs, a mini figure for an empty state. One self-contained HTML file on three.js r128. Five themes (${THEME_ROWS.map((t) => t.name).join(", ")}), every field overridable.
 

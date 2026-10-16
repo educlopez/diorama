@@ -7,11 +7,11 @@ The built page is one HTML file: a `<script>` for three.js (CDN, or inlined with
 ```html
 <div id="hero" style="width:100%"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/3d-world/kit/world3d.js"></script>
-<script src="/3d-world/warehouse.js"></script>
+<script src="/diorama/kit/diorama.js"></script>
+<script src="/diorama/warehouse.js"></script>
 <script>
-  var fig = World3D.figures[World3D.figures.length - 1];
-  var ctx = World3D.mount(fig, { el: document.getElementById('hero') });
+  var fig = Diorama.figures[Diorama.figures.length - 1];
+  var ctx = Diorama.mount(fig, { el: document.getElementById('hero') });
   // later: ctx.destroy();
 </script>
 ```
@@ -20,20 +20,20 @@ The kernel sizes the canvas to the element's width and the figure's aspect, watc
 
 ## React or Next.js
 
-Install three (`npm i three@0.128`) or keep the CDN script. Copy `kit/world3d.js` and the figure into the project (for example `components/3d-world/`). The kernel takes `THREE` as an option, so it works with the module build.
+Install three (`npm i three@0.128`) or keep the CDN script. Copy `kit/diorama.js` and the figure into the project (for example `components/diorama/`). The kernel takes `THREE` as an option, so it works with the module build.
 
 ```tsx
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import World3D from "./world3d.js";
-import "./warehouse.js"; // registers the figure in World3D.figures
+import Diorama from "./diorama.js";
+import "./warehouse.js"; // registers the figure in Diorama.figures
 
 export function Hero() {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const fig = World3D.figures[World3D.figures.length - 1];
-    const ctx = World3D.mount(fig, { el: el.current!, THREE });
+    const fig = Diorama.figures[Diorama.figures.length - 1];
+    const ctx = Diorama.mount(fig, { el: el.current!, THREE });
     return () => ctx.destroy();
   }, []);
   return <div ref={el} style={{ width: "100%" }} aria-hidden />;
@@ -42,12 +42,12 @@ export function Hero() {
 
 Notes:
 
-- The kernel's `module.exports` line makes `import World3D from "./world3d.js"` work under bundlers; with plain `<script>` tags it sets `window.World3D`.
-- A figure file ends with `World3D.figure({ … })`, which needs `World3D` in scope. In a bundler, change its first line to `import World3D from "./world3d.js";` or wrap it as `export default (World3D) => World3D.figure({ … })` and call it in the effect. Nothing else in the figure changes.
+- The kernel's `module.exports` line makes `import Diorama from "./diorama.js"` work under bundlers; with plain `<script>` tags it sets `window.Diorama`.
+- A figure file ends with `Diorama.figure({ … })`, which needs `Diorama` in scope. In a bundler, change its first line to `import Diorama from "./diorama.js";` or wrap it as `export default (Diorama) => Diorama.figure({ … })` and call it in the effect. Nothing else in the figure changes.
 - Server rendering: render the `<div>` empty with a fixed aspect ratio (`aspectRatio: "3 / 2"`, `"4 / 3"` or `"1"`) so nothing shifts when the canvas mounts.
 - One canvas per diorama. Several on one page are fine; each sleeps when offscreen.
 - The figure's `means` and `empty` text are yours to render as React text next to the stage; the kernel never writes words.
 
 ## Shipping the page itself
 
-For a blog or a static site, `3d-world-<name>.html` can be served as is, or embedded in an `<iframe>` at the stage's aspect. `--inline` makes it a single file with no network request.
+For a blog or a static site, `diorama-<name>.html` can be served as is, or embedded in an `<iframe>` at the stage's aspect. `--inline` makes it a single file with no network request.

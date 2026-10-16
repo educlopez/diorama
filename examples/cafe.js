@@ -2,7 +2,7 @@
    The barista pulls a shot (steam rises), a customer walks up, takes a cup
    and walks off; a cat on the chair flicks its tail. Hover the cart, the
    table or the cat and it lifts. Drawn in the soft theme. */
-World3D.figure({
+Diorama.figure({
   name: 'cafe',
   size: 'card',
   theme: 'soft',

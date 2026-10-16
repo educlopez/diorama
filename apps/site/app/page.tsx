@@ -94,7 +94,7 @@ export default function Page() {
         <ol className="steps">
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">1</span><h3 className="step-title">Install the skill</h3></div>
-            <p className="step-text">One command adds 3D World to Claude Code, Cursor or Codex: the kernel, the themes, {FIGURES.length} examples and the checks.</p>
+            <p className="step-text">One command adds Diorama to Claude Code, Cursor or Codex: the kernel, the themes, {FIGURES.length} examples and the checks.</p>
           </li>
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">2</span><h3 className="step-title">Ask for a place</h3></div>

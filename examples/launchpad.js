@@ -3,7 +3,7 @@
    with lit windows, floodlights. Every twenty seconds the arm swings away,
    the engine lights and the rocket climbs out of the frame, then it is back
    on the pad. Hover the rocket, the gantry or the bunker and it lifts. */
-World3D.figure({
+Diorama.figure({
   name: 'launchpad',
   size: 'card',
   theme: 'night',

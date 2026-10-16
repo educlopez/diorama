@@ -28,9 +28,9 @@ export function Topbar({ active }: { active?: "figures" | "how" | "docs" }) {
     <header className="nav">
       <div className="nav-inner">
         <div className="nav-left">
-          <a className="brand" href="/" aria-label="3D World home">
+          <a className="brand" href="/" aria-label="Diorama home">
             <span className="brand-mark"><Mark /></span>
-            <span className="brand-word"><span>3D</span><span className="brand-word-dim"> World</span></span>
+            <span className="brand-word"><span>Diorama</span></span>
           </a>
           <nav className="nav-menu" aria-label="Primary">
             <a className={`pill${active === "figures" ? " pill--active" : ""}`} href="/figures">Figures</a>
@@ -51,7 +51,7 @@ export function Footer() {
     <footer className="footer">
       <div className="footer-top">
         <div className="footer-brand">
-          <a className="footer-brand-logo" href="/"><Mark size={18} /><span className="brand-word"><span>3D</span><span className="brand-word-dim"> World</span></span></a>
+          <a className="footer-brand-logo" href="/"><Mark size={18} /><span className="brand-word"><span>Diorama</span></span></a>
           <p className="footer-tagline">Small animated 3D worlds for the web, built by your coding agent. One file, five themes, MIT.</p>
         </div>
         <div className="footer-cols">

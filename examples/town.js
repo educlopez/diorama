@@ -4,7 +4,7 @@
    fountain, a station, a building site with a crane that turns. Cars and a
    bus ride the streets on their own laps, a tram crosses, people walk, the
    traffic lights cycle, a cloud drifts. The pointer lifts what it rests on. */
-World3D.figure({
+Diorama.figure({
   name: 'town',
   size: 'hero',
   title: 'Alder Springs',

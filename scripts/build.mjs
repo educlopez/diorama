@@ -2,7 +2,7 @@
 /**
  * Puts a figure on the bench: `node build.mjs <figure.js> [out.html] [--inline]`
  * writes one page, bench.html with the kernel and the figure in their slots,
- * and prints where it is. Without a path the page is 3d-world-<name>.html in
+ * and prints where it is. Without a path the page is diorama-<name>.html in
  * the working directory. three.js r128 comes from cdnjs by default; `--inline`
  * pastes the copy in kit/three.min.js instead, for a page with no network at all
  * (about 600 KB more).
@@ -15,7 +15,7 @@ const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 export const THREE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
 
 export function kernelSource() {
-  return readFileSync(here("../kit/world3d.js"), "utf8").replace(/\r\n/g, "\n").trimEnd();
+  return readFileSync(here("../kit/diorama.js"), "utf8").replace(/\r\n/g, "\n").trimEnd();
 }
 
 /** The page for a figure's source. The replacements are functions so `$&` in the kernel or the figure is pasted as it is. */
@@ -29,9 +29,9 @@ export function assemble(figure, { inline = false } = {}) {
     .replace("/*FIGURE*/", () => `\n${figure.replace(/\r\n/g, "\n").trim()}\n`);
 }
 
-/** The figure's name, read from its declaration: the last World3D.figure({ … }) call. */
+/** The figure's name, read from its declaration: the last Diorama.figure({ … }) call. */
 export function nameOf(figure) {
-  const call = [...figure.matchAll(/\bWorld3D\.figure\s*\(\s*\{/g)].at(-1);
+  const call = [...figure.matchAll(/\bDiorama\.figure\s*\(\s*\{/g)].at(-1);
   return call ? /\bname:\s*["'`]([a-z][a-z0-9-]*)["'`]/.exec(figure.slice(call.index))?.[1] ?? null : null;
 }
 
@@ -46,7 +46,7 @@ if (process.argv[1] && same(realpathSync(process.argv[1]), realpathSync(here("./
     process.exit(2);
   }
   const figure = readFileSync(src, "utf8");
-  const file = resolve(out ?? `3d-world-${nameOf(figure) ?? "figure"}.html`);
+  const file = resolve(out ?? `diorama-${nameOf(figure) ?? "figure"}.html`);
   writeFileSync(file, assemble(figure, { inline }));
   console.log(file);
 }

@@ -1,7 +1,7 @@
 /* mailbox · a mini empty state: "No messages yet".
    A letterbox on a post, door open, nothing inside. The flag rests down; now
    and then it lifts as if to check, finds nothing, and settles. */
-World3D.figure({
+Diorama.figure({
   name: 'mailbox',
   size: 'mini',
   means: 'An open letterbox with nothing inside. The flag lifts now and then to check, and settles again.',

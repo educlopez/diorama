@@ -1,7 +1,7 @@
 /* desk · a mini empty state: "No tasks today", drawn in ink.
    A desk with a lamp, an empty tray, a mug and a chair. The chair swivels
    a little now and then, and the mug steams. */
-World3D.figure({
+Diorama.figure({
   name: 'desk',
   size: 'mini',
   theme: { base: 'line', accent: '#e8714f' },
