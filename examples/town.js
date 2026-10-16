@@ -1,4 +1,4 @@
-/* town · a hero: a small town on a plate, the kind of world WareTrack sits in.
+/* town · a hero: a small town on a plate.
    Two avenues and three streets cut six blocks: houses with gabled roofs,
    shops with awnings, an office tower with a flag, a park with a pond and a
    fountain, a station, a building site with a crane that turns. Cars and a

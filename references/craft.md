@@ -1,6 +1,6 @@
 # The ten rules of the look
 
-They are read off WareTrack, the game the style comes from: an orthographic isometric camera, a pale blue-grey world, matte blocks in a few saturated accents, one warm sun with soft shadows, and hundreds of small objects that are each five to twenty primitives. Each rule has what it says, how to keep it with the kernel, and what gets a figure rejected.
+They describe the look: an orthographic isometric camera, a pale blue-grey world, matte blocks in a few saturated accents, one warm sun with soft shadows, and hundreds of small objects that are each five to twenty primitives. Each rule has what it says, how to keep it with the kernel, and what gets a figure rejected.
 
 ## 01 · base: the world stands on a plate
 
@@ -78,7 +78,7 @@ A theme is a set of fields the kernel applies to every primitive; a figure never
 
 | Theme | Reads as | Keeps | Adds | Use it for |
 | --- | --- | --- | --- | --- |
-| `toy` | WareTrack: pastel blocks, warm sun, soft shadows, cool fill | all colours | | product pages, READMEs, anything warm |
+| `toy` | pastel blocks, warm sun, soft shadows, cool fill | all colours | | product pages, READMEs, anything warm |
 | `soft` | the same on cream, gentler light, desaturated accents | all colours (shifted) | | editorial pages, cream or paper backgrounds |
 | `mono` | tints of ink on white, one accent | the `accent` | `tone { paper, ink }`, `tint` | docs, product UIs with their own accent, text-heavy pages |
 | `line` | a hairline drawing: white fills, ink edges, silhouettes, no shadows | the `accent`, as a stroke with a faint fill | `edges`, `outline`, `stroke`, `strokeWidth`, optional `round` | minimal or technical pages, quiet empty states |

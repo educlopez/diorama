@@ -14,7 +14,7 @@ export const SIZES = [
   { name: "mini", lives: "an empty state above a heading and a button", stage: "1:1, 160 to 240px", moves: "one quiet ambient motion", lines: "≤ 150" },
 ];
 export const THEME_ROWS = [
-  { name: "toy", reads: "WareTrack: pastel blocks, one warm sun, a cool fill, soft shadows", keeps: "every colour", use: "product pages, READMEs, anything warm" },
+  { name: "toy", reads: "pastel blocks, one warm sun, a cool fill, soft shadows", keeps: "every colour", use: "product pages, READMEs, anything warm" },
   { name: "soft", reads: "the same on cream, gentler light, desaturated accents", keeps: "every colour, shifted warm", use: "editorial pages, paper backgrounds" },
   { name: "mono", reads: "tints of ink on white", keeps: "one accent", use: "docs, product UIs with their own accent, text-heavy pages" },
   { name: "line", reads: "a hairline drawing: white fills, ink edges, silhouettes, no shadows", keeps: "one accent, as a stroke", use: "minimal or technical pages, quiet empty states" },

@@ -1,6 +1,6 @@
 <h1 align="center">3D World</h1>
 
-<p align="center"><b>A Claude Code skill that builds small animated 3D worlds for the web.</b><br>Isometric scenes made of blocks and soft shadows, with little trucks, forklifts and people that keep their own time. A hero for a landing page, a card for your docs, or a mini figure for an empty state. Five themes, from WareTrack pastel to a hairline drawing, all of them yours to tune.</p>
+<p align="center"><b>A Claude Code skill that builds small animated 3D worlds for the web.</b><br>Isometric scenes made of blocks and soft shadows, with little trucks, forklifts and people that keep their own time. A hero for a landing page, a card for your docs, or a mini figure for an empty state. Five themes, from pastel toy to a hairline drawing, all of them yours to tune.</p>
 
 <p align="center">
   <a href="https://code.claude.com/docs/en/skills"><img src="https://img.shields.io/badge/Claude_Code-skill-1b1b19?style=flat-square&logo=claude&logoColor=white" alt="Claude Code skill"></a>
@@ -25,7 +25,7 @@
 
 Ask Claude for a 3D illustration and 3D World has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun with soft shadows. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
 
-The default look comes from [WareTrack](https://siddik-web.github.io/waretrack/), a warehouse strategy game built in one HTML file on three.js. 3D World takes its camera, lighting and block vocabulary and turns them into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing, or a night scene with the lamps on.
+The default look is an isometric camera, matte blocks, one warm sun with soft shadows and a few accents, built into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing, or a night scene with the lamps on.
 
 <p align="center">
   <img src="docs/media/themes.png" width="820" alt="The same warehouse scene drawn five ways: toy in pastel, soft on cream, mono in greys with a cobalt roof, line as an ink drawing on white, and night in dusk blues with lamps glowing.">
@@ -79,7 +79,7 @@ Three sizes, one format:
 
 | Theme | Reads as | Keeps |
 | --- | --- | --- |
-| `toy` | WareTrack: pastel blocks, one warm sun, a cool fill, soft shadows | every colour |
+| `toy` | pastel blocks, one warm sun, a cool fill, soft shadows | every colour |
 | `soft` | the same on cream, gentler, desaturated | every colour, shifted warm |
 | `mono` | tints of ink on white | one `accent` |
 | `line` | a hairline drawing: white fills, ink edges, silhouettes, no shadows | one `accent`, as a stroke |
@@ -186,6 +186,6 @@ To deploy on Vercel, import the repository and set the project's **Root Director
 
 ## Credits
 
-The default look takes its cue from [WareTrack](https://github.com/siddik-web/waretrack) by siddik-web. Rendering by [three.js](https://threejs.org/).
+Rendering by [three.js](https://threejs.org/).
 
 MIT.
