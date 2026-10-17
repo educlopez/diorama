@@ -1,14 +1,16 @@
 // Spike: the part under the pointer on a grid, with three.js and with three-lite; reports how many grid points agree.
+// Usage: node spike/hover.mjs <names…>   env: THEME (for the line theme's edge picking), BROWSER, PLAYWRIGHT. Pages come from compare.mjs.
 import { join } from 'node:path';
-const ROOT = new URL('..', import.meta.url).pathname, OUT = join(ROOT, 'spike/out');
-const { chromium } = await import(process.env.PLAYWRIGHT || 'playwright');
-const CH = `${process.env.HOME}/Library/Caches/ms-playwright/chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
-const b = await chromium.launch({ executablePath: CH, args: ['--use-angle=metal'] });
+import { OUT, launch, contextOptions } from './launch.mjs';
+const theme = process.env.THEME || '';
+const b = await launch();
+const ctx = await b.newContext(contextOptions());
+await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: '', contentType: 'text/css' }));
 for (const n of process.argv.slice(2)) {
   const res = {};
   for (const kind of ['three', 'lite']) {
-    const p = await b.newPage({ viewport: { width: 900, height: 900 } });
-    await p.goto(`file://${join(OUT, `${n}-${kind}.html`)}?embed`);
+    const p = await ctx.newPage();
+    await p.goto(`file://${join(OUT, `${n}-${kind}.html`)}?embed${theme ? '&theme=' + theme : ''}`);
     await p.waitForFunction(() => window.__diorama);
     res[kind] = await p.evaluate(() => {
       const c = window.__diorama; c.stop(); c.t = 0; c.step(0); const out = [];
@@ -20,7 +22,7 @@ for (const n of process.argv.slice(2)) {
   }
   const a = res.three.out, l = res.lite.out; let same = 0, hot = 0;
   for (let i = 0; i < a.length; i++) { if (a[i] === l[i]) same++; if (a[i] !== '-') hot++; }
-  const diff = {}; for (let i = 0; i < a.length; i++) if (a[i] !== l[i]) { const k = a[i] + ' -> ' + l[i]; diff[k] = (diff[k] || 0) + 1; } console.log(JSON.stringify(diff));
-  console.log(`${n}: ${same}/${a.length} grid points agree (${hot} on a part with three)`);
+  const diff = {}; for (let i = 0; i < a.length; i++) if (a[i] !== l[i]) { const k = a[i] + ' -> ' + l[i]; diff[k] = (diff[k] || 0) + 1; }
+  console.log(`${n}${theme ? ' [' + theme + ']' : ''}: ${same}/${a.length} grid points agree (${hot} on a part with three)${Object.keys(diff).length ? ' ' + JSON.stringify(diff) : ''}`);
 }
-await b.close();
+await ctx.close(); await b.close();

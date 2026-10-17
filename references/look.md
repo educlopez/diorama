@@ -36,4 +36,4 @@ The sheet's tiles are small for a hero. Open the built page at any second, still
 
 ## Without a browser
 
-Run `node <skill>/scripts/validate.mjs diorama-<name>.html` after each build: it checks the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base and the pointer. Then answer the eight questions above from the code, honestly: walk the loop at 1.5, 4 and 8 seconds by hand and say where each part is. Tell the person the look was not seen, and ask them to open the page and press "Still frame" to judge the rest pose.
+Run `node <skill>/scripts/validate.mjs diorama-<name>.html` after each build: it checks the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base, the pointer and the renderer. Then answer the eight questions above from the code, honestly: walk the loop at 1.5, 4 and 8 seconds by hand and say where each part is. Tell the person the look was not seen, and ask them to open the page and press "Still frame" to judge the rest pose.

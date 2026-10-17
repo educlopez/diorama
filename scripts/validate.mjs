@@ -26,6 +26,9 @@
  *  9 pointer       a hero or card answers the pointer somewhere: it reads
  *                  ctx.pointer or ctx.hover, or sets parts.hot. A mini may
  *                  rely on the camera tilt alone.
+ * 10 renderer      a built page carries one renderer: three.js r128 (the cdnjs
+ *                  script, or inlined with --inline) or three-lite (--lite),
+ *                  never both and never neither. A lite page has no script src.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -95,7 +98,21 @@ export function validate(text) {
   const named = !/\bhot\s*[:=]/.test(strip) || /\.name\s*=/.test(strip);
   check(9, "pointer", s === "mini" || (answers && named), !answers ? "a hero or card should read ctx.pointer / ctx.hover or set parts.hot" : "hot groups need a .name for the read-out");
 
+  if (page) {
+    const r = renderersOf(text), n = r.cdn + r.three + r.lite;
+    check(10, "renderer", n === 1, n === 0 ? "no three.js and no three-lite in the page" : r.lite && (r.cdn || r.three) ? "a lite page also carries three.js: build it with --lite alone" : r.cdn && r.three ? "three.js is both linked from cdnjs and inlined" : "more than one renderer in the page");
+  } else check(10, "renderer", true, "");
+
   return out;
+}
+
+/** How many times each renderer is in a built page: the cdnjs script, three.js inlined, three-lite inlined. */
+export function renderersOf(text) {
+  return {
+    cdn: [...text.matchAll(/<script[^>]*\ssrc=["'][^"']*three\.min\.js["']/g)].length,
+    three: [...text.matchAll(/Copyright 2010-20\d\d Three\.js Authors/g)].length,
+    lite: [...text.matchAll(/\bREVISION:\s*["']128-lite["']/g)].length,
+  };
 }
 
 export function report(results) {

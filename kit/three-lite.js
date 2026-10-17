@@ -2,7 +2,8 @@
    It exposes the same names (THREE.Mesh, THREE.BoxGeometry, THREE.WebGLRenderer, …) so the kernel and every
    figure run unchanged. It is not a general renderer: one orthographic camera, Lambert shading with a
    hemisphere, a sun with a soft shadow map, a fill and an ambient light, emissive, linear fog, sRGB output,
-   ink edges and the backface hull of the line theme, canvas-texture labels and a raycaster for meshes. */
+   ink edges and the backface hull of the line theme, canvas-texture labels and a raycaster for meshes and
+   line segments (with three's Line threshold, so the line theme answers the pointer the same way). */
 (function (root) {
   'use strict';
   var uid = 0;
@@ -29,7 +30,8 @@
   V.length = function () { return Math.sqrt(this.dot(this)); };
   V.lengthSq = function () { return this.dot(this); };
   V.normalize = function () { var l = this.length() || 1; return this.multiplyScalar(1 / l); };
-  V.distanceTo = function (v) { var dx = this.x - v.x, dy = this.y - v.y, dz = this.z - v.z; return Math.sqrt(dx * dx + dy * dy + dz * dz); };
+  V.distanceToSquared = function (v) { var dx = this.x - v.x, dy = this.y - v.y, dz = this.z - v.z; return dx * dx + dy * dy + dz * dz; };
+  V.distanceTo = function (v) { return Math.sqrt(this.distanceToSquared(v)); };
   V.lerp = function (v, t) { this.x += (v.x - this.x) * t; this.y += (v.y - this.y) * t; this.z += (v.z - this.z) * t; return this; };
   V.applyMatrix4 = function (m) {
     var e = m.elements, x = this.x, y = this.y, z = this.z, w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15]);
@@ -167,13 +169,48 @@
 
   function Plane(normal, constant) { this.normal = normal || new Vector3(0, 1, 0); this.constant = constant || 0; }
   function Ray() { this.origin = new Vector3(); this.direction = new Vector3(0, 0, -1); }
-  Ray.prototype.intersectPlane = function (plane, target) {
+  var R = Ray.prototype;
+  R.copy = function (r) { this.origin.copy(r.origin); this.direction.copy(r.direction); return this; };
+  R.applyMatrix4 = function (m) { this.origin.applyMatrix4(m); this.direction.transformDirection(m); return this; };
+  R.intersectPlane = function (plane, target) {
     var den = plane.normal.dot(this.direction);
     if (Math.abs(den) < 1e-9) return null;
     var t = -(this.origin.dot(plane.normal) + plane.constant) / den;
     if (t < 0) return null;
     return target.copy(this.origin).addScaledVector(this.direction, t);
   };
+  R.distanceSqToPoint = function (p) {
+    var along = _rv.subVectors(p, this.origin).dot(this.direction);
+    if (along < 0) return this.origin.distanceToSquared(p);
+    return _rv.copy(this.direction).multiplyScalar(along).add(this.origin).distanceToSquared(p);
+  };
+  R.intersectsSphere = function (center, radius) { return this.distanceSqToPoint(center) <= radius * radius; };
+  /* the squared distance between the ray and a segment, as three computes it: s0 along the ray (clamped at the origin),
+     s1 along the segment from its centre (clamped at the ends); the regions are the cases of that clamping */
+  R.distanceSqToSegment = function (v0, v1, onRay, onSegment) {
+    var mid = _rc.copy(v0).add(v1).multiplyScalar(.5), dir = _rd.copy(v1).sub(v0).normalize(), diff = _rv.copy(this.origin).sub(mid);
+    var ext = v0.distanceTo(v1) * .5, a01 = -this.direction.dot(dir), b0 = diff.dot(this.direction), b1 = -diff.dot(dir), c = diff.lengthSq();
+    var det = Math.abs(1 - a01 * a01), s0, s1, sq, extDet;
+    if (det > 0) {
+      s0 = a01 * b1 - b0; s1 = a01 * b0 - b1; extDet = ext * det;
+      if (s0 >= 0) {
+        if (s1 >= -extDet) {
+          if (s1 <= extDet) { var inv = 1 / det; s0 *= inv; s1 *= inv; sq = s0 * (s0 + a01 * s1 + 2 * b0) + s1 * (a01 * s0 + s1 + 2 * b1) + c; }
+          else { s1 = ext; s0 = Math.max(0, -(a01 * s1 + b0)); sq = -s0 * s0 + s1 * (s1 + 2 * b1) + c; }
+        } else { s1 = -ext; s0 = Math.max(0, -(a01 * s1 + b0)); sq = -s0 * s0 + s1 * (s1 + 2 * b1) + c; }
+      } else if (s1 <= -extDet) {
+        s0 = Math.max(0, -(-a01 * ext + b0)); s1 = s0 > 0 ? -ext : Math.min(Math.max(-ext, -b1), ext); sq = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
+      } else if (s1 <= extDet) {
+        s0 = 0; s1 = Math.min(Math.max(-ext, -b1), ext); sq = s1 * (s1 + 2 * b1) + c;
+      } else {
+        s0 = Math.max(0, -(a01 * ext + b0)); s1 = s0 > 0 ? ext : Math.min(Math.max(-ext, -b1), ext); sq = -s0 * s0 + s1 * (s1 + 2 * b1) + c;
+      }
+    } else { s1 = a01 > 0 ? -ext : ext; s0 = Math.max(0, -(a01 * s1 + b0)); sq = -s0 * s0 + s1 * (s1 + 2 * b1) + c; }
+    if (onRay) onRay.copy(this.direction).multiplyScalar(s0).add(this.origin);
+    if (onSegment) onSegment.copy(dir).multiplyScalar(s1).add(mid);
+    return sq;
+  };
+  var _rv = new Vector3(), _rc = new Vector3(), _rd = new Vector3();
 
   /* ---------- scene graph ---------- */
   function Object3D() {
@@ -277,7 +314,7 @@
   function Float32BufferAttribute(array, itemSize) { BufferAttribute.call(this, new Float32Array(array), itemSize); }
   Float32BufferAttribute.prototype = Object.create(BufferAttribute.prototype);
 
-  function BufferGeometry() { this.uuid = uuid(); this.attributes = {}; this.index = null; this.groups = []; this.boundingBox = null; this.version = 0; }
+  function BufferGeometry() { this.uuid = uuid(); this.attributes = {}; this.index = null; this.groups = []; this.boundingBox = null; this.boundingSphere = null; this.version = 0; }
   var G = BufferGeometry.prototype;
   G.isBufferGeometry = true;
   G.setAttribute = function (name, attr) { this.attributes[name] = attr; this.version++; return this; };
@@ -287,6 +324,12 @@
     var p = this.attributes.position, b = new Box3(), v = new Vector3();
     for (var i = 0; i < p.count; i++) b.expandByPoint(v.set(p.getX(i), p.getY(i), p.getZ(i)));
     this.boundingBox = b; return this;
+  };
+  G.computeBoundingSphere = function () {
+    if (!this.boundingBox) this.computeBoundingBox();
+    var p = this.attributes.position, c = this.boundingBox.getCenter(new Vector3()), v = new Vector3(), r2 = 0;
+    for (var i = 0; i < p.count; i++) r2 = Math.max(r2, c.distanceToSquared(v.set(p.getX(i), p.getY(i), p.getZ(i))));
+    this.boundingSphere = { center: c, radius: Math.sqrt(r2) }; return this;
   };
   G.computeVertexNormals = function () {
     var p = this.attributes.position.array, n = new Float32Array(p.length), idx = this.index ? this.index.array : null, count = idx ? idx.length : p.length / 3;
@@ -313,6 +356,7 @@
       }
     }
     if (this.boundingBox) this.computeBoundingBox();
+    if (this.boundingSphere) this.computeBoundingSphere();
     this.version++; return this;
   };
   G.translate = function (x, y, z) { var m = new Matrix4(); m.elements[12] = x; m.elements[13] = y; m.elements[14] = z; return this.applyMatrix4(m); };
@@ -547,8 +591,8 @@
   function CanvasTexture(canvas) { this.uuid = uuid(); this.image = canvas; this.anisotropy = 1; this.encoding = 3000; this.needsUpdate = true; this.version = 1; }
   CanvasTexture.prototype.dispose = function () {};
 
-  /* ---------- raycaster: meshes only, faces facing the ray unless double-sided ---------- */
-  function Raycaster() { this.ray = new Ray(); this.params = { Line: { threshold: 1 } }; }
+  /* ---------- raycaster: mesh faces facing the ray (unless double-sided), and line segments within params.Line.threshold ---------- */
+  function Raycaster() { this.ray = new Ray(); this.near = 0; this.far = Infinity; this.params = { Line: { threshold: 1 } }; }
   Raycaster.prototype.setFromCamera = function (ndc, cam) {
     this.ray.origin.set(ndc.x, ndc.y, (cam.near + cam.far) / (cam.near - cam.far));
     var inv = new Matrix4().multiplyMatrices(cam.matrixWorld, new Matrix4().copy(cam.projectionMatrix).invert());
@@ -556,9 +600,10 @@
     this.ray.direction.set(0, 0, -1).transformDirection(cam.matrixWorld);
   };
   Raycaster.prototype.intersectObjects = function (objects, recursive) {
-    var hits = [], ray = this.ray;
+    var hits = [], ray = this.ray, self = this;
     function test(o) {
       if (o.isMesh) intersectMesh(o, ray, hits);
+      else if (o.isLine) intersectLine(o, self, hits);
       if (recursive) for (var i = 0; i < o.children.length; i++) test(o.children[i]);
     }
     for (var i = 0; i < objects.length; i++) test(objects[i]);
@@ -587,6 +632,27 @@
     if (best < Infinity) {
       var point = o.clone().addScaledVector(d, best).applyMatrix4(mesh.matrixWorld);
       hits.push({ object: mesh, distance: point.distanceTo(ray.origin), point: point });
+    }
+  }
+  /* like three's Line.raycast: every segment within the threshold (world units, divided by the object's mean scale) is a hit,
+     at the distance from the ray's origin to the point on the ray nearest the segment */
+  var _lRay = new Ray(), _lStart = new Vector3(), _lEnd = new Vector3(), _lOnRay = new Vector3(), _lOnSeg = new Vector3(), _lCenter = new Vector3();
+  function intersectLine(line, caster, hits) {
+    var g = line.geometry, mw = line.matrixWorld, e = mw.elements, threshold = caster.params.Line.threshold;
+    if (!g.boundingSphere) g.computeBoundingSphere();
+    var scaleMax = Math.sqrt(Math.max(e[0] * e[0] + e[1] * e[1] + e[2] * e[2], e[4] * e[4] + e[5] * e[5] + e[6] * e[6], e[8] * e[8] + e[9] * e[9] + e[10] * e[10]));
+    _lCenter.copy(g.boundingSphere.center).applyMatrix4(mw);
+    if (!caster.ray.intersectsSphere(_lCenter, g.boundingSphere.radius * scaleMax + threshold)) return;
+    _lRay.copy(caster.ray).applyMatrix4(new Matrix4().copy(mw).invert());
+    var local = threshold / ((line.scale.x + line.scale.y + line.scale.z) / 3), localSq = local * local;
+    var p = g.attributes.position, idx = g.index, count = idx ? idx.count : p.count, step = line.isLineSegments ? 2 : 1;
+    for (var i = 0; i < count - 1; i += step) {
+      var a = idx ? idx.getX(i) : i, b = idx ? idx.getX(i + 1) : i + 1;
+      _lStart.set(p.getX(a), p.getY(a), p.getZ(a)); _lEnd.set(p.getX(b), p.getY(b), p.getZ(b));
+      if (_lRay.distanceSqToSegment(_lStart, _lEnd, _lOnRay, _lOnSeg) > localSq) continue;
+      var distance = caster.ray.origin.distanceTo(_lOnRay.applyMatrix4(mw));
+      if (distance < caster.near || distance > caster.far) continue;
+      hits.push({ object: line, distance: distance, point: _lOnSeg.clone().applyMatrix4(mw), index: i });
     }
   }
 
@@ -649,6 +715,7 @@
     this.domElement = canvas; this.shadowMap = { enabled: false, type: 2 }; this.outputEncoding = 3001; this.capabilities = { getMaxAnisotropy: function () { return aniso ? gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1; } };
     var pixelRatio = 1, clear = [0, 0, 0, 0], programs = {}, buffers = {}, textures = {}, shadowTarget = null;
     this.setPixelRatio = function (r) { pixelRatio = r || 1; };
+    this.getContext = function () { return gl; };
     this.getPixelRatio = function () { return pixelRatio; };
     this.setClearColor = function (c, a) { var col = new Color(c); clear = [col.r, col.g, col.b, a === undefined ? 1 : a]; };
     this.setSize = function (w, h, style) {

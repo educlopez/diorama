@@ -97,7 +97,7 @@ theme: { base: 'mono', accent: '#5b4ae0', shadows: false, strokeWidth: 1.4 }
 
 `tone` makes any theme monochrome, `edges` and `outline` draw ink on any theme, `round` turns every box into a rounded solid, `lights` replaces any of the four lights. The bench page has a theme switcher, and `look.mjs --theme line` writes the sheet for another theme.
 
-Every diorama ships as `diorama-<name>.html`: three.js from cdnjs (or inlined with `--inline`), the kernel, the figure and a small bench page. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
+Every diorama ships as `diorama-<name>.html`: three.js from cdnjs (or inlined with `--inline`, or replaced by three-lite with `--lite`, an option in beta), the kernel, the figure and a small bench page. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
 
 It honours `prefers-reduced-motion` with one still frame, sleeps when offscreen or in a hidden tab, and never allocates in the loop.
 
@@ -125,7 +125,7 @@ mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/dioram
 
 - Node.js 20 or later, for `build.mjs`, `validate.mjs` and `look.mjs`.
 - Chrome or Chromium for the look. `look.mjs` finds Playwright's browser or installs `playwright-core` once into `~/.cache/diorama-look`.
-- Nothing at runtime: the page loads three.js r128 from cdnjs, or carries it inline.
+- Nothing at runtime: the page loads three.js r128 from cdnjs, or carries it inline. With `--lite` it carries three-lite instead, 44 KB in place of 600 KB.
 
 ## Usage
 
@@ -140,6 +140,7 @@ Then run the scripts yourself when you want to:
 ```sh
 node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js            # writes diorama-mailbox.html
 node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --inline   # no network at all
+node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --lite     # three-lite instead of three.js (beta, about 44 KB)
 node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html
 node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the sheet and the numbers
 ```
@@ -167,8 +168,9 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
 - `kit/diorama.js` is the kernel: the orthographic isometric camera fitted to the scene, four lights (hemisphere, warm sun with PCF soft shadows, cool fill, ambient) in sRGB, the five themes with toning, edges and silhouette outlines, cached matte materials, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths), the pointer with picking and camera tilt, and the loop that sleeps.
 - `kit/three.min.js` is three.js r128, vendored for `--inline` builds and the offline look.
+- `kit/three-lite.js` is three-lite: the part of the three.js API the kernel uses, written without a dependency, with a WebGL1 renderer, for `--lite` builds (an option, in beta; three.js stays the default). `kit/three-lite.min.js` is the copy the build pastes in, written by `scripts/minify-lite.mjs`.
 - `bench.html` is the page: a card for every figure, sized to it.
-- `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs nine checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer); `scripts/look.mjs` takes the sheet in headless Chromium and measures fill, motion and the pointer's answer.
+- `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs ten checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer, renderer); `scripts/look.mjs` takes the sheet in headless Chromium and measures fill, motion and the pointer's answer.
 - `references/` hold the long form: concepts, the ten craft rules with the themes and recipes, motion patterns, the look, and embedding in React.
 - `apps/site/` is the website (see below).
 
