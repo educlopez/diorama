@@ -26,9 +26,10 @@
  *  9 pointer       a hero or card answers the pointer somewhere: it reads
  *                  ctx.pointer or ctx.hover, or sets parts.hot. A mini may
  *                  rely on the camera tilt alone.
- * 10 renderer      a built page carries one renderer: three.js r128 (the cdnjs
- *                  script, or inlined with --inline) or three-lite (--lite),
- *                  never both and never neither. A lite page has no script src.
+ * 10 renderer      a built page carries one renderer: three-lite (the default),
+ *                  or three.js r128 (the cdnjs script with --three, or inlined
+ *                  with --inline), never both and never neither. A lite page
+ *                  has no script src.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -100,7 +101,7 @@ export function validate(text) {
 
   if (page) {
     const r = renderersOf(text), n = r.cdn + r.three + r.lite;
-    check(10, "renderer", n === 1, n === 0 ? "no three.js and no three-lite in the page" : r.lite && (r.cdn || r.three) ? "a lite page also carries three.js: build it with --lite alone" : r.cdn && r.three ? "three.js is both linked from cdnjs and inlined" : "more than one renderer in the page");
+    check(10, "renderer", n === 1, n === 0 ? "no three.js and no three-lite in the page" : r.lite && (r.cdn || r.three) ? "a lite page also carries three.js: build it without --three or --inline" : r.cdn && r.three ? "three.js is both linked from cdnjs and inlined" : "more than one renderer in the page");
   } else check(10, "renderer", true, "");
 
   return out;

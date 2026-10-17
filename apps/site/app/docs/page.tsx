@@ -107,7 +107,7 @@ export default function Page() {
         <Section id="installation">
           <CodeRows rows={[
             { code: INSTALL, note: "Installs the skill for every agent the skills CLI knows. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
-            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page loads three.js r128 from cdnjs, carries it inline with --inline, or carries three-lite with --lite (beta)." },
+            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page carries three-lite and makes no network request. --three loads three.js r128 from cdnjs instead, and --inline carries it in the page." },
           ]} />
         </Section>
 
@@ -158,7 +158,7 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
 
         <Section id="scripts">
           <CodeRows rows={[
-            { code: "node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js", note: "Writes diorama-mailbox.html: three.js from cdnjs, the kernel, the figure and the bench page. Add --inline to paste three.js in, or --lite (an option, in beta) to use three-lite instead: the part of three.js the kernel uses, about 44 KB instead of 600 KB. three.js stays the default." },
+            { code: "node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js", note: "Writes diorama-mailbox.html: three-lite (the part of three.js the kernel uses, about 44 KB), the kernel, the figure and the bench page. Add --three to load three.js r128 from cdnjs instead, or --inline to paste three.js in." },
             { code: "node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html", note: "Ten checks: the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base, the pointer and the renderer (three.js or three-lite, never both)." },
             { code: "node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js --theme line", note: "Opens the page in headless Chromium and writes one sheet: the still frame, three moments, the pointer, the tilt, the thumbnail and the page, plus the console, the fill, the motion and the answer as numbers." },
           ]} />

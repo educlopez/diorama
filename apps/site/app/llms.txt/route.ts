@@ -7,7 +7,7 @@ export const dynamic = "force-static";
 export function GET() {
   const text = `# Diorama
 
-> A Claude Code skill that builds small animated isometric 3D scenes for the web: a hero for a landing page, a card for docs, a mini figure for any small spot (an empty state, a feature list, a 404). One self-contained HTML file on three.js r128 (or on three-lite, a 44 KB subset, with the --lite build option, in beta). Five themes (${THEME_ROWS.map((t) => t.name).join(", ")}), every field overridable.
+> A Claude Code skill that builds small animated isometric 3D scenes for the web: a hero for a landing page, a card for docs, a mini figure for any small spot (an empty state, a feature list, a 404). One self-contained HTML file on three-lite, a 44 KB subset of three.js (or on three.js r128 with the --three or --inline build options). Five themes (${THEME_ROWS.map((t) => t.name).join(", ")}), every field overridable.
 
 Install: ${INSTALL}
 Repository: ${REPO}

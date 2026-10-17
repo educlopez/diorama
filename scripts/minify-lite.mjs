@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Regenerates kit/three-lite.min.js from kit/three-lite.js: `node minify-lite.mjs`.
- * build.mjs --lite pastes the minified copy into the page, so run this after
+ * build.mjs pastes the minified copy into every page, so run this after
  * any change to kit/three-lite.js and commit both files. It needs terser, which
  * the skill does not depend on: it is resolved from the working directory, or
  * from the folder in DIORAMA_TOOLS (any project with terser in node_modules).

@@ -113,7 +113,7 @@ export default function Page() {
           {[
             ["What is this, exactly?", "A skill: a folder of instructions, a small three.js kernel, themes, examples and checks that a coding agent reads when you ask it for a 3D scene. We made it, and every figure on this site is its output. The site is the gallery and the manual."],
             ["Is it free?", "Yes. The skill, the kernel and the examples are MIT. Use them in any project, commercial or not."],
-            ["What do I need?", "Claude Code or another agent that reads skills, Node.js 20 or later for the scripts, and Chrome or Chromium for the look. A finished page needs nothing: it loads three.js r128 from cdnjs or carries it inline."],
+            ["What do I need?", "Claude Code or another agent that reads skills, Node.js 20 or later for the scripts, and Chrome or Chromium for the look. A finished page needs nothing: it carries three-lite, the part of three.js the kernel uses, in about 44 KB."],
             ["Does it work in React?", "Yes. The kernel takes a three.js instance and an element; mount a figure in an effect, destroy it on unmount, and pass a theme. Plain pages use two script tags."],
             ["Why is everything isometric and blocky?", "On purpose. One camera, matte blocks, one sun with soft shadows and a few accents is what makes a scene read at a glance and stay cheap to render."],
             ["Can I change the colours?", "Every theme is a set of fields: palette, accent, lights, shadows, finish, tone, edges, outline, stroke, glow. Override any of them in the figure or when you mount it, or start from mono and line for a one-colour or hairline look."],

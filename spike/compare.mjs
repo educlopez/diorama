@@ -1,4 +1,4 @@
-// Spike: render each figure with three.js r128 (inlined) and with three-lite (build.mjs --lite) at the same second,
+// Spike: render each figure with three.js r128 (inlined) and with three-lite (the default build) at the same second,
 // in one browser, and report SSIM per figure with the console errors of both pages.
 // Usage: node spike/compare.mjs [names…]   env: BROWSER, MOBILE, THEME, T, PLAYWRIGHT (see launch.mjs); needs ffmpeg.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
@@ -17,7 +17,7 @@ const rows = [];
 for (const n of names) {
   const src = readFileSync(join(ROOT, 'examples', n + '.js'), 'utf8');
   writeFileSync(join(OUT, `${n}-three.html`), assemble(src, { inline: true }));
-  writeFileSync(join(OUT, `${n}-lite.html`), assemble(src, { lite: true }));
+  writeFileSync(join(OUT, `${n}-lite.html`), assemble(src));
   const shots = {};
   for (const kind of ['three', 'lite']) {
     const p = await ctx.newPage();
