@@ -8,6 +8,7 @@
   'use strict';
   var uid = 0;
   function uuid() { return 'l' + (++uid); }
+  var objectId = 0;
 
   /* ---------- maths ---------- */
   function Vector2(x, y) { this.x = x || 0; this.y = y || 0; }
@@ -22,6 +23,7 @@
   V.clone = function () { return new Vector3(this.x, this.y, this.z); };
   V.add = function (v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; };
   V.sub = function (v) { this.x -= v.x; this.y -= v.y; this.z -= v.z; return this; };
+  V.addVectors = function (a, b) { this.x = a.x + b.x; this.y = a.y + b.y; this.z = a.z + b.z; return this; };
   V.subVectors = function (a, b) { this.x = a.x - b.x; this.y = a.y - b.y; this.z = a.z - b.z; return this; };
   V.addScaledVector = function (v, s) { this.x += v.x * s; this.y += v.y * s; this.z += v.z * s; return this; };
   V.multiplyScalar = function (s) { this.x *= s; this.y *= s; this.z *= s; return this; };
@@ -155,6 +157,15 @@
     this.min.set(Math.min(this.min.x, p.x), Math.min(this.min.y, p.y), Math.min(this.min.z, p.z));
     this.max.set(Math.max(this.max.x, p.x), Math.max(this.max.y, p.y), Math.max(this.max.z, p.z)); return this;
   };
+  /* like three: each object's world matrix from its parent's current one, its geometry's box in world space */
+  B.setFromObject = function (object) { this.min.set(Infinity, Infinity, Infinity); this.max.set(-Infinity, -Infinity, -Infinity); return this.expandByObject(object); };
+  B.expandByObject = function (object) {
+    object.updateWorldMatrix(false);
+    var g = object.geometry;
+    if (g) { if (!g.boundingBox) g.computeBoundingBox(); this.union(new Box3(g.boundingBox.min.clone(), g.boundingBox.max.clone()).applyMatrix4(object.matrixWorld)); }
+    for (var i = 0; i < object.children.length; i++) this.expandByObject(object.children[i]);
+    return this;
+  };
   B.union = function (b) { if (!b.isEmpty()) { this.expandByPoint(b.min); this.expandByPoint(b.max); } return this; };
   B.applyMatrix4 = function (m) {
     if (this.isEmpty()) return this;
@@ -214,7 +225,7 @@
 
   /* ---------- scene graph ---------- */
   function Object3D() {
-    this.uuid = uuid(); this.type = 'Object3D'; this.parent = null; this.children = [];
+    this.id = objectId++; this.uuid = uuid(); this.type = 'Object3D'; this.parent = null; this.children = [];
     this.position = new Vector3(); this.rotation = new Euler(); this.scale = new Vector3(1, 1, 1);
     this.matrix = new Matrix4(); this.matrixWorld = new Matrix4(); this.visible = true; this.userData = {};
     this.castShadow = false; this.receiveShadow = false; this.renderOrder = 0; this.frustumCulled = true;
@@ -316,6 +327,7 @@
 
   function BufferGeometry() { this.uuid = uuid(); this.attributes = {}; this.index = null; this.groups = []; this.boundingBox = null; this.boundingSphere = null; this.version = 0; }
   var G = BufferGeometry.prototype;
+  G.type = 'BufferGeometry';
   G.isBufferGeometry = true;
   G.setAttribute = function (name, attr) { this.attributes[name] = attr; this.version++; return this; };
   G.setIndex = function (index) { this.index = index ? (index.array ? index : new BufferAttribute(new Uint32Array(index), 1)) : null; this.version++; return this; };
@@ -389,7 +401,7 @@
     face([0, 0, 1], [1, 0, 0], [0, 1, 0]); face([0, 0, -1], [-1, 0, 0], [0, 1, 0]);
     build(this, pos, nor, uv, idx);
   }
-  inherit(BoxGeometry, BufferGeometry);
+  inherit(BoxGeometry, BufferGeometry, { type: 'BoxGeometry' });
 
   function CylinderGeometry(rt, rb, h, seg, hseg, open, th0, thl) {
     BufferGeometry.call(this);
@@ -422,9 +434,9 @@
     if (!open) { cap(true); cap(false); }
     build(this, pos, nor, uv, idx);
   }
-  inherit(CylinderGeometry, BufferGeometry);
+  inherit(CylinderGeometry, BufferGeometry, { type: 'CylinderGeometry' });
   function ConeGeometry(r, h, seg) { CylinderGeometry.call(this, 0, r, h, seg); }
-  inherit(ConeGeometry, BufferGeometry);
+  inherit(ConeGeometry, BufferGeometry, { type: 'ConeGeometry' });
 
   function SphereGeometry(r, ws, hs, p0, pl, t0, tl) {
     BufferGeometry.call(this);
@@ -446,7 +458,7 @@
     }
     build(this, pos, nor, uv, idx);
   }
-  inherit(SphereGeometry, BufferGeometry);
+  inherit(SphereGeometry, BufferGeometry, { type: 'SphereGeometry' });
 
   function TorusGeometry(R, tube, rs, ts) {
     BufferGeometry.call(this);
@@ -464,13 +476,13 @@
     }
     build(this, pos, nor, uv, idx);
   }
-  inherit(TorusGeometry, BufferGeometry);
+  inherit(TorusGeometry, BufferGeometry, { type: 'TorusGeometry' });
 
   function PlaneGeometry(w, h) {
     BufferGeometry.call(this);
     build(this, [-w / 2, h / 2, 0, w / 2, h / 2, 0, -w / 2, -h / 2, 0, w / 2, -h / 2, 0], [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1], [0, 1, 1, 1, 0, 0, 1, 0], [0, 2, 1, 2, 3, 1]);
   }
-  inherit(PlaneGeometry, BufferGeometry);
+  inherit(PlaneGeometry, BufferGeometry, { type: 'PlaneGeometry' });
 
   /* shapes: lines and quadratic curves, which is all the kernel draws */
   function Shape() { this.cmds = []; this.cur = new Vector2(); }
@@ -528,7 +540,7 @@
     this.addGroup(sideStart, pos.length / 3 - sideStart, 1);
     build(this, pos); this.computeVertexNormals();
   }
-  inherit(ExtrudeGeometry, BufferGeometry);
+  inherit(ExtrudeGeometry, BufferGeometry, { type: 'ExtrudeGeometry' });
 
   function EdgesGeometry(g, angle) {
     BufferGeometry.call(this);
@@ -554,7 +566,7 @@
     Object.keys(edges).forEach(function (k) { var e = edges[k]; if (e) out.push(p.getX(e.a), p.getY(e.a), p.getZ(e.a), p.getX(e.b), p.getY(e.b), p.getZ(e.b)); });
     build(this, out);
   }
-  inherit(EdgesGeometry, BufferGeometry);
+  inherit(EdgesGeometry, BufferGeometry, { type: 'EdgesGeometry' });
 
   /* ---------- materials ---------- */
   var FrontSide = 0, BackSide = 1, DoubleSide = 2;

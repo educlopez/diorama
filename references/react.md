@@ -1,6 +1,6 @@
 # Embedding a diorama
 
-The built page is one HTML file: a `<script>` for three.js (CDN, or inlined with `--inline`; or three-lite with `--lite`, an option in beta), the kernel, the figure, and the bench's own mount code. For a product, keep the figure and the kernel, drop the bench.
+The built page is one HTML file: three-lite inlined (or, with `--three`, a `<script>` for three.js r128 from the CDN; with `--inline`, three.js pasted in), the kernel, the figure, and the bench's own mount code. For a product, keep the figure and the kernel, drop the bench.
 
 ## Any page
 
@@ -50,4 +50,4 @@ Notes:
 
 ## Shipping the page itself
 
-For a blog or a static site, `diorama-<name>.html` can be served as is, or embedded in an `<iframe>` at the stage's aspect. `--inline` makes it a single file with no network request. `--lite` does the same with three-lite in place of three.js, about 44 KB instead of 600 KB; it is an option in beta, and three.js stays the default. On a page of its own, `kit/three-lite.js` can take the place of the three.js script tag, since it exposes the same `THREE` names the kernel uses.
+For a blog or a static site, `diorama-<name>.html` can be served as is, or embedded in an `<iframe>` at the stage's aspect. The default build is already a single file with no network request, on three-lite (about 44 KB). `--inline` does the same with three.js r128 pasted in, about 600 KB. In a product, `kit/three-lite.js` can take the place of the three.js script tag below, since it exposes the same `THREE` names the kernel uses; keep three.js when the app already loads r128.
