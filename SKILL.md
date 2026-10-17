@@ -48,7 +48,7 @@ Offer two or three when there is someone to ask, and wait. If there is nobody to
    - `still`: the second of the loop that reduced motion and thumbnails show. Choose a moment where everything is in a telling place (the truck at the dock, the forks up).
    - `build({ D, pal })`: build the scene once with the toolkit and return `parts`: every group and mesh `tick` will move, plus `parts.hot`, the groups the pointer may pick. Give each hot group a `.name` (`boat.name = 'boat'`): the page shows it as a read-out while the pointer is on it.
    - `tick(ctx)`: every frame, pose the parts from `ctx.t` with `D.phase`, `D.pulse`, `D.wave`, `D.inOut`, `D.path` and `D.spring`. `references/motion.md` has the patterns.
-5. Assemble: `node <skill>/scripts/build.mjs <name>.js` writes `diorama-<name>.html`. Add `--inline` for a page with no network at all (three.js pasted in, about 600 KB more).
+5. Assemble: `node <skill>/scripts/build.mjs <name>.js` writes `diorama-<name>.html`. Add `--inline` for a page with no network at all (three.js pasted in, about 600 KB more). `--lite` is an option in beta: it pastes `kit/three-lite.min.js` instead of three.js (the part of three.js the kernel uses, written without a dependency, about 44 KB; 15 KB gzip against 150 KB), also with no network. Use it only when the person asks for the smallest page; three.js stays the default, and `look.mjs` always looks with three.js.
 
 ## 3. Check
 

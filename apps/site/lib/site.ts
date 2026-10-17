@@ -37,9 +37,10 @@ export const THEME_FIELDS = [
 export const SKILL_FILES = [
   ["SKILL.md", "the workflow: size and concept, build, check, hand over, adjust"],
   ["kit/diorama.js", "the kernel: camera, lights, shadows, themes, primitives, props, paths, springs, the loop"],
+  ["kit/three-lite.js", "three-lite: the part of three.js the kernel uses, without a dependency, for --lite builds (an option, in beta)"],
   ["bench.html", "the page a figure is built into; a theme switcher and a still-frame toggle"],
-  ["scripts/build.mjs", "writes diorama-<name>.html; --inline pastes three.js in"],
-  ["scripts/validate.mjs", "nine checks: declaration, length, clock, self-contained, kernel, words, colours, base, pointer"],
+  ["scripts/build.mjs", "writes diorama-<name>.html; --inline pastes three.js in, --lite uses three-lite instead"],
+  ["scripts/validate.mjs", "ten checks: declaration, length, clock, self-contained, kernel, words, colours, base, pointer, renderer"],
   ["scripts/look.mjs", "a sheet of eight pictures and the numbers, in headless Chromium; --theme for another theme"],
   ["references/", "concepts, the ten craft rules and the themes, motion, the look, React"],
   ["examples/", "thirteen figures across sizes and themes, the format to write"],
