@@ -32,7 +32,7 @@
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { kernelSource } from "./build.mjs";
+import { kernelSource, THREE_CDN } from "./build.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const LINES = { hero: 420, card: 240, mini: 150 };
@@ -80,7 +80,7 @@ export function validate(text) {
 
   const net = /\b(import\s*\(|^\s*import\s|fetch\s*\(|XMLHttpRequest|WebSocket|document\.createElement\s*\(\s*["']script)/m.exec(strip);
   let extra = null;
-  if (page) { const srcs = [...text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g)].map((m) => m[1]).filter((u) => !/three\.min\.js$/.test(u)); extra = srcs[0] || null; }
+  if (page) { const srcs = [...text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g)].map((m) => m[1]).filter((u) => u !== THREE_CDN); extra = srcs[0] || null; }
   check(4, "self-contained", !net && !extra, net ? `${net[1] || net[0]} in the figure` : extra ? `<script src="${extra}">` : "");
 
   if (page) check(5, "kernel", kernel === kernelBody(kernelSource()), "the page's kernel differs from kit/diorama.js");
@@ -109,7 +109,7 @@ export function validate(text) {
 /** How many times each renderer is in a built page: the cdnjs script, three.js inlined, three-lite inlined. */
 export function renderersOf(text) {
   return {
-    cdn: [...text.matchAll(/<script[^>]*\ssrc=["'][^"']*three\.min\.js["']/g)].length,
+    cdn: [...text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g)].filter((m) => m[1] === THREE_CDN).length,
     three: [...text.matchAll(/Copyright 2010-20\d\d Three\.js Authors/g)].length,
     lite: [...text.matchAll(/\bREVISION:\s*["']128-lite["']/g)].length,
   };

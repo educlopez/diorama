@@ -23,9 +23,10 @@ for (const n of names) {
     const p = await ctx.newPage();
     const errors = []; p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     await p.goto(`file://${join(OUT, `${n}-${kind}.html`)}?embed&still&t=${process.env.T || 2}${theme ? '&theme=' + theme : ''}`);
-    try { await p.waitForFunction(() => window.__diorama && window.__diorama.renderer && window.__diorama.renderer.getContext(), null, { timeout: 15000 }); } catch { errors.push('no WebGL context'); }
+    let ready = true;
+    try { await p.waitForFunction(() => window.__diorama && window.__diorama.renderer && window.__diorama.renderer.getContext(), null, { timeout: 15000 }); } catch { ready = false; errors.push('no WebGL context'); }
     await p.waitForTimeout(400);
-    if (!rows.length && kind === 'lite') console.log(await p.evaluate(() => { const gl = window.__diorama.renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info'); return navigator.userAgent + ' · ' + (d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)) + ' · dpr ' + devicePixelRatio; }));
+    if (ready && !rows.length && kind === 'lite') console.log(await p.evaluate(() => { const gl = window.__diorama.renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info'); return navigator.userAgent + ' · ' + (d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)) + ' · dpr ' + devicePixelRatio; }));
     const file = join(OUT, `${n}${suffix}-${kind}-${TAG}.png`);
     const stage = await p.$('#stage');
     if (stage) await stage.screenshot({ path: file, omitBackground: true });
