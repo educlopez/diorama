@@ -86,7 +86,9 @@
                                      (D.mat(c).clone()) before changing it for a single object
      group.userData.terrain = true   ground other things stand on (a hill, a mountain): look's clash check skips it
      D.group(x, y, z, parent)        a Group placed at x, y, z
-     D.box(w, h, d, c, x, y, z, parent, { shadow, mat, r })
+     D.box(w, h, d, c, x, y, z, parent, { shadow, mat, r, on })  on: the mesh this is set into the face of (a window
+                                     in a wall, a door on a cabinet, a shelf inside a fridge): it paints right after it.
+                                     Any mesh takes m.on = other
      D.rbox(w, h, d, c, x, y, z, parent, { r })  a box with rounded edges (drawn as a box; the rounding is the ink's)
      D.cyl(rt, rb, h, c, x, y, z, parent, seg)
      D.cone(r, h, c, x, y, z, parent, seg)
@@ -269,6 +271,9 @@ var Diorama = (function () {
     setFromMatrixPosition: function (m) { var e = m.elements; this.x = e[12]; this.y = e[13]; this.z = e[14]; return this; },
     toArray: function () { return [this.x, this.y, this.z]; }
   };
+  function Euler(x, y, z) { this.x = x || 0; this.y = y || 0; this.z = z || 0; }
+  Euler.prototype.set = function (x, y, z) { this.x = x; this.y = y; this.z = z; return this; };
+  Euler.prototype.copy = function (e) { this.x = e.x; this.y = e.y; this.z = e.z; return this; };
   function Matrix4() { this.elements = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
   Matrix4.prototype = {
     isMatrix4: true,
@@ -328,13 +333,13 @@ var Diorama = (function () {
   function toSRGB(c) { return c < .0031308 ? c * 12.92 : 1.055 * Math.pow(c, .41666) - .055; }
   function hexOf(c) { return (typeof c === 'string' ? (c.length === 4 ? '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c) : '#' + c.getHexString()).toLowerCase(); }
   function luma(col) { return .2126 * col.r + .7152 * col.g + .0722 * col.b; }
-  var M = { Vector3: Vector3, Matrix4: Matrix4, Color: Color };
+  var M = { Vector3: Vector3, Matrix4: Matrix4, Color: Color, Euler: Euler };
 
   /* ---------- the scene: groups, meshes, materials ---------- */
   var nextId = 1;
   function Object3D() {
     this.id = nextId++; this.name = ''; this.type = 'Object3D'; this.parent = null; this.children = [];
-    this.position = new Vector3(); this.rotation = { x: 0, y: 0, z: 0 }; this.scale = new Vector3(1, 1, 1);
+    this.position = new Vector3(); this.rotation = new Euler(); this.scale = new Vector3(1, 1, 1);
     this.visible = true; this.userData = {}; this.matrix = new Matrix4(); this.matrixWorld = new Matrix4();
     this.castShadow = false; this.receiveShadow = false; this.renderOrder = 0;
   }
@@ -405,6 +410,7 @@ var Diorama = (function () {
       var m = new Mesh(g, mat(c, o && o.mat));
       m.position.set(x || 0, y || 0, z || 0); m.castShadow = !(o && o.shadow === false); m.receiveShadow = true;
       if (o && o.shadow === false) m.userData.mark = true;
+      if (o && o.on) m.on = o.on;
       (parent || world).add(m); return m;
     }
     var D = {
@@ -619,7 +625,7 @@ var Diorama = (function () {
           if (stroke) for (j = 0; j < f.length; j++) { var a = f[j], b = f[(j + 1) % f.length], key = a < b ? a + '-' + b : b + '-' + a; if (!seen[key]) { seen[key] = 1; d.edges.push([proj(V[a]), proj(V[b])]); } }
         }
         if (m.castShadow) d.shadowPts = V;
-        d.depth = depthOf(V);
+        d.depth = depthOf(V); bounds(d, V);
       } else if (g.type === 'CylinderGeometry' || g.type === 'ConeGeometry') {
         var seg = g.seg, top = [], bot = [], h = g.h;
         if (g.type === 'ConeGeometry') { top = [[0, h / 2, 0]]; ring(g.r, -h / 2, seg, bot); } else { ring(g.rt, h / 2, seg, top); ring(g.rb, -h / 2, seg, bot); }
@@ -631,14 +637,26 @@ var Diorama = (function () {
         }
         var topN = cone ? null : normalOf(T[0], T[1], T[2]), botN = normalOf(B[0], B[2], B[1]), topVis = topN && facing(topN), botVis = facing(botN);
         if (botVis) d.faces.push({ d: poly(B.map(proj)), fill: fillOf(botN) });
-        for (k = 0; k < seg; k++) if (vis[k]) d.faces.push({ d: poly(bands[k].pts.map(proj)), fill: fillOf(bands[k].n) });
+        /* the visible side as one shape with a gradient across its bands, so a round thing shades smoothly like a
+           turned part, not in stripes; a run too short to shade, or a side seen from inside, keeps its bands */
+        var run = runOf(vis, seg);
+        if (run.length >= 3) {
+          var sidePts = [], q6, last = (run[run.length - 1] + 1) % seg;
+          for (q6 = 0; q6 < run.length; q6++) sidePts.push(proj(B[run[q6]]));
+          sidePts.push(proj(B[last]));
+          if (cone) sidePts.push(proj(T[0])); else { sidePts.push(proj(T[last])); for (q6 = run.length - 1; q6 >= 0; q6--) sidePts.push(proj(T[run[q6]])); }
+          var mid = function (kk) { var bq = B[kk], tq = cone ? T[0] : T[kk]; return proj([(bq[0] + tq[0]) / 2, (bq[1] + tq[1]) / 2, (bq[2] + tq[2]) / 2]); };
+          var g0 = mid(run[0]), g1 = mid(last), gx = g1[0] - g0[0], gy = g1[1] - g0[1], gl = gx * gx + gy * gy || 1, stops = [];
+          for (q6 = 0; q6 < run.length; q6++) { var pb = bands[run[q6]].pts, bx = 0, by = 0, bz = 0; for (var q7 = 0; q7 < pb.length; q7++) { bx += pb[q7][0]; by += pb[q7][1]; bz += pb[q7][2]; } var bm = proj([bx / pb.length, by / pb.length, bz / pb.length]); stops.push([clamp(((bm[0] - g0[0]) * gx + (bm[1] - g0[1]) * gy) / gl, 0, 1), fillOf(bands[run[q6]].n)]); }
+          d.faces.push({ d: poly(sidePts), fill: stops[Math.floor(stops.length / 2)][1], grad: theme.name === 'line' ? null : { x1: g0[0], y1: g0[1], x2: g1[0], y2: g1[1], stops: stops } });
+        } else for (k = 0; k < seg; k++) if (vis[k]) d.faces.push({ d: poly(bands[k].pts.map(proj)), fill: fillOf(bands[k].n) });
         if (topVis) d.faces.push({ d: poly(T.map(proj)), fill: fillOf(topN) });
         if (stroke) {
           for (k = 0; k < seg; k++) { var prev = vis[(k - 1 + seg) % seg]; if (vis[k] !== prev) d.edges.push([proj(B[k]), proj(cone ? T[0] : T[k])]); }
           if (topVis && !cone) d.edges.push(T.map(proj).concat([proj(T[0])])); else if (!cone) d.edges.push(rimArc(T, vis, seg));
           if (botVis) d.edges.push(B.map(proj).concat([proj(B[0])])); else d.edges.push(rimArc(B, vis, seg));
         }
-        var allPts = T.concat(B); if (m.castShadow) d.shadowPts = allPts; d.depth = depthOf(allPts);
+        var allPts = T.concat(B); if (m.castShadow) d.shadowPts = allPts; d.depth = depthOf(allPts); bounds(d, allPts);
       } else if (g.type === 'SphereGeometry') {
         var r = g.r, cx = e[12], cy = e[13], cz = e[14];
         /* the ellipse this (scaled) sphere projects to: the 2×3 of camera rows times the matrix's 3×3 */
@@ -671,9 +689,14 @@ var Diorama = (function () {
           outline = hull(silUp.concat(front.map(function (q) { return basePts[q]; })));
           sp.outline = poly(outline); sp.dome = true;
         }
+        if (!g.dome) { var ringPts = []; for (var q8 = 0; q8 < 24; q8++) { var a8 = q8 / 24 * TAU, cu = Math.cos(a8), su = Math.sin(a8); ringPts.push([c2[0] + sp.matrix[0] * cu + sp.matrix[2] * su, c2[1] + sp.matrix[1] * cu + sp.matrix[3] * su]); } sp.ring = ringPts;
+        }
         d.special = sp;
         if (m.castShadow) { var sh = []; for (var q2 = 0; q2 < 8; q2++) { var aa = q2 / 8 * TAU; sh.push([cx + ax[0] * Math.cos(aa) + az[0] * Math.sin(aa), cy + ax[1] * Math.cos(aa) + az[1] * Math.sin(aa) + (g.dome ? 0 : 0), cz + ax[2] * Math.cos(aa) + az[2] * Math.sin(aa)]); sh.push([cx + ay[0] * Math.cos(aa) + ax[0] * Math.sin(aa), cy + ay[1] * Math.cos(aa) + ax[1] * Math.sin(aa), cz + ay[2] * Math.cos(aa) + ax[2] * Math.sin(aa)]); } d.shadowPts = sh; }
         d.depth = cam.depth(cx, cy, cz);
+        var ex = Math.abs(ax[0]) + Math.abs(ay[0]) + Math.abs(az[0]), ey = Math.abs(ax[1]) + Math.abs(ay[1]) + Math.abs(az[1]), ez = Math.abs(ax[2]) + Math.abs(ay[2]) + Math.abs(az[2]);
+        d.bb = [cx - ex, cy - (g.dome ? 0 : ey), cz - ez, cx + ex, cy + ey, cz + ez];
+        var sx = Math.abs(sp.matrix[0]) + Math.abs(sp.matrix[2]), sy = Math.abs(sp.matrix[1]) + Math.abs(sp.matrix[3]); d.sb = [c2[0] - sx, c2[1] - sy, c2[0] + sx, c2[1] + sy];
       } else if (g.type === 'TorusGeometry') {
         /* the ring in six chunks, each a band as wide as the tube with its own depth, so the half of a handle that is
            behind its body is painted before the body and the half in front after it */
@@ -689,6 +712,7 @@ var Diorama = (function () {
           var part = { faces: [{ d: poly(outer.concat(inner.slice().reverse())), fill: tone }], edges: stroke ? [outer, inner] : [], shadow: null, special: null, depth: depthOf(wpts) };
           if (wob && part.edges.length) part.edges = part.edges.map(function (seg2) { return wobble(seg2, m.id * 7 + c2); });
           if (c2 === 0 && m.castShadow) part.shadowPts = ringW;
+          bounds(part, wpts, outer.concat(inner));
           parts.push(part);
         }
         return parts;
@@ -706,18 +730,34 @@ var Diorama = (function () {
           d.edges.push(rimArc(BW, visS, n2));
           for (q3 = 0; q3 < n2; q3++) { var pv = visS[(q3 - 1 + n2) % n2]; if (visS[q3] !== pv) d.edges.push([proj(BW[q3]), proj(TW[q3])]); }
         }
-        d.ground = true; d.area = g.w * g.d; d.depth = depthOf(TW);
+        d.ground = true; d.area = g.w * g.d; d.depth = depthOf(TW); bounds(d, TW.concat(BW));
       } else if (g.type === 'PlaneGeometry') {
         var o0 = proj([e[12], e[13], e[14]]), ox = proj([e[12] + e[0], e[13] + e[1], e[14] + e[2]]), oy = proj([e[12] + e[4], e[13] + e[5], e[14] + e[6]]);
         d.special = { label: true, matrix: [ox[0] - o0[0], ox[1] - o0[1], oy[0] - o0[0], oy[1] - o0[1], o0[0], o0[1]], g: g };
         d.depth = cam.depth(e[12], e[13], e[14]);
+        var lc = [], lw = g.w / 2, lh = g.h / 2, li; for (li = 0; li < 4; li++) { var ux = li & 1 ? lw : -lw, uy = li & 2 ? lh : -lh; lc.push([e[12] + e[0] * ux + e[4] * uy, e[13] + e[1] * ux + e[5] * uy, e[14] + e[2] * ux + e[6] * uy]); } bounds(d, lc);
       }
       /* ground: thin, low things (zones, roads, water, rails) are painted first, under everything */
       if (!d.ground) { var ab = aabb(m); if (ab.max.y <= .26 && ab.max.y - ab.min.y <= .32 && ab.min.y > -.5) { d.ground = true; d.area = 0; } }
       if (wob && d.edges.length) d.edges = d.edges.map(function (seg2) { return wobble(seg2, m.id); });
       return d;
     }
+    /* a drawable's box in the world and on the page, for the painter's order */
+    function bounds(d, wpts, spts) {
+      var bb = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity], sb = [Infinity, Infinity, -Infinity, -Infinity], i, p;
+      for (i = 0; i < wpts.length; i++) { p = wpts[i]; if (p[0] < bb[0]) bb[0] = p[0]; if (p[1] < bb[1]) bb[1] = p[1]; if (p[2] < bb[2]) bb[2] = p[2]; if (p[0] > bb[3]) bb[3] = p[0]; if (p[1] > bb[4]) bb[4] = p[1]; if (p[2] > bb[5]) bb[5] = p[2]; }
+      if (!spts) { spts = []; for (i = 0; i < wpts.length; i++) spts.push(proj(wpts[i])); }
+      for (i = 0; i < spts.length; i++) { p = spts[i]; if (p[0] < sb[0]) sb[0] = p[0]; if (p[1] < sb[1]) sb[1] = p[1]; if (p[0] > sb[2]) sb[2] = p[0]; if (p[1] > sb[3]) sb[3] = p[1]; }
+      d.bb = bb; d.sb = sb;
+    }
     function depthOf(pts) { var s = 0; for (var i = 0; i < pts.length; i++) s += cam.depth(pts[i][0], pts[i][1], pts[i][2]); return s / pts.length; }
+    function runOf(vis, n) {
+      /* the indices of the visible bands, in order, when they form one run with a start (none: all or nothing visible) */
+      var start = -1, i; for (i = 0; i < n; i++) if (vis[i] && !vis[(i - 1 + n) % n]) { start = i; break; }
+      if (start < 0) return [];
+      var out = []; for (i = 0; i < n; i++) { var k = (start + i) % n; if (!vis[k]) break; out.push(k); }
+      return out;
+    }
     function rimArc(ringW, vis, n) {
       /* the rim of a hidden cap: the bottom points of the visible bands, in order, as one open polyline */
       var start = -1, i; for (i = 0; i < n; i++) if (vis[i] && !vis[(i - 1 + n) % n]) { start = i; break; }
@@ -727,20 +767,27 @@ var Diorama = (function () {
     }
     var wobAmp = 0;
     function wobble(seg, seed) {
-      /* a hand's copy of a line: each piece split in eight, bowed by a sine and an S of its own, the ends now and
-         then run a little past the corner; the endpoints themselves stay put, so lines still meet */
+      /* a hand's copy of a line: the whole stroke bowed by a few slow waves (one per forty pixels or so, each with
+         its own size and phase), fading to nothing at the ends so lines still meet, and now and then run a little
+         past a corner. A ring of many short pieces is one stroke too, so it wavers instead of sawing */
       if (seg.length < 2) return seg;
       var s = (seed * 7919 + 13) % 2147483647 || 1, rnd = function () { s = (s * 16807) % 2147483647; return s / 2147483647 * 2 - 1; };
-      var out = [], SUB = 8;
-      for (var i = 0; i < seg.length - 1; i++) {
-        var a = seg[i], b = seg[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy); if (L < 1e-6) continue;
-        var ux = dx / L, uy = dy / L, px = -uy, py = ux, r1 = rnd(), r2 = rnd() * .6, o0 = rnd(), o1 = rnd();
-        for (var k = 0; k <= SUB; k++) {
-          if (k === 0 && i > 0) continue;
-          var t = k / SUB, w = Math.sin(t * Math.PI) * r1 + Math.sin(2 * t * Math.PI) * r2, over = (t === 0 && i === 0 && o0 > .2) ? -o0 : (t === 1 && i === seg.length - 2 && o1 > .2) ? o1 : 0;
-          out.push([a[0] + dx * t + (px * w + ux * over) * wobAmp, a[1] + dy * t + (py * w + uy * over) * wobAmp]);
+      var n = seg.length, i, k, Ls = [], Ltot = 0;
+      for (i = 0; i < n - 1; i++) { var l = Math.hypot(seg[i + 1][0] - seg[i][0], seg[i + 1][1] - seg[i][1]); Ls.push(l); Ltot += l; }
+      if (Ltot < 1e-6) return seg;
+      var bows = Math.max(1, Math.min(6, Math.round(Ltot / (wobAmp * 48)))), r1 = rnd(), r2 = rnd() * .6, ph = rnd() * Math.PI, o0 = rnd(), o1 = rnd();
+      var w = function (u) { return (Math.sin(u * Math.PI * bows + ph) * r1 + Math.sin(u * Math.PI * 2 * bows + ph * 2) * r2) * Math.sin(u * Math.PI); };
+      var out = [seg[0]], acc = 0;
+      for (i = 0; i < n - 1; i++) {
+        var a = seg[i], b = seg[i + 1], L = Ls[i]; if (L < 1e-6) continue;
+        var dx = b[0] - a[0], dy = b[1] - a[1], ux = dx / L, uy = dy / L, px = -uy, py = ux, SUB = Math.max(1, Math.min(8, Math.round(L / (wobAmp * 6))));
+        for (k = 1; k <= SUB; k++) {
+          var t = k / SUB, ww = w((acc + L * t) / Ltot), over = (t === 1 && i === n - 2 && o1 > .2) ? o1 : 0;
+          out.push([a[0] + dx * t + (px * ww + ux * over) * wobAmp, a[1] + dy * t + (py * ww + uy * over) * wobAmp]);
         }
+        acc += L;
       }
+      if (o0 > .2 && Ls[0] > 1e-6) out[0] = [seg[0][0] - (seg[1][0] - seg[0][0]) / Ls[0] * o0 * wobAmp, seg[0][1] - (seg[1][1] - seg[0][1]) / Ls[0] * o0 * wobAmp];
       return out;
     }
 
@@ -769,7 +816,7 @@ var Diorama = (function () {
       if (path.__f !== fill) { path.setAttribute('fill', fill); path.__f = fill; }
       var sc = strokeC || seamC; if (path.__s !== sc) { path.setAttribute('stroke', sc); path.__s = sc; }
     }
-    var seamW = theme.edges ? 0 : .7;
+    var seamW = theme.edges ? .5 : .7;
     function paint(it, d) {
       var m = it.m, mt = m.material, g = it.g, i, op = mt.transparent ? mt.opacity : 1;
       if (g.__op !== op) { g.setAttribute('opacity', op); g.__op = op; }
@@ -793,31 +840,42 @@ var Diorama = (function () {
             S.tr = el('g', null, host);
             S.disc = el('circle', { r: 1 }, S.tr); S.disc.__mesh = m;
             S.dark = el('path', { 'pointer-events': 'none' }, S.tr); S.cap = el('path', { 'pointer-events': 'none' }, S.tr);
-            if (theme.edges) S.ink = el('path', { fill: 'none', 'pointer-events': 'none', 'vector-effect': 'non-scaling-stroke' }, sp.dome ? g : S.tr);
+            if (theme.edges) S.ink = el('path', { fill: 'none', 'pointer-events': 'none' }, g);
           }
           S.tr.setAttribute('transform', 'matrix(' + sp.matrix.map(function (v) { return Math.round(v * 1000) / 1000; }).join(' ') + ')');
           var lu = sp.light, k = .55 + .3 * clamp(sp.toward, -1, 1); /* the light from behind the camera pushes the terminator back */
           S.disc.setAttribute('fill', theme.name === 'line' ? sp.mid : sp.mid);
           if (theme.name === 'line' || theme.tones) { S.dark.setAttribute('d', ''); S.cap.setAttribute('d', ''); }
           else { S.dark.setAttribute('d', crescent(lu, k)); S.dark.setAttribute('fill', sp.dark); S.cap.setAttribute('d', cap(lu, .42)); S.cap.setAttribute('fill', sp.lit); }
-          if (sp.dome) { S.clipPath.setAttribute('d', sp.outline); S.hit.setAttribute('d', sp.outline); if (S.ink) { S.ink.setAttribute('d', wobAmp ? polyline(wobble(outlinePts(sp.outline), m.id), false) : sp.outline); S.ink.setAttribute('stroke', strokeOf(mt)); S.ink.setAttribute('stroke-width', (theme.strokeWidth || 1.1)); } }
-          else if (S.ink) { S.ink.setAttribute('d', 'M-1 0A1 1 0 1 0 1 0A1 1 0 1 0 -1 0Z'); S.ink.setAttribute('stroke', strokeOf(mt)); S.ink.setAttribute('stroke-width', (theme.strokeWidth || 1.1)); }
+          if (sp.dome) { S.clipPath.setAttribute('d', sp.outline); S.hit.setAttribute('d', sp.outline); }
+          if (S.ink) { var ring2 = sp.dome ? outlinePts(sp.outline) : sp.ring; S.ink.setAttribute('d', wobAmp ? polyline(wobble(ring2.concat([ring2[0]]), m.id), false) : poly(ring2)); S.ink.setAttribute('stroke', strokeOf(mt)); S.ink.setAttribute('stroke-width', f2((theme.strokeWidth || 1.1) * ctx.px)); }
         }
         return;
       }
       var strokeC = strokeOf(mt);
       for (i = 0; i < d.faces.length; i++) {
         var p = it.paths[i];
-        if (!p) { p = it.paths[i] = el('path', { 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' }, g); p.__mesh = m; if (!theme.edges) p.setAttribute('stroke-width', seamW); }
+        if (!p) { p = it.paths[i] = el('path', { 'stroke-linejoin': 'round' }, g); p.__mesh = m; }
+        p.setAttribute('stroke-width', f2(seamW * ctx.px));
         if (it.edgeEl && it.edgeEl.parentNode === g) g.insertBefore(p, it.edgeEl);
         setD(p, d.faces[i].d, d.faces[i].fill, theme.edges ? d.faces[i].fill : null, d.faces[i].fill);
+        var fg = d.faces[i].grad;
+        if (fg) {
+          /* a gradient of this face's own, in page units, its stops the tones of the bands it stands for */
+          var gid = uid + 'g' + it.id.replace('/', '-') + '-' + i, lg = it.grads && it.grads[i];
+          if (!lg) { it.grads = it.grads || {}; lg = it.grads[i] = el('linearGradient', { id: gid, gradientUnits: 'userSpaceOnUse' }, defs); }
+          lg.setAttribute('x1', f2(fg.x1)); lg.setAttribute('y1', f2(fg.y1)); lg.setAttribute('x2', f2(fg.x2)); lg.setAttribute('y2', f2(fg.y2));
+          while (lg.childNodes.length > fg.stops.length) lg.removeChild(lg.lastChild);
+          for (var si = 0; si < fg.stops.length; si++) { var st = lg.childNodes[si] || el('stop', null, lg); st.setAttribute('offset', f2(fg.stops[si][0])); st.setAttribute('stop-color', fg.stops[si][1]); }
+          p.setAttribute('fill', 'url(#' + gid + ')'); p.__f = 'url(#' + gid + ')';
+        }
       }
       while (it.paths.length > d.faces.length) { var extra = it.paths.pop(); g.removeChild(extra); }
       if (strokeC && d.edges.length) {
-        if (!it.edgeEl) { it.edgeEl = el('path', { fill: 'none', 'pointer-events': 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke' }, g); }
+        if (!it.edgeEl) { it.edgeEl = el('path', { fill: 'none', 'pointer-events': 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, g); }
         var ds = ''; for (i = 0; i < d.edges.length; i++) if (d.edges[i].length > 1) ds += polyline(d.edges[i], false);
         if (it.edgeEl.__d !== ds) { it.edgeEl.setAttribute('d', ds); it.edgeEl.__d = ds; }
-        it.edgeEl.setAttribute('stroke', strokeC); it.edgeEl.setAttribute('stroke-width', theme.strokeWidth || 1.1);
+        it.edgeEl.setAttribute('stroke', strokeC); it.edgeEl.setAttribute('stroke-width', f2((theme.strokeWidth || 1.1) * ctx.px));
         g.appendChild(it.edgeEl);
       } else if (it.edgeEl) { g.removeChild(it.edgeEl); it.edgeEl = null; }
     }
@@ -851,7 +909,7 @@ var Diorama = (function () {
       var seen = {};
       for (i = 0; i < ms.length; i++) {
         var mesh = ms[i], mt = mesh.material, rec = recs[mesh.id] || (recs[mesh.id] = { key: null, ds: null });
-        var key = cam.key + '|' + mesh.matrixWorld.elements.map(f2).join(',') + '|' + mt.color.getHexString() + mt.emissive.getHexString() + f2(mt.emissiveIntensity) + (mt.transparent ? f2(mt.opacity) : '') + (mesh.side ? mesh.side.color.getHexString() : '') + '|' + wobAmp;
+        var key = cam.key + '|' + mesh.matrixWorld.elements.map(f2).join(',') + '|' + mt.color.getHexString() + mt.emissive.getHexString() + f2(mt.emissiveIntensity) + (mt.transparent ? f2(mt.opacity) : '') + (mesh.side ? mesh.side.color.getHexString() : '') + '|' + wobAmp + '|' + f2(ctx.px * 1000);
         if (rec.key !== key) {
           rec.key = key; var ds = draw(mesh); rec.ds = Array.isArray(ds) ? ds : [ds];
           for (var k = 0; k < rec.ds.length; k++) {
@@ -865,7 +923,7 @@ var Diorama = (function () {
       for (var hid in items) if (!seen[hid] && items[hid].shadowEl) { shadowG.removeChild(items[hid].shadowEl); items[hid].shadowEl = null; }
       /* painter's order: the ground layer by area (slabs) then depth, the scene by depth, the far first */
       var ground = list.filter(function (it) { return it.layer === 'ground'; }).sort(function (a, b) { return (b.d.area - a.d.area) || (b.d.depth - a.d.depth); });
-      var scene = list.filter(function (it) { return it.layer === 'scene'; }).sort(function (a, b) { return b.d.depth - a.d.depth; });
+      var scene = orderScene(list.filter(function (it) { return it.layer === 'scene'; }));
       arrange(groundG, ground, 'ground'); arrange(sceneG, scene, 'scene');
       /* the shadows land on the slabs only */
       if (shadowOn) { var cp = ''; for (i = 0; i < ground.length; i++) if (ground[i].d.topPath) cp += ground[i].d.topPath; if (clip.__d !== cp) { while (clip.firstChild) clip.removeChild(clip.firstChild); el('path', { d: cp }, clip); clip.__d = cp; } }
@@ -880,6 +938,45 @@ var Diorama = (function () {
       /* the ground is not pickable unless it is hot; everything else is */
       for (i = 0; i < list.length; i++) list[i].g.__mesh = list[i].m;
     };
+    /* the painter's order of the scene: far first by centre depth; then every pair that overlaps on the page and
+       has a plane square to an axis between them paints in the order that plane says (the side the camera is on
+       paints later), which is what keeps a counter in front of a tall wall and a window on it; a thing set `on`
+       another paints right after it. A depth-first walk over those constraints gives the order; a cycle (two
+       things that overlap on the page but not in space) falls back to depth. */
+    function orderScene(its) {
+      var n = its.length, i, j, p, q;
+      its.sort(function (a, b) { return b.d.depth - a.d.depth; });
+      var idx = new Array(n); for (i = 0; i < n; i++) idx[i] = i;
+      idx.sort(function (a, b) { return its[a].d.sb[0] - its[b].d.sb[0]; });
+      var before = new Array(n); for (i = 0; i < n; i++) before[i] = [];
+      var fx = cam.F.x, fy = cam.F.y, fz = cam.F.z;
+      for (p = 0; p < n; p++) {
+        i = idx[p]; var A = its[i], sa = A.d.sb, ab = A.d.bb;
+        for (q = p + 1; q < n; q++) {
+          j = idx[q]; var B = its[j], sb = B.d.sb;
+          if (sb[0] > sa[2]) break;
+          if (sb[1] > sa[3] || sb[3] < sa[1] || A.m === B.m || A.m.on === B.m || B.m.on === A.m) continue;
+          var bb = B.d.bb, r = sep(ab[0], ab[3], bb[0], bb[3], fx), v = sep(ab[2], ab[5], bb[2], bb[5], fz);
+          if (v) { if (r && v !== r) continue; r = v; }
+          v = sep(ab[1], ab[4], bb[1], bb[4], fy); if (v) { if (r && v !== r) continue; r = v; }
+          if (r === 1) before[j].push(i); else if (r === -1) before[i].push(j);
+        }
+      }
+      var first = {}; for (i = 0; i < n; i++) if (first[its[i].m.id] == null) first[its[i].m.id] = i;
+      for (i = 0; i < n; i++) { var on = its[i].m.on; if (on) { var om = on.isMesh ? on : firstMesh(on); if (om && first[om.id] != null) before[i].push(first[om.id]); } }
+      var out = [], state = new Uint8Array(n);
+      var visit = function (k) { if (state[k]) return; state[k] = 1; var b = before[k]; for (var x = 0; x < b.length; x++) visit(b[x]); out.push(its[k]); };
+      for (i = 0; i < n; i++) visit(i);
+      return out;
+    }
+    /* 1 when A lies wholly on the far side of a plane square to this axis, -1 when B does, 0 when neither */
+    function sep(a0, a1, b0, b1, f) {
+      if (f > -.05 && f < .05) return 0;
+      if (a1 <= b0 + .01) return f < 0 ? 1 : -1;
+      if (b1 <= a0 + .01) return f < 0 ? -1 : 1;
+      return 0;
+    }
+    function firstMesh(o) { var m = null; o.traverse(function (c) { if (!m && c.isMesh) m = c; }); return m; }
     function isVisible(o) { while (o) { if (!o.visible) return false; o = o.parent; } return true; }
     function arrange(host, its, name) {
       var s = ''; for (var i = 0; i < its.length; i++) s += its[i].m.id + ',';

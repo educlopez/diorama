@@ -65,6 +65,12 @@ Claude offers two or three concepts, builds the one you choose, checks it in a h
 | **`seedling`** · a mini, in `line` with the pot as the accent. Now and then the can lifts, turns to the pot and waters the soil. | **`desk`** · a mini, in `line` with a coral accent. The chair swivels, the lamp nods. |
 | <img src="docs/media/powder.png" alt="An isometric ski village at the foot of a snowy mountain: a chairlift up the slope, chalets with lit windows, a hotel, pines, a frozen pond and a shuttle bus"> | <img src="docs/media/turntable.png" alt="A line drawing of a record player on a low cabinet with a speaker and an empty crate, the platter mat in purple, on a rounded tile"> |
 | **`powder`** · a hero. Chairs climb the slope, two skiers ride up and carve back down, a ski class snakes the nursery, the shuttle waits at the lift. | **`turntable`** · a mini, in `line` with a purple accent. Now and then the arm swings over, finds no record and goes back. |
+| <img src="docs/media/harbour.png" alt="An isometric container quay on pale water: a ship with coloured containers moored along it, an orange gantry crane, a tractor on the quay road, a harbour office, a tug and a lighthouse on a breakwater"> | <img src="docs/media/kitchen.png" alt="An isometric kitchen corner: a tiled floor, a counter with a sink and a red toaster, a teal kettle steaming, a fridge, a window and a clock on the back wall, a cat on a stool"> |
+| **`harbour`** · a hero. The crane lifts containers off the ship one by one, the tractor laps the quay and waits at the barrier, the tug circles, the lighthouse turns. Tap the crane and the next lift starts now. | **`kitchen`** · a card. The kettle steams, the clock turns, the toast pops now and then. Hover the fridge and the door opens; tap the toaster and it pops now. |
+| <img src="docs/media/assembly.png" alt="A conveyor belt in greys with four cardboard boxes riding it through a scanner gate with a teal light, a stamping arm over it, a pallet at the end, a worker at a panel"> | <img src="docs/media/observatory.png" alt="A line drawing of a small round observatory with a dome, a purple telescope through its slit, a bench, a pine and a rock, on a grass tile"> |
+| **`assembly`** · a card, in `mono` with a teal accent. Jobs ride the belt through the scanner and under the stamp; tap the gate and the belt holds, the read-out counts what is waiting. | **`observatory`** · a mini, in `line` with a hand-drawn wobble. The dome turns; now and then the telescope lifts, finds nothing yet, and settles. |
+| <img src="docs/media/vending.png" alt="A print-style drawing of a vending machine with bare coils behind its open front, an orange button, an empty tray, a fan on its side and a plant beside it"> | |
+| **`vending`** · a mini, in `print` with an orange button. Every coil is bare; now and then one turns and nothing drops. Tap the button and one turns now. | |
 
 Open them live in the gallery on the site: every figure answers the pointer, names what is under it, switches theme and pauses to its still frame.
 
@@ -159,6 +165,11 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/desk.js`: a mini in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
 - `examples/powder.js`: a hero. A ski village under a snowy peak: a chairlift on a loop, two skiers who ride up and ski down in turns, a ski class, a shuttle bus, a skater on the pond, smoking chimneys.
 - `examples/turntable.js`: a mini in `line` with a purple accent. A record player and an empty crate; the tonearm looks for a record now and then.
+- `examples/harbour.js`: a hero. A container quay: a ship with containers on deck, a gantry crane on an 18 s lift cycle, a tractor on a lap that stops at a barrier, a tug in the basin, gulls, a lighthouse on a breakwater; tap the crane and the next lift starts now; the read-out says what the crane is doing.
+- `examples/kitchen.js`: a card. A kitchen corner with a wall, a window and a clock, a counter with a sink, a kettle that steams, a toaster that pops, a fridge built as a shell whose door opens under the pointer, a cat on a stool.
+- `examples/assembly.js`: a card in `mono` with a teal accent. A belt of jobs through a scanner gate and under a stamping arm; tap the gate and the belt holds; the read-out counts what is waiting.
+- `examples/observatory.js`: a mini in `line` with a wobble. A round observatory whose dome turns; the telescope lifts to look now and then.
+- `examples/vending.js`: a mini in `print`. A vending machine with bare coils behind an open front, a fan on its side; a coil turns a notch now and then, or now, on a tap.
 
 Build any of them with `node scripts/build.mjs examples/<name>.js`.
 

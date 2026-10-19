@@ -210,7 +210,8 @@ async function main() {
     let g = null;
     if (pressArg) g = hot.find((o) => (o.name || "").toLowerCase() === pressArg.toLowerCase()) || null;
     else { const m = /\b(tap|click|press)/.exec(h), from = m ? m.index : -1;
-      g = hot.filter((o) => o.name && h.indexOf(o.name.toLowerCase()) > from).sort((a, b) => h.indexOf(a.name.toLowerCase()) - h.indexOf(b.name.toLowerCase()))[0] || null; }
+      const after = (o) => h.indexOf(o.name.toLowerCase(), from + 1);
+      g = hot.filter((o) => o.name && after(o) >= 0).sort((a, b) => after(a) - after(b))[0] || null; }
     return g ? { at: ndcOf(g), name: g.name } : { at: cur, name: "" };
   };
   await fresh(); await goto(2);

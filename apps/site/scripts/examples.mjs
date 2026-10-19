@@ -14,7 +14,7 @@ import { assemble, nameOf } from "../../../scripts/build.mjs";
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const EXAMPLES = here("../../../examples");
 const OUT = here("../public/examples");
-const ORDER = ["town", "powder", "island", "farm", "warehouse", "cafe", "launchpad", "server", "rack", "mailbox", "seedling", "desk", "turntable"];
+const ORDER = ["town", "harbour", "powder", "island", "farm", "warehouse", "cafe", "kitchen", "launchpad", "server", "assembly", "rack", "mailbox", "seedling", "observatory", "desk", "turntable", "vending"];
 
 const field = (src, key) => new RegExp(`\\b${key}:\\s*["'\`]([^"'\`]*)["'\`]`).exec(src)?.[1] ?? null;
 const themeOf = (src) => {
