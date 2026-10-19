@@ -629,7 +629,7 @@ var Diorama = (function () {
           var nb = cone ? normalOf(B[k], B[k2], T[0]) : normalOf(B[k], B[k2], T[k2]);
           vis.push(facing(nb)); bands.push({ pts: cone ? [B[k], B[k2], T[0]] : [B[k], B[k2], t1, t0], n: nb });
         }
-        var topN = cone ? null : normalOf(T[0], T[1], T[2]), botN = normalOf(B[0], B[1], B[2]), topVis = topN && facing(topN), botVis = facing(botN);
+        var topN = cone ? null : normalOf(T[0], T[1], T[2]), botN = normalOf(B[0], B[2], B[1]), topVis = topN && facing(topN), botVis = facing(botN);
         if (botVis) d.faces.push({ d: poly(B.map(proj)), fill: fillOf(botN) });
         for (k = 0; k < seg; k++) if (vis[k]) d.faces.push({ d: poly(bands[k].pts.map(proj)), fill: fillOf(bands[k].n) });
         if (topVis) d.faces.push({ d: poly(T.map(proj)), fill: fillOf(topN) });
@@ -675,9 +675,23 @@ var Diorama = (function () {
         if (m.castShadow) { var sh = []; for (var q2 = 0; q2 < 8; q2++) { var aa = q2 / 8 * TAU; sh.push([cx + ax[0] * Math.cos(aa) + az[0] * Math.sin(aa), cy + ax[1] * Math.cos(aa) + az[1] * Math.sin(aa) + (g.dome ? 0 : 0), cz + ax[2] * Math.cos(aa) + az[2] * Math.sin(aa)]); sh.push([cx + ay[0] * Math.cos(aa) + ax[0] * Math.sin(aa), cy + ay[1] * Math.cos(aa) + ax[1] * Math.sin(aa), cz + ay[2] * Math.cos(aa) + ax[2] * Math.sin(aa)]); } d.shadowPts = sh; }
         d.depth = cam.depth(cx, cy, cz);
       } else if (g.type === 'TorusGeometry') {
-        var ringPts = worldPts(ring(g.r, 0, 24, []).map(function (p) { return [p[0], p[2], 0]; }), e), rp = ringPts.map(proj);
-        d.special = { torus: true, d: polyline(rp, true), width: g.tube * 2, fill: fillOf([0, 1, 0]) };
-        if (m.castShadow) d.shadowPts = ringPts; d.depth = depthOf(ringPts);
+        /* the ring in six chunks, each a band as wide as the tube with its own depth, so the half of a handle that is
+           behind its body is painted before the body and the half in front after it */
+        var N = 24, CH = 6, per = N / CH, ringW = worldPts(ring(g.r, 0, N, []).map(function (p) { return [p[0], p[2], 0]; }), e), rp = ringW.map(proj);
+        var tw = g.tube * Math.hypot(e[0], e[1], e[2]), tone = fillOf([-cam.F.x * .5, .8, -cam.F.z * .5]), parts = [], c2, k2, q5;
+        for (c2 = 0; c2 < CH; c2++) {
+          var pts2 = [], wpts = [], outer = [], inner = [];
+          for (k2 = 0; k2 <= per; k2++) { q5 = (c2 * per + k2) % N; pts2.push(rp[q5]); wpts.push(ringW[q5]); }
+          for (k2 = 0; k2 < pts2.length; k2++) {
+            var pa = pts2[Math.max(k2 - 1, 0)], pb = pts2[Math.min(k2 + 1, pts2.length - 1)], ddx = pb[0] - pa[0], ddy = pb[1] - pa[1], dl = Math.hypot(ddx, ddy) || 1;
+            outer.push([pts2[k2][0] - ddy / dl * tw, pts2[k2][1] + ddx / dl * tw]); inner.push([pts2[k2][0] + ddy / dl * tw, pts2[k2][1] - ddx / dl * tw]);
+          }
+          var part = { faces: [{ d: poly(outer.concat(inner.slice().reverse())), fill: tone }], edges: stroke ? [outer, inner] : [], shadow: null, special: null, depth: depthOf(wpts) };
+          if (wob && part.edges.length) part.edges = part.edges.map(function (seg2) { return wobble(seg2, m.id * 7 + c2); });
+          if (c2 === 0 && m.castShadow) part.shadowPts = ringW;
+          parts.push(part);
+        }
+        return parts;
       } else if (g.type === 'ExtrudeGeometry' && g.slab) {
         var o = slabOutline(g), n2 = o.length, topL = [], botL = [], q3;
         for (q3 = 0; q3 < n2; q3++) { topL.push([o[q3][0], 0, o[q3][1]]); botL.push([o[q3][0], -g.h, o[q3][1]]); }
@@ -744,10 +758,10 @@ var Diorama = (function () {
     }
 
     /* ---------- the frame ---------- */
-    var items = {}; /* mesh id → { g, paths, edge, shadow, special… } */
-    function item(m) {
-      var it = items[m.id];
-      if (!it) { it = items[m.id] = { m: m, g: el('g'), paths: [], edgeEl: null, shadowEl: null, specialEls: null, key: null, d: null, layer: null }; it.g.__mesh = m; }
+    var items = {}, recs = {}; /* item: one painted part of a mesh → { g, paths, edge, shadow, special… }; rec: a mesh's cached parts */
+    function item(m, k) {
+      var id = m.id + '/' + (k || 0), it = items[id];
+      if (!it) { it = items[id] = { id: id, m: m, g: el('g'), paths: [], edgeEl: null, shadowEl: null, specialEls: null, d: null, layer: null }; it.g.__mesh = m; }
       return it;
     }
     function setD(path, dStr, fill, strokeC, seamC) {
@@ -836,13 +850,19 @@ var Diorama = (function () {
       for (i = 0; i < ms.length; i++) { var m = ms[i]; if (m.geometry.slab) { var e = m.matrixWorld.elements, sx = Math.hypot(e[0], e[1], e[2]) || 1, sz = Math.hypot(e[8], e[9], e[10]) || 1; grounds.push({ cx: e[12], cz: e[14], y: e[13], w: m.geometry.w / 2 * sx, d: m.geometry.d / 2 * sz, c: e[0] / sx, s: e[2] / sx }); } }
       var seen = {};
       for (i = 0; i < ms.length; i++) {
-        var mesh = ms[i], it = item(mesh), mt = mesh.material; seen[mesh.id] = 1;
+        var mesh = ms[i], mt = mesh.material, rec = recs[mesh.id] || (recs[mesh.id] = { key: null, ds: null });
         var key = cam.key + '|' + mesh.matrixWorld.elements.map(f2).join(',') + '|' + mt.color.getHexString() + mt.emissive.getHexString() + f2(mt.emissiveIntensity) + (mt.transparent ? f2(mt.opacity) : '') + (mesh.side ? mesh.side.color.getHexString() : '') + '|' + wobAmp;
-        if (it.key !== key) { it.key = key; it.d = draw(mesh); paint(it, it.d); if (shadowOn && it.d.shadowPts && !it.d.ground) { if (!it.shadowEl) { it.shadowEl = el('path', { fill: ink }, shadowG); } var sp2 = shadowPath(it.d.shadowPts, mesh.matrixWorld.elements[12], mesh.matrixWorld.elements[14]); if (it.shadowEl.__d !== sp2) { it.shadowEl.setAttribute('d', sp2); it.shadowEl.__d = sp2; } } else if (it.shadowEl) { shadowG.removeChild(it.shadowEl); it.shadowEl = null; } }
-        it.layer = it.d.ground ? 'ground' : 'scene';
-        list.push(it);
+        if (rec.key !== key) {
+          rec.key = key; var ds = draw(mesh); rec.ds = Array.isArray(ds) ? ds : [ds];
+          for (var k = 0; k < rec.ds.length; k++) {
+            var it0 = item(mesh, k), d0 = rec.ds[k]; it0.d = d0; paint(it0, d0);
+            if (shadowOn && d0.shadowPts && !d0.ground) { if (!it0.shadowEl) it0.shadowEl = el('path', { fill: ink }, shadowG); var sp2 = shadowPath(d0.shadowPts, mesh.matrixWorld.elements[12], mesh.matrixWorld.elements[14]); if (it0.shadowEl.__d !== sp2) { it0.shadowEl.setAttribute('d', sp2); it0.shadowEl.__d = sp2; } }
+            else if (it0.shadowEl) { shadowG.removeChild(it0.shadowEl); it0.shadowEl = null; }
+          }
+        }
+        for (var k2 = 0; k2 < rec.ds.length; k2++) { var it = item(mesh, k2); it.layer = it.d.ground ? 'ground' : 'scene'; seen[it.id] = 1; list.push(it); }
       }
-      for (var id in items) if (!seen[id] && items[id].shadowEl) { shadowG.removeChild(items[id].shadowEl); items[id].shadowEl = null; }
+      for (var hid in items) if (!seen[hid] && items[hid].shadowEl) { shadowG.removeChild(items[hid].shadowEl); items[hid].shadowEl = null; }
       /* painter's order: the ground layer by area (slabs) then depth, the scene by depth, the far first */
       var ground = list.filter(function (it) { return it.layer === 'ground'; }).sort(function (a, b) { return (b.d.area - a.d.area) || (b.d.depth - a.d.depth); });
       var scene = list.filter(function (it) { return it.layer === 'scene'; }).sort(function (a, b) { return b.d.depth - a.d.depth; });
@@ -872,7 +892,7 @@ var Diorama = (function () {
     this.setWobble = function (unitsPerPx) { wobAmp = (theme.wobble || 0) * unitsPerPx; };
     this.shadowOpacity = function () { shadowG.setAttribute('opacity', theme.shadow == null ? .2 : theme.shadow); };
     this.shadowOpacity();
-    this.dispose = function () { items = {}; };
+    this.dispose = function () { items = {}; recs = {}; };
   }
 
   /* ---------- mount ---------- */
