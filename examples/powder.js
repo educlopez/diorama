@@ -21,7 +21,7 @@ Diorama.figure({
     function hgt(x, z) { var d = Math.hypot(x - C[0], z - C[1]); return d < R ? H * (1 - d / R) : 0; }
     function W(lx, lz) { return [C[0] + lx * ux + lz * px, C[1] + lx * uz + lz * pz]; }     /* lift frame → world */
     function P(d, a) { return [d * Math.cos(a), d * Math.sin(a)]; }                           /* polar in the lift frame */
-    D.cone(R, H, pal.paper, C[0], H / 2, C[1], null, 40);
+    D.cone(R, H, pal.paper, C[0], H / 2, C[1], null, 40).userData.terrain = true;   /* the slope things ride up: not a clash */
     D.cone(5.6, 10.5, pal.mist, -15.6, 5.25, -10.2, null, 28); D.cone(2.35, 4.4, pal.paper, -15.6, 8.5, -10.2, null, 28);
     [[6.2, -.9, .6], [7.4, 1.7, .5], [4.2, -1.3, .45], [8.8, -1.6, .55]].forEach(function (q, k) { var p = W.apply(null, P(q[0], q[1])), r = D.props.rock(p[0], p[1], null, { r: q[2], yaw: k }); r.position.y = hgt(p[0], p[1]) - .1; });
     [[8.4, -.75], [9.2, -.55], [7.6, -1.25], [9.4, -1.05], [6.4, -1.5], [8.6, 1.45], [9.3, 1.62], [7.6, 1.85], [9.5, 1.95], [5.4, 2.2]].forEach(function (q, k) {
@@ -40,17 +40,17 @@ Diorama.figure({
       D.cyl(.12, .12, .1, pal.slate, x, top + .12, -rr, lift, 10); D.cyl(.12, .12, .1, pal.slate, x, top + .12, rr, lift, 10);
     });
     var top = D.group(xT, H * (1 - xT / R) - .45, 0, lift);
-    D.box(2.2, .3, 1.8, pal.mist, -.4, .15, 0, top); D.box(1.6, 1.6, 1.4, pal.wood, -.3, .9, -2.3, top); D.wedge(1.9, .7, 1.8, pal.coral, -.3, 1.7, -2.3, top);
-    D.cyl(.12, .12, yB + .65, pal.steel, 0, (yB + .65) / 2, 0, top, 8); D.cyl(.8, .8, .12, pal.coral, 0, yB + .45, 0, top, 20);
+    D.box(2.2, .3, 1.8, pal.mist, -.4, .15, 0, top); D.box(1.6, 1.6, 1.4, pal.wood, -.3, .9, -2.3, top); D.wedge(1.9, .7, 1.8, pal.accent, -.3, 1.7, -2.3, top);
+    D.cyl(.12, .12, yB + .65, pal.steel, 0, (yB + .65) / 2, 0, top, 8); D.cyl(.8, .8, .12, pal.accent, 0, yB + .45, 0, top, 20);
     var station = D.group(xB, 0, 0, lift); station.name = 'lift station'; hot.push(station);
-    D.box(3.4, .12, 3.2, pal.mist, .3, .06, 0, station); D.box(1.2, 2.0, 2.2, pal.wood, 1.75, 1.3, 0, station); D.wedge(1.6, .8, 2.6, pal.coral, 1.75, 2.3, 0, station);
+    D.box(3.4, .12, 3.2, pal.mist, .3, .06, 0, station); D.box(1.2, 2.0, 2.2, pal.wood, 1.75, 1.3, 0, station); D.wedge(1.6, .8, 2.6, pal.accent, 1.75, 2.3, 0, station);
     D.box(.06, .5, .7, pal.mustard, 1.13, 1.5, 0, station, { mat: { emissive: pal.lampGlow, emissiveIntensity: .6 }, shadow: false });
     [[-.9, -1.2], [-.9, 1.2], [.9, -1.2], [.9, 1.2]].forEach(function (q) { D.cyl(.07, .07, 2.6, pal.steel, q[0], 1.45, q[1], station, 8); });
-    D.box(2.4, .22, 3.0, pal.coral, 0, 2.85, 0, station); D.cyl(.8, .8, .12, pal.ink, 0, yB + .2, 0, station, 20);
+    D.box(2.4, .22, 3.0, pal.accent, 0, 2.85, 0, station); D.cyl(.8, .8, .12, pal.ink, 0, yB + .2, 0, station, 20);
     var chairs = [];
     for (var k = 0; k < 8; k++) {
       var ch = D.group(0, 0, 0, lift);
-      D.cyl(.025, .025, 1.3, pal.ink, 0, -.65, 0, ch, 6); D.box(.5, .08, .9, pal.coral, .02, -1.3, 0, ch); D.box(.08, .45, .9, pal.coral, -.22, -1.08, 0, ch); D.box(.06, .05, .9, pal.ink, .32, -1.7, 0, ch, { shadow: false });
+      D.cyl(.025, .025, 1.3, pal.ink, 0, -.65, 0, ch, 6); D.box(.5, .08, .9, pal.accent, .02, -1.3, 0, ch); D.box(.08, .45, .9, pal.accent, -.22, -1.08, 0, ch); D.box(.06, .05, .9, pal.ink, .32, -1.7, 0, ch, { shadow: false });
       chairs.push(ch);
     }
     function onLoop(s, o) {       /* a place on the rope: up side, top wheel, down side, bottom wheel */

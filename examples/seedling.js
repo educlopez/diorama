@@ -15,8 +15,8 @@ Diorama.figure({
     var D = o.D, pal = o.pal;
     D.slab(2.6, 2.6, pal.grass, 0, 0, 0, null, { h: .45, r: .45, side: pal.base });
     var pot = D.group(.3, 0, .15);
-    D.cyl(.6, .46, .95, pal.terracotta, 0, .475, 0, pot, 20);
-    D.cyl(.67, .65, .16, pal.terracotta, 0, .95, 0, pot, 20);
+    D.cyl(.6, .46, .95, pal.accent, 0, .475, 0, pot, 20);
+    D.cyl(.67, .65, .16, pal.accent, 0, .95, 0, pot, 20);
     D.cyl(.58, .58, .06, pal.ink, 0, 1.0, 0, pot, 20);
     // At rest the spout points away from the pot; it turns to face the pot as the can lifts.
     var can = D.group(-.75, 0, -.55); can.rotation.y = .5;
@@ -28,7 +28,7 @@ Diorama.figure({
     var handle = D.torus(.26, .035, pal.steel, 0, .85, 0, body); handle.rotation.y = Math.PI / 2;
     var drops = []; [0, 1, 2, 3].forEach(function (k) { drops.push(D.ball(.035, pal.sky, 0, 0, 0, null)); });
     D.props.rock(.95, -.8, null, { r: .16 }); D.props.rock(-.85, .8, null, { r: .12, yaw: 2 });
-    return { can: can, face: -Math.atan2(.15 + .55, .3 + .75), body: body, rose: rose, drops: drops, nozzle: new o.THREE.Vector3(), soil: 1.03 };
+    return { can: can, face: -Math.atan2(.15 + .55, .3 + .75), body: body, rose: rose, drops: drops, nozzle: new o.M.Vector3(), soil: 1.03 };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;

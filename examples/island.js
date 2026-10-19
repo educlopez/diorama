@@ -57,7 +57,7 @@ Diorama.figure({
     var keeper = D.props.person(3.3, 0, pier, { shirt: pal.mustard, hat: pal.paper, yaw: 1.2 }); keeper.position.y = .61;
 
     /* the boat, on a lap that stops at the pier */
-    var boat = D.group(0, 0, 0); var hull = D.rbox(3.2, .7, 1.3, pal.coral, 0, .25, 0, boat, { r: .18 });
+    var boat = D.group(0, 0, 0); var hull = D.rbox(3.2, .7, 1.3, pal.accent, 0, .25, 0, boat, { r: .18 });
     D.box(2.6, .1, 1.0, pal.paper, 0, .62, 0, boat);
     D.box(1.1, .7, .9, pal.paper, -.3, 1.0, 0, boat); D.box(.6, .3, .06, pal.ink, .26, 1.1, .46, boat); D.box(.6, .3, .06, pal.ink, .26, 1.1, -.46, boat);
     D.cyl(.04, .04, 1.6, pal.ink, .9, 1.4, 0, boat, 6);
@@ -82,6 +82,7 @@ Diorama.figure({
     var q = D.place(p.boat, p.lap, d);
     p.boat.position.y = .62 + .05 * D.wave(t, 2.6); p.boat.rotation.z = .035 * D.wave(t, 2.1); p.boat.rotation.x = .025 * D.wave(t, 3.3);
     var moving = T > 7.5 && T < 29.5; p.wake.scale.x = moving ? 1 : .001;
+    ctx.read = T < 7 ? 'boat · tied up at the pier' : 'boat · out round the island';
     p.beam.rotation.y = t * .9;
     p.gulls.forEach(function (g, k) {
       var u = D.phase(t, 22, k * .5), s = p.fly.at(u * p.fly.length);

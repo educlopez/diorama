@@ -24,6 +24,18 @@
       "prompt": "Our site is very minimal, black text on white, no colour except our purple #5b4ae0 for links. I want a small 3D illustration for the 'no results' state of the search page, in a line-drawing style like those hairline figures, nothing cartoony or colourful. One HTML file please.",
       "expected_output": "A mini-size diorama declared with theme 'line' (or { base: 'line', accent: '#5b4ae0' }): white fills, ink edges and silhouettes, no shadows, the accent only on the one thing the eye should find (a loupe over a blank sheet, a bare sieve, an empty tray); no new hex literals beyond the accent; cylinders with 12+ segments so no seams show; one quiet ambient motion; empty: { title, body, action } set. look.mjs ran in the line theme and the thumbnail was judged at 160px.",
       "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Card-sized 3D illustration for our status page: a lighthouse on a rock. Most of our visitors are on phones, so it has to do something when you tap it, not just on hover. The lamp should be our brand's teal, #2a9d8f.",
+      "expected_output": "A card-size diorama of a lighthouse on a rock with the sea as the base; the lamp (painted with pal.accent, the figure declares accent '#2a9d8f') turns on a loop; a tap switches something (ctx.active or ctx.pressed: the lamp comes on and stays on, or a boat is called in) and the hint says what to tap; the hover answer has the same effect so a desk and a phone get the same figure; ctx.read says the state ('lamp · on', 'boat · coming in'). look.mjs ran, the press picture showed the change and the press line was not MUTE.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "An illustration for the empty 'no projects yet' screen of our notes app. We want it to look sketched by hand, like a pencil drawing in a notebook, not rendered. Small, square, one HTML file.",
+      "expected_output": "A mini-size diorama declared with theme { base: 'line', wobble: 1.2 to 2 } (an accent only if the brand has one): ink edges that bow and overshoot, white fills, no shadows, the base's soft halo kept; one object that would hold the missing projects (a notebook open to a blank page, an empty folder tray, a corkboard with one pin) with one or two neighbours; few, large parts so the wobble reads as a hand and not as fuzz; one quiet ambient motion. look.mjs ran and the thumbnail at 160px was judged for whether the lines still meet and the object still reads.",
+      "files": []
     }
   ]
 }

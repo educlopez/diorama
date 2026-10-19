@@ -32,6 +32,11 @@
   .foot button{font:inherit;font-size:12px;font-weight:600;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer}
   .foot button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
   .foot .themes{display:inline-flex;gap:4px;padding-left:8px;border-left:1px solid var(--line)}
+  .foot .swatches{display:inline-flex;gap:6px;align-items:center;padding-left:10px;border-left:1px solid var(--line)}
+  .foot .swatches button{width:18px;height:18px;padding:0;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+  .foot .swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+  .foot .read{min-width:12ch;font-variant-numeric:tabular-nums}
+  .foot .read b{color:var(--ink-2);font-weight:600}
   .err{color:#d24b42;font-size:13px;padding:12px 18px}
   html.embed,body.embed{background:transparent}
   body.embed{padding:0;display:block;min-height:0}
@@ -43,7 +48,6 @@
 </head>
 <body>
 <div class="wrap" id="wrap"></div>
-<!--THREE-->
 <script>
 /*KERNEL*/
 </script>
@@ -72,37 +76,64 @@
   wrap.appendChild(card);
   var foot = document.createElement('div'); foot.className = 'foot';
   var still = document.createElement('button'); still.type = 'button'; still.textContent = 'Still frame'; still.setAttribute('aria-pressed', 'false');
-  var note = document.createElement('span'); note.textContent = 'Move the pointer over the scene.';
+  var note = document.createElement('span'); note.className = 'read'; note.setAttribute('aria-live', 'polite'); note.textContent = 'Move the pointer over the scene.';
   foot.appendChild(still); foot.appendChild(note); wrap.appendChild(foot);
   var ctx, figAccent = fig.theme && typeof fig.theme === 'object' ? fig.theme.accent : null;
-  /* a theme picked here swaps the look and keeps the figure's own accent, which is the brand's colour */
-  function picked() { return themePick ? (figAccent ? { base: themePick, accent: figAccent } : themePick) : undefined; }
+  var figBase = typeof fig.theme === 'object' ? fig.theme.base || 'toy' : fig.theme || 'toy';
+  /* a theme picked here swaps the look and keeps the figure's own accent, which is the brand's colour; a swatch
+     (or ?accent=hex) recolours the subject, which every figure paints with pal.accent */
+  var themePick = q.get('theme') || null, accentPick = q.get('accent') ? '#' + q.get('accent').replace(/^#/, '') : null;
+  function picked() { var a = accentPick || figAccent; return themePick || accentPick ? (a ? { base: themePick || figBase, accent: a } : themePick) : undefined; }
   if (figAccent) document.documentElement.style.setProperty('--accent', figAccent);
   function mountIt(reduced) {
     if (ctx) ctx.destroy();
     try { ctx = Diorama.mount(fig, { el: stage, reduced: reduced, still: q.has('t') ? +q.get('t') : undefined, theme: picked() }); window.__diorama = ctx; }
     catch (err) { stage.innerHTML = '<div class="err">' + (err && err.message || err) + '</div>'; console.error(err); }
   }
-  var themePick = q.get('theme') || null;
   var themes = Object.keys(Diorama.THEMES), sel = document.createElement('span'); sel.className = 'themes';
   themes.forEach(function (t) {
     var b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.dataset.theme = t;
-    var current = themePick || (typeof fig.theme === 'object' ? fig.theme.base || 'toy' : fig.theme || 'toy');
-    b.setAttribute('aria-pressed', String(t === current));
+    b.setAttribute('aria-pressed', String(t === (themePick || figBase)));
     b.addEventListener('click', function () { themePick = t; sel.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); mountIt(isStill); });
     sel.appendChild(b);
   });
   foot.insertBefore(sel, note);
+  /* the swatches: the figure's own accent first, then five of the palette's */
+  var own = figAccent || Diorama.PAL.coral, sw = document.createElement('span'); sw.className = 'swatches'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Accent');
+  [['own', own], ['mustard', Diorama.PAL.mustard], ['mint', Diorama.PAL.mint], ['cobalt', Diorama.PAL.cobalt], ['rose', Diorama.PAL.rose], ['plum', Diorama.PAL.plum]].forEach(function (s) {
+    if (s[0] !== 'own' && s[1].toLowerCase() === own.toLowerCase()) return;
+    var b = document.createElement('button'); b.type = 'button'; b.style.background = s[1]; b.dataset.accent = s[1]; b.title = s[0] === 'own' ? 'the figure’s own accent' : s[0]; b.setAttribute('aria-label', 'Accent ' + s[0]);
+    b.setAttribute('aria-pressed', String((accentPick || own).toLowerCase() === s[1].toLowerCase()));
+    b.addEventListener('click', function () { accentPick = s[0] === 'own' ? null : s[1]; sw.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); mountIt(isStill); });
+    sw.appendChild(b);
+  });
+  foot.insertBefore(sw, note);
   var isStill = q.has('still');
   mountIt(isStill); still.setAttribute('aria-pressed', String(isStill));
   still.addEventListener('click', function () { isStill = !isStill; still.setAttribute('aria-pressed', String(isStill)); mountIt(isStill); });
-  /* in a frame: tell the parent what the pointer is over, and take a theme or a still request from it */
-  if (q.has('embed') && window.parent !== window) {
-    var lastHover = null;
-    (function watch() { var h = ctx && ctx.hover ? (ctx.hover.name || 'something') : ''; if (h !== lastHover) { lastHover = h; try { window.parent.postMessage({ type: 'diorama', name: fig.name, hover: h }, '*'); } catch (e) {} } requestAnimationFrame(watch); })();
+  /* the read-out: what the pointer is on, what is switched on, or what the figure says it is doing */
+  function readout() {
+    if (!ctx) return '';
+    if (ctx.hover) return ctx.hover.name || 'something';
+    if (ctx.active) return (ctx.active.name || 'something') + ' · on';
+    return ctx.read || '';
+  }
+  var lastRead = null, inFrame = q.has('embed') && window.parent !== window;
+  (function watch() {
+    var h = readout();
+    if (h !== lastRead) {
+      lastRead = h;
+      if (h) { note.textContent = ''; var b = document.createElement('b'); b.textContent = h; note.appendChild(b); } else note.textContent = 'Move the pointer over the scene.';
+      if (inFrame) { try { window.parent.postMessage({ type: 'diorama', name: fig.name, hover: h }, '*'); } catch (e) {} }
+    }
+    requestAnimationFrame(watch);
+  })();
+  /* in a frame: take a theme, an accent or a still request from the parent */
+  if (inFrame) {
     window.addEventListener('message', function (e) {
       var d = e.data; if (!d || d.type !== 'diorama') return;
-      if (d.theme !== undefined) { themePick = d.theme || null; sel.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.theme === (themePick || 'toy'))); }); mountIt(isStill); }
+      if (d.theme !== undefined) { themePick = d.theme || null; sel.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.theme === (themePick || figBase))); }); mountIt(isStill); }
+      if (d.accent !== undefined) { accentPick = d.accent || null; sw.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.accent.toLowerCase() === (accentPick || own).toLowerCase())); }); mountIt(isStill); }
       if (d.still !== undefined) { isStill = !!d.still; still.setAttribute('aria-pressed', String(isStill)); mountIt(isStill); }
     });
     var hello = function () { try { window.parent.postMessage({ type: 'diorama', name: fig.name, ready: true, hint: fig.hint || '', hot: (ctx && ctx.parts && ctx.parts.hot ? ctx.parts.hot.map(function (g) { return g.name; }).filter(Boolean) : []) }, '*'); } catch (e) {} };

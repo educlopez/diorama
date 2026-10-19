@@ -76,7 +76,7 @@ export default function Page() {
       <section className="section" id="components" aria-labelledby="made-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
           <h2 className="steps-title" id="made-title">Made with the skill.<br /><span className="steps-title-dim">Heroes, cards and minis</span></h2>
-          <p className="steps-lede">Three sizes, five themes, and a different place each time: an island, a launchpad, a coffee bar, a server, a mailbox, a desk. The gallery has all {FIGURES.length}, live.</p>
+          <p className="steps-lede">Three sizes, six themes, and a different place each time: an island, a launchpad, a coffee bar, a server, a mailbox, a desk. The gallery has all {FIGURES.length}, live.</p>
         </div>
         <div className="cards">
           {strip.map((fig, i) => <FigureCard key={fig.name} fig={fig} index={FIGURES.indexOf(fig) + 1} chips={false} lazy />)}
@@ -111,12 +111,12 @@ export default function Page() {
         <h2 className="section-title" id="faq-title">FAQs</h2>
         <div className="faq-list">
           {[
-            ["What is this, exactly?", "A skill: a folder of instructions, a small three.js kernel, themes, examples and checks that a coding agent reads when you ask it for a 3D scene. We made it, and every figure on this site is its output. The site is the gallery and the manual."],
+            ["What is this, exactly?", "A skill: a folder of instructions, a small kernel that draws SVG, themes, examples and checks that a coding agent reads when you ask it for a 3D scene. We made it, and every figure on this site is its output. The site is the gallery and the manual."],
             ["Is it free?", "Yes. The skill, the kernel and the examples are MIT. Use them in any project, commercial or not."],
-            ["What do I need?", "Claude Code or another agent that reads skills, Node.js 20 or later for the scripts, and Chrome or Chromium for the look. A finished page needs nothing: it carries three-lite, the part of three.js the kernel uses, in about 44 KB."],
-            ["Does it work in React?", "Yes. The kernel takes a three.js instance and an element; mount a figure in an effect, destroy it on unmount, and pass a theme. Plain pages use two script tags."],
-            ["Why is everything isometric and blocky?", "On purpose. One camera, matte blocks, one sun with soft shadows and a few accents is what makes a scene read at a glance and stay cheap to render."],
-            ["Can I change the colours?", "Every theme is a set of fields: palette, accent, lights, shadows, finish, tone, edges, outline, stroke, glow. Override any of them in the figure or when you mount it, or start from mono and line for a one-colour or hairline look."],
+            ["What do I need?", "Claude Code or another agent that reads skills, Node.js 20 or later for the scripts, and Chrome or Chromium for the look. A finished page needs nothing: the kernel draws SVG, no three.js, no WebGL, one file of about 30 KB gzip."],
+            ["Does it work in React?", "Yes. The kernel takes an element; mount a figure in an effect, destroy it on unmount, and pass a theme. Plain pages use two script tags. Nothing to install."],
+            ["Why is everything isometric and blocky?", "On purpose. One camera, flat blocks, one sun with thrown shadows and a few accents is what makes a scene read at a glance and stay cheap to draw: it is SVG, painted the way an illustrator fakes depth."],
+            ["Can I change the colours?", "Every theme is a set of fields: palette, accent, lights, shadows, tones, tone, edges, stroke, glow, halo, wobble. Override any of them in the figure or when you mount it, or start from mono and line for a one-colour or hairline look."],
           ].map(([q, a]) => (
             <details key={q} className="faq">
               <summary>{q}</summary>

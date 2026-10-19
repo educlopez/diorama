@@ -20,12 +20,12 @@ Diorama.figure({
 
     /* the cart */
     var cart = D.group(-.8, 0, -1.2);
-    D.rbox(3.4, 1.4, 1.5, pal.coral, 0, .95, 0, cart, { r: .12 });
+    D.rbox(3.4, 1.4, 1.5, pal.accent, 0, .95, 0, cart, { r: .12 });
     D.box(3.5, .1, 1.6, pal.wood, 0, 1.7, 0, cart);
     D.wheel(.36, .18, pal.tyre, -1.2, .36, .85, cart); D.wheel(.36, .18, pal.tyre, 1.2, .36, .85, cart);
     D.wheel(.36, .18, pal.tyre, -1.2, .36, -.85, cart); D.wheel(.36, .18, pal.tyre, 1.2, .36, -.85, cart);
     [-1.55, 1.55].forEach(function (x) { D.cyl(.05, .05, 2.3, pal.ink, x, 2.6, -.6, cart, 8); });
-    for (var k = 0; k < 7; k++) D.box(.55, .06, 1.9, k % 2 ? pal.paper : pal.coral, -1.65 + k * .55, 3.72, -.1, cart, { shadow: k === 0 });
+    for (var k = 0; k < 7; k++) D.box(.55, .06, 1.9, k % 2 ? pal.paper : pal.accent, -1.65 + k * .55, 3.72, -.1, cart, { shadow: k === 0 });
     D.box(3.9, .08, .12, pal.ink, 0, 3.7, .85, cart);
     var machine = D.box(.9, .7, .6, pal.steel, .9, 2.1, -.3, cart); D.box(.3, .12, .3, pal.mustard, .9, 2.5, -.3, cart);
     D.cyl(.1, .1, .3, pal.ink, .9, 1.9, .15, cart, 8);

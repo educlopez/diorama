@@ -8,7 +8,7 @@
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent_Skills-compatible-1b1b19?style=flat-square" alt="Agent Skills compatible"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1b1b19?style=flat-square" alt="MIT license"></a>
   <a href="#requirements"><img src="https://img.shields.io/badge/node-%E2%89%A5%2020-1b1b19?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node 20 or later"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/three.js-r128-1b1b19?style=flat-square" alt="three.js r128"></a>
+  <a href="#how-it-works"><img src="https://img.shields.io/badge/renders-SVG%2C_no_dependency-1b1b19?style=flat-square" alt="Renders SVG, no dependency"></a>
 </p>
 
 <p align="center">
@@ -24,14 +24,14 @@
 
 ---
 
-Ask Claude for a 3D illustration and Diorama has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun with soft shadows. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
+Ask Claude for a 3D illustration and Diorama has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun, drawn as SVG the way an illustrator fakes depth: one flat tone per face, the pieces painted from the back to the front, the shadows thrown on the ground as shapes. No three.js, no WebGL, nothing to load. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
 
-The default look is an isometric camera, matte blocks, one warm sun with soft shadows and a few accents, built into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing, or a night scene with the lamps on.
+The default look is an isometric camera, matte blocks, one warm sun with soft shadows and a few accents, built into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing (by hand, if you ask), or a night scene with the lamps on. Every base throws a soft shadow on the page, so the diorama sits on it like a thing on a table. The subject is painted with the accent, so one brand colour recolours it in any theme, and the bench has swatches to try. Things answer a tap as well as the pointer, a thing can come apart under the pointer to show what it is made of, and a read-out under the stage says what the scene is doing, from the same clock that moves it.
 
 <p align="center">
   <img src="docs/media/themes.png" width="820" alt="The same warehouse scene drawn five ways: toy in pastel, soft on cream, mono in greys with a cobalt roof, line as an ink drawing on white, and night in dusk blues with lamps glowing.">
 </p>
-<p align="center"><sub>One figure file, five themes: <code>toy</code>, <code>soft</code>, <code>mono</code>, <code>line</code>, <code>night</code>. The gallery switches them live.</sub></p>
+<p align="center"><sub>One figure file, six themes: <code>toy</code>, <code>soft</code>, <code>mono</code>, <code>line</code>, <code>night</code>, <code>print</code>. The gallery switches them live.</sub></p>
 
 ## Quick start
 
@@ -58,13 +58,19 @@ Claude offers two or three concepts, builds the one you choose, checks it in a h
 | <img src="docs/media/warehouse.png" alt="An isometric warehouse yard: a white building with a terracotta roof and three dock doors, a truck at the dock, a forklift by yellow racks, trees along a road, a parked van"> | <img src="docs/media/cafe.png" alt="A coffee cart with a striped awning on a cream street corner, a barista, a customer, a bistro table, a cat on a chair, two trees"> |
 | **`warehouse`** · a hero. A truck does a lap and docks, a forklift carries pallets to the racks, a worker walks the aisle. | **`cafe`** · a card in `soft`. The barista pulls shots, a customer comes for a cup, the cat flicks its tail. |
 | <img src="docs/media/launchpad.png" alt="A rocket on its pad at night beside a gantry, floodlights on, a control room with lit windows, on a dark rounded base"> | <img src="docs/media/server.png" alt="Three server racks in greys with blinking lights, a cooling unit, a technician and a terminal, on a white tiled floor"> |
-| **`launchpad`** · a card, in `night`. The rocket waits under floodlights and every so often the arm swings back and it lifts off. | **`server`** · a card, in `mono` with a teal accent. The racks blink in their own rhythms, the fan turns; hover a rack and all its lights come on. |
+| **`launchpad`** · a card, in `night`. The rocket waits under floodlights and every so often the arm swings back and it lifts off. Hover the rocket and it comes apart into its stages; tap the control room and the count reaches zero now. | **`server`** · a card, in `mono` with a teal accent. The racks blink in their own rhythms, the fan turns; hover a rack and all its lights come on. |
 | <img src="docs/media/rack.png" alt="An empty three-level pallet rack drawn in greys with yellow beams, a forklift waiting in front, on a rounded base"> | <img src="docs/media/mailbox.png" alt="A coral letterbox on a wooden post, door open and empty, a small tree, a fence and a rock beside it, on a grass tile"> |
 | **`rack`** · a card, in `mono` with the beams' yellow as the one accent. Hover a level and the forks go to it. | **`mailbox`** · a mini. The flag lifts every few seconds to check, finds nothing, settles. |
 | <img src="docs/media/seedling.png" alt="A line drawing of a terracotta pot full of soil and a watering can lifted over it, drops falling from its rose onto the soil, on a rounded tile"> | <img src="docs/media/desk.png" alt="A line drawing of a desk with a lamp, an empty tray, a mug and a swivel chair, on a rounded tile"> |
 | **`seedling`** · a mini, in `line` with the pot as the accent. Now and then the can lifts, turns to the pot and waters the soil. | **`desk`** · a mini, in `line` with a coral accent. The chair swivels, the lamp nods. |
 | <img src="docs/media/powder.png" alt="An isometric ski village at the foot of a snowy mountain: a chairlift up the slope, chalets with lit windows, a hotel, pines, a frozen pond and a shuttle bus"> | <img src="docs/media/turntable.png" alt="A line drawing of a record player on a low cabinet with a speaker and an empty crate, the platter mat in purple, on a rounded tile"> |
 | **`powder`** · a hero. Chairs climb the slope, two skiers ride up and carve back down, a ski class snakes the nursery, the shuttle waits at the lift. | **`turntable`** · a mini, in `line` with a purple accent. Now and then the arm swings over, finds no record and goes back. |
+| <img src="docs/media/harbour.png" alt="An isometric container quay on pale water: a ship with coloured containers moored along it, an orange gantry crane, a tractor on the quay road, a harbour office, a tug and a lighthouse on a breakwater"> | <img src="docs/media/kitchen.png" alt="An isometric kitchen corner: a tiled floor, a counter with a sink and a red toaster, a teal kettle steaming, a fridge, a window and a clock on the back wall, a cat on a stool"> |
+| **`harbour`** · a hero. The crane lifts containers off the ship one by one, the tractor laps the quay and waits at the barrier, the tug circles, the lighthouse turns. Tap the crane and the next lift starts now. | **`kitchen`** · a card. The kettle steams, the clock turns, the toast pops now and then. Hover the fridge and the door opens; tap the toaster and it pops now. |
+| <img src="docs/media/assembly.png" alt="A conveyor belt in greys with four cardboard boxes riding it through a scanner gate with a teal light, a stamping arm over it, a pallet at the end, a worker at a panel"> | <img src="docs/media/observatory.png" alt="A line drawing of a small round observatory with a dome, a purple telescope through its slit, a bench, a pine and a rock, on a grass tile"> |
+| **`assembly`** · a card, in `mono` with a teal accent. Jobs ride the belt through the scanner and under the stamp; tap the gate and the belt holds, the read-out counts what is waiting. | **`observatory`** · a mini, in `line` with a hand-drawn wobble. The dome turns; now and then the telescope lifts, finds nothing yet, and settles. |
+| <img src="docs/media/vending.png" alt="A print-style drawing of a vending machine with bare coils behind its open front, an orange button, an empty tray, a fan on its side and a plant beside it"> | |
+| **`vending`** · a mini, in `print` with an orange button. Every coil is bare; now and then one turns and nothing drops. Tap the button and one turns now. | |
 
 Open them live in the gallery on the site: every figure answers the pointer, names what is under it, switches theme and pauses to its still frame.
 
@@ -87,17 +93,18 @@ Three sizes, one format:
 | `mono` | tints of ink on white | one `accent` |
 | `line` | a hairline drawing: white fills, ink edges, silhouettes, no shadows | one `accent`, as a stroke |
 | `night` | dusk: dark base, cool sky, warm lamps and windows | every colour, darker |
+| `print` | flat tones per face and ink lines, no thrown shadows: a printed illustration | every colour |
 
 A theme is a set of fields, and a figure (or a `mount` call) can override any of them:
 
 ```js
 theme: { base: 'mono', accent: '#5b4ae0', shadows: false, strokeWidth: 1.4 }
-// palette, accent, lights, shadows, finish, tone, tint, edges, outline, stroke, strokeWidth, round, glow
+// palette, accent, lights, shadows, finish, tone, tint, edges, outline, stroke, strokeWidth, round, glow, halo, wobble
 ```
 
-`tone` makes any theme monochrome, `edges` and `outline` draw ink on any theme, `round` turns every box into a rounded solid, `lights` replaces any of the four lights. The bench page has a theme switcher, and `look.mjs --theme line` writes the sheet for another theme.
+`tone` makes any theme monochrome, `edges` and `outline` draw ink on any theme, `round` turns every box into a rounded solid, `lights` replaces any of the four lights, `halo` is the soft shadow the base throws on the page, `wobble` draws the ink by hand (`{ base: 'line', wobble: 1.4 }`), and `accent` is the subject's colour in every theme. The bench page has a theme switcher and accent swatches, and `look.mjs --theme line` writes the sheet for another theme.
 
-Every diorama ships as `diorama-<name>.html`: three-lite (the part of three.js the kernel uses, without a dependency), the kernel, the figure and a small bench page. `--three` links three.js r128 from cdnjs instead, and `--inline` pastes it in. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
+Every diorama ships as `diorama-<name>.html`: the kernel, the figure and a small bench page, one file of 30 to 35 KB gzip that draws itself as SVG, crisp at any size, styled by the page's CSS. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
 
 It honours `prefers-reduced-motion` with one still frame, sleeps when offscreen or in a hidden tab, and never allocates in the loop.
 
@@ -125,17 +132,7 @@ mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/dioram
 
 - Node.js 20 or later, for `build.mjs`, `validate.mjs` and `look.mjs`.
 - Chrome or Chromium for the look. `look.mjs` finds Playwright's browser or installs `playwright-core` once into `~/.cache/diorama-look`.
-- Nothing at runtime: the page carries three-lite, so it makes no network request. With `--three` it loads three.js r128 from cdnjs; with `--inline` it carries three.js.
-
-Page weight per build mode, gzip, across the 13 gallery figures:
-
-| Build | Renderer | Page | What the browser downloads |
-|---|---|---:|---:|
-| default | three-lite, in the page | 31 to 35 KB | 31 to 35 KB |
-| `--three` | three.js r128 from cdnjs | 17 to 21 KB | 163 to 167 KB |
-| `--inline` | three.js r128, in the page | 162 to 167 KB | 162 to 167 KB |
-
-three-lite matches three.js to an SSIM of 0.997 to 0.9998 in Chromium, WebKit and a phone profile; `spike/LITE-RESULTS.md` has the numbers.
+- Nothing at runtime: the page draws SVG, so it needs no renderer, no WebGL and makes no network request. A built page is 30 to 35 KB gzip across the 13 gallery figures.
 
 ## Usage
 
@@ -143,14 +140,12 @@ Three habits help:
 
 1. **Say where it will live.** "Hero for the landing page", "card in the docs", "empty state for the inbox". The size sets the budget.
 2. **Name the place or the product.** "A harbour", "a kitchen", "our CI service". Claude turns a product into a place.
-3. **Give a colour if you have one.** A brand colour goes in through the palette and the rest stays pastel.
+3. **Give a colour if you have one.** A brand colour goes in as the accent: it recolours the subject in any theme and the rest stays pastel.
 
 Then run the scripts yourself when you want to:
 
 ```sh
-node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js            # writes diorama-mailbox.html, on three-lite
-node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --three    # three.js r128 from cdnjs instead
-node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --inline   # three.js r128 pasted in
+node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js            # writes diorama-mailbox.html
 node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html
 node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the sheet and the numbers
 ```
@@ -162,7 +157,7 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/farm.js`: a hero. Fields, a farmhouse, a barn, a silo, a windmill, a pond with sheep; a tractor on a lap that stops at the barn.
 - `examples/warehouse.js`: a hero. A building with docks and a flag, racks, a truck on a lap with a stop, a forklift shuttle with a hand-off, a walker, trees and lamps.
 - `examples/cafe.js`: a card in `soft`. A coffee cart with a striped canopy, a barista and steam, a customer who comes for a cup and goes, a cat on a chair.
-- `examples/launchpad.js`: a card in `night`. A rocket on its pad under floodlights, a gantry whose arm swings back, a control room; a launch now and then.
+- `examples/launchpad.js`: a card in `night`. A rocket on its pad under floodlights, a gantry whose arm swings back, a control room; a launch now and then, or now, on a tap; hover the rocket and it comes apart into its stages, and the read-out counts down.
 - `examples/server.js`: a card in `mono` with a teal accent. Three racks that blink in their own rhythms, a cooling unit, a technician; hover a rack and its lights all come on.
 - `examples/rack.js`: a card in `mono` with one accent. A bare rack, a forklift whose forks rise and settle; hover a level and the forks go there.
 - `examples/mailbox.js`: a mini. A letterbox on a post, door open, a fence, a tree and a rock; the flag checks now and then.
@@ -170,17 +165,20 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/desk.js`: a mini in `line` with a coral accent. A desk with a lamp, an empty tray and a mug; the chair swivels.
 - `examples/powder.js`: a hero. A ski village under a snowy peak: a chairlift on a loop, two skiers who ride up and ski down in turns, a ski class, a shuttle bus, a skater on the pond, smoking chimneys.
 - `examples/turntable.js`: a mini in `line` with a purple accent. A record player and an empty crate; the tonearm looks for a record now and then.
+- `examples/harbour.js`: a hero. A container quay: a ship with containers on deck, a gantry crane on an 18 s lift cycle, a tractor on a lap that stops at a barrier, a tug in the basin, gulls, a lighthouse on a breakwater; tap the crane and the next lift starts now; the read-out says what the crane is doing.
+- `examples/kitchen.js`: a card. A kitchen corner with a wall, a window and a clock, a counter with a sink, a kettle that steams, a toaster that pops, a fridge built as a shell whose door opens under the pointer, a cat on a stool.
+- `examples/assembly.js`: a card in `mono` with a teal accent. A belt of jobs through a scanner gate and under a stamping arm; tap the gate and the belt holds; the read-out counts what is waiting.
+- `examples/observatory.js`: a mini in `line` with a wobble. A round observatory whose dome turns; the telescope lifts to look now and then.
+- `examples/vending.js`: a mini in `print`. A vending machine with bare coils behind an open front, a fan on its side; a coil turns a notch now and then, or now, on a tap.
 
 Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
 ## How it works
 
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
-- `kit/diorama.js` is the kernel: the orthographic isometric camera fitted to the scene, four lights (hemisphere, warm sun with PCF soft shadows, cool fill, ambient) in sRGB, the five themes with toning, edges and silhouette outlines, cached matte materials, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths), the pointer with picking and camera tilt, and the loop that sleeps.
-- `kit/three.min.js` is three.js r128, vendored for `--inline` builds and for looking at a `--three` page offline.
-- `kit/three-lite.js` is three-lite: the part of the three.js API the kernel uses, written without a dependency, with a WebGL1 renderer, the renderer every build uses unless `--three` or `--inline` asks for three.js. `kit/three-lite.min.js` is the copy the build pastes in, written by `scripts/minify-lite.mjs`.
-- `bench.html` is the page: a card for every figure, sized to it.
-- `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs ten checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer, renderer); `scripts/look.mjs` takes the sheet in headless Chromium and measures fill, motion and the pointer's answer.
+- `kit/diorama.js` is the kernel, with no dependency: a small scene graph (groups, meshes, materials, vectors and matrices), the orthographic isometric camera fitted to the scene, an SVG painter (one flat tone per face from four lights, a disc and a crescent for a sphere, bands for a cylinder, the pieces sorted back to front, the shadows thrown on the slabs, the halo, the ink with its wobble), the six themes with toning, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths, `apart`), the pointer with picking, the press (`ctx.pressed`, `ctx.active`) and camera tilt, the read-out (`ctx.read`), the halo under the base, the hand-drawn wobble, and the loop that sleeps.
+- `bench.html` is the page: a card for every figure, sized to it, with a theme switcher, accent swatches, a still-frame toggle and the live read-out.
+- `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs ten checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer, drawing); `scripts/look.mjs` takes the sheet of nine pictures in headless Chromium and measures fill, motion, the pointer's answer and a press.
 - `references/` hold the long form: concepts, the ten craft rules with the themes and recipes, motion patterns, the look, and embedding in React.
 - `apps/site/` is the website (see below).
 
@@ -198,11 +196,11 @@ To deploy on Vercel, import the repository and set the project's **Root Director
 
 - One scene per page, one `Diorama.figure` call per file. Several dioramas on a page are several mounts.
 - No textures, no glass, no particles: the look is matte blocks, shadows and ink lines on purpose.
-- Software GL in a sandbox renders a hero in a few milliseconds per frame; a phone with a real GPU is faster than that. Keep heroes under ~400 primitives.
-- three.js r128 is the vendored build. Newer versions work with the kernel's `{ THREE }` option but are not what the look tests.
+- A hero of four hundred parts draws in a few milliseconds a frame; what is not moving is not redrawn. Keep heroes under ~400 primitives, and give small cylinders few segments.
+- The painter sorts whole pieces by depth, as an illustrator would: a long thin thing beside a small one can be painted in the wrong order for a frame. Split it, or move the small thing.
 
 ## Credits
 
-Rendering by [three.js](https://threejs.org/).
+The flat isometric drawing owes a debt to [Anatomy](https://github.com/wheresryan22/anatomy) and [Colorfigures](https://april-zhu.com/colorfigures), two skills that fake 3D in SVG beautifully.
 
 MIT.

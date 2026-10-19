@@ -49,7 +49,7 @@ Diorama.figure({
     var flock = [sheep(8, 5, 1), sheep(10.5, 4, 2.4), sheep(7, 9, -.5), sheep(14, 10.5, 1.8), sheep(9.5, 7.5, 3)];
     [[3.5, -7.5], [4.3, -6.3], [3.9, -6.9]].forEach(function (p, k) { D.cyl(.5, .5, .9, pal.cardboard, p[0], k === 2 ? 1.4 : .5, p[1], null, 14).rotation.z = Math.PI / 2; });
     var tractor = D.group(0, 0, 0), tw = []; tractor.name = 'tractor'; hot.push(tractor);
-    D.rbox(2.2, .9, 1.2, pal.coral, .1, .95, 0, tractor, { r: .12 }); D.box(1.2, .6, 1.0, pal.coral, .6, .5, 0, tractor); D.cyl(.08, .08, .9, pal.ink, 1.0, 1.7, .3, tractor, 8);
+    D.rbox(2.2, .9, 1.2, pal.accent, .1, .95, 0, tractor, { r: .12 }); D.box(1.2, .6, 1.0, pal.accent, .6, .5, 0, tractor); D.cyl(.08, .08, .9, pal.ink, 1.0, 1.7, .3, tractor, 8);
     D.box(.9, .9, 1.0, pal.paper, -.5, 1.85, 0, tractor); D.box(.9, .06, 1.1, pal.ink, -.5, 2.33, 0, tractor); D.box(.06, .5, .9, pal.sky, -.03, 1.9, 0, tractor, { shadow: false });
     var driver = D.props.person(-.5, 0, tractor, { shirt: pal.teal, hat: pal.mustard }); driver.position.y = 1.0; driver.scale.setScalar(.9); driver.rotation.y = Math.PI / 2;
     tw.push(D.wheel(.65, .5, pal.tyre, -.6, .65, .75, tractor), D.wheel(.65, .5, pal.tyre, -.6, .65, -.75, tractor), D.wheel(.38, .4, pal.tyre, 1.1, .38, .65, tractor), D.wheel(.38, .4, pal.tyre, 1.1, .38, -.65, tractor));

@@ -78,8 +78,44 @@ The kernel gives three things without a line of code: `ctx.pointer` (`x`, `y` in
 - **Light a level.** Swap the beams' material to a `D.mat(pal.safety, { emissive: pal.safety, emissiveIntensity: .55 })` while hovered; swap back after. Materials are cached, so make the two once in `build`.
 - **Send something there.** The forks' spring target becomes the hovered level's height; with no hover it goes back to the ambient value.
 - **Look at it.** A driver's head turns toward `ctx.pointer.world`.
+- **Tap to keep it.** The same answer on `ctx.active`, so a phone can hold what a hover previews.
 
 Springs make the answer and the return calm; never set a pose directly from the pointer. Test the pick against what is at rest (`parts.hot` are groups; a lifted group is still picked where it stands). Name every hot group (`g.name = 'tram'`): the bench and the site show the name as a read-out while the pointer is on it, which is how a visitor learns what answers.
+
+## The press
+
+A click or a tap is a press. The kernel records it: `ctx.pressed` is the hot group under the last press (or null), `ctx.pressedAt` its second, `ctx.active` the group switched on by a press until it or another is pressed again, and `ctx.pointer.down` while the button is held. Touch has no hover, so on a phone the press is the only answer there is: a hero or a card gives one thing a press, and the hint says so ("tap the control room to launch now"). Three shapes:
+
+- **A switch.** `ctx.active === p.lamp` turns the lamp on and keeps it on; pressing again turns it off. The same spring that answers the hover answers this, with `ctx.hover === g || ctx.active === g` as its target, so a tap on a phone does what a hover does on a desk.
+- **A call.** A press moves the clock to the moment the visitor asked for, and the loop goes on from there, seamless:
+
+```js
+if (ctx.pressed === p.bunker && ctx.pressedAt !== p.lastPress) {   // one press, once
+  p.lastPress = ctx.pressedAt;
+  if (D.phase(t - p.base, 20) * 20 < 12) p.base = t - 12;          // only while the rocket waits
+}
+var T = D.phase(t - p.base, 20) * 20;                              // T is 12 now: the arm swings
+```
+
+  `p.base` starts at 0 and only a press changes it, so the still frame and the loop stay reproducible; nothing accumulates.
+- **A pick.** A press on a level sends the forks there and keeps them there until another level is pressed; the hover previews, the press commits.
+
+Never run an event from a press that leaves the scene half way: a rocket that teleports home when the next press lands is a bug. Guard the call with the phase, as above.
+
+## Taking it apart
+
+Hover a thing and it comes apart into what it is made of, then closes when the pointer leaves: a rocket into its stages, a building into roof and floors, a machine out of its cover. `D.apart` does the motion:
+
+```js
+var apart = D.apart([{ g: nose, y: 1.5 }, { g: body, y: .7 }], { stagger: .08 });            // in build, outermost first
+apart.open((ctx.hover === p.rocket || ctx.active === p.rocket) && !busy); apart.step(ctx.dt);   // in tick
+```
+
+Each item is a group and the vector it moves along, times a sprung 0..1; the first leaves first and the rest follow one `stagger` later each, and closing runs the order backwards, so the parts that left last come home first and nothing passes through anything. Build the thing in groups at their assembled places; list them outermost first; give each part a vector along which it clears the others (a nose up, a side panel out, a drawer forward). Hold it shut while the thing is busy (`!busy`: a rocket in flight stays whole).
+
+## The read-out
+
+`ctx.read` is one line the figure writes every frame, shown under the stage when the pointer is on nothing: what the scene is doing right now, from the same clock that poses it. `'truck · at the dock'`, `'boat · out round the island'`, `'on the pad · T−8 s'`, `'lift-off · 9 m'`. Keep it under forty characters, name the thing then its state with a middle dot, and let a number in only when it comes from the model (the count from `T`, the height from `rise`), never a made-up one. The read-out is how a visitor learns the scene is a working model with a schedule and not a gif; a phase word that lags the picture is a bug, so compute it from `T` beside the pose, not from a second clock.
 
 ## The still frame
 
@@ -87,4 +123,4 @@ Reduced motion, a thumbnail, and the look's `rest` picture all draw the loop at 
 
 ## Cost
 
-`tick` runs sixty times a second. Keep it to arithmetic and property sets: no `new THREE.*`, no array allocations, no `scene.traverse`, no material creation. Make every material in `build` and swap references in `tick`. A hero of 400 primitives at 1.5 device pixels renders in a few milliseconds on a laptop; the look prints the time in software GL as a hint.
+`tick` runs sixty times a second. Keep it to arithmetic and property sets: no `new o.M.Vector3()`, no array allocations, no `world.traverse`, no material creation. Make every material in `build` and swap references in `tick`. A part that does not move costs nothing to draw again (the kernel keeps its shapes), so the frame is the movers: a hero of 400 primitives with twenty of them moving draws in a few milliseconds on a laptop; the look prints the time in headless Chromium as a hint.
