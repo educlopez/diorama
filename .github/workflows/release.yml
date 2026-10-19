@@ -1,14 +1,13 @@
-name: Release
+name: Release by hand
 
-# Two ways to publish a version, both with the notes taken from that version's section of
-# CHANGELOG.md (the job fails and publishes nothing when the section is missing):
-#   - push a tag like v1.2.0, or
-#   - run this workflow by hand with the version (and, if not the branch's head, the commit
-#     to tag): it creates the tag at that commit and the release in one go.
+# The releases come from release-please (see release-please.yml): a merge of its release pull
+# request creates the tag and the GitHub release. This workflow is the hand lever for the rare
+# case outside that flow, such as a version that needs a tag on an older commit: run it with the
+# version (and, if not the branch's head, the commit to tag) and it creates the tag and the
+# release in one go, with the notes taken from that version's section of CHANGELOG.md. It fails
+# and publishes nothing when the section is missing.
 
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
@@ -29,39 +28,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Name the version and the commit
-        id: v
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          INPUT_TARGET: ${{ inputs.target }}
-        run: |
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            v="${INPUT_VERSION#v}"; target="${INPUT_TARGET:-$GITHUB_SHA}"
-          else
-            v="${GITHUB_REF_NAME#v}"; target=""
-          fi
-          echo "version=$v" >> "$GITHUB_OUTPUT"; echo "target=$target" >> "$GITHUB_OUTPUT"
       - name: Take this version's notes from CHANGELOG.md
         env:
-          VERSION: ${{ steps.v.outputs.version }}
+          VERSION: ${{ inputs.version }}
         run: |
-          python3 - "$VERSION" > notes.md <<'PY'
+          v="${VERSION#v}"
+          python3 - "$v" > notes.md <<'PY'
           import re, sys
           version = sys.argv[1]
           text = open("CHANGELOG.md", encoding="utf-8").read()
           m = re.search(r"^## \[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^## \[|\Z)", text, re.S | re.M)
           sys.stdout.write(m.group(1).strip() + "\n" if m else "")
           PY
-          if [ ! -s notes.md ]; then echo "::error::CHANGELOG.md has no [$VERSION] section"; exit 1; fi
+          if [ ! -s notes.md ]; then echo "::error::CHANGELOG.md has no [$v] section"; exit 1; fi
           cat notes.md
-      - name: Create the release (and the tag, when run by hand)
+      - name: Create the tag and the release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.v.outputs.version }}
-          TARGET: ${{ steps.v.outputs.target }}
+          VERSION: ${{ inputs.version }}
+          TARGET: ${{ inputs.target }}
         run: |
-          if [ -n "$TARGET" ]; then
-            gh release create "v$VERSION" --target "$TARGET" --title "Diorama v$VERSION" --notes-file notes.md
-          else
-            gh release create "v$VERSION" --verify-tag --title "Diorama v$VERSION" --notes-file notes.md
-          fi
+          v="${VERSION#v}"
+          gh release create "v$v" --target "${TARGET:-$GITHUB_SHA}" --title "Diorama v$v" --notes-file notes.md

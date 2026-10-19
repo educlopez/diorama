@@ -1,8 +1,6 @@
 # Changelog
 
-All notable changes to Diorama are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes.
-
-## [Unreleased]
+All notable changes to Diorama are listed here. The versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes. From 1.0.0 on, [release-please](https://github.com/googleapis/release-please) writes each new section from the pull requests merged since the last version (`feat:` under Added, `fix:` under Fixed, `perf:` and `refactor:` under Changed, `docs:` under Documentation) and opens the release pull request that publishes it.
 
 ## [1.0.0] - 2026-10-19
 
@@ -44,6 +42,5 @@ All notable changes to Diorama are listed here. The format follows [Keep a Chang
 - `bench.html` and the scripts: `build.mjs`, `validate.mjs` with ten checks, `look.mjs` in headless Chromium; the three-lite build.
 - The site at diorama.educalvolopez.com with the gallery, the docs, `llms.txt` and the launch videos; the identity check on every commit.
 
-[Unreleased]: https://github.com/educlopez/diorama/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/educlopez/diorama/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/educlopez/diorama/releases/tag/v0.1.0

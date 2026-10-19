@@ -175,7 +175,7 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
 ## Releases
 
-Every version is a tag and a [release on GitHub](https://github.com/educlopez/diorama/releases) with its notes, and [`CHANGELOG.md`](CHANGELOG.md) keeps them all. Watch the repository for releases to hear about the next one.
+Every version is a tag and a [release on GitHub](https://github.com/educlopez/diorama/releases) with its notes, and [`CHANGELOG.md`](CHANGELOG.md) keeps them all. The releases make themselves: a pull request titled `feat: …` asks for a minor version, `fix: …` for a patch, a `!` after the type for a major; once merged, release-please keeps one pull request open with the changelog and the version bumped, and merging that one creates the tag and the release. Watch the repository for releases to hear about the next one.
 
 ## How it works
 
