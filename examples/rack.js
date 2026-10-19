@@ -41,7 +41,7 @@ Diorama.figure({
     [-.32, .32].forEach(function (z) { D.box(.1, 3.4, .1, pal.slate, .74, 1.8, z, fl); });
     var beacon = D.box(.16, .12, .16, pal.warn, -.4, 2.31, 0, fl, { mat: { emissive: pal.flame, emissiveIntensity: .2 }, shadow: false });
     [[.45, .3], [-.62, .26]].forEach(function (p) { [-.52, .52].forEach(function (z) { D.wheel(p[1], .22, pal.tyre, p[0], p[1], z, fl); }); });
-    var driver = D.props.person(-.2, 0, fl, { shirt: pal.teal }); driver.position.y = .55;
+    var driver = D.props.person(-.2, 0, fl, { shirt: pal.teal }); driver.position.y = .85;
     var head = driver.children[3];
     var carriage = D.group(.8, .1, 0, fl);
     D.box(.07, .6, .82, pal.steel, 0, .3, 0, carriage);

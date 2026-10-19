@@ -38,7 +38,7 @@ Diorama.figure({
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;
-    p.door.rotation.z = -1.25 + .06 * D.wave(t, 3.2);
+    p.door.rotation.z = 1.9 + .06 * D.wave(t, 3.2);
     var check = D.smooth(D.pulse(t, 7, .36));
     p.flag.rotation.z = D.lerp(.2, 1.45, check) + .04 * D.wave(t, 1.3);
   }

@@ -32,15 +32,15 @@ Diorama.figure({
     [[2.6, -1.2, .7], [3.4, 2.2, .6], [1.6, 2.8, .5], [4.4, -2.0, .8]].forEach(function (q, k) { var p = W.apply(null, P(q[0], q[1])), r = D.props.rock(p[0], p[1], null, { r: q[2], h: q[2] * 1.2, yaw: k * 2 }); r.position.y = hgt(p[0], p[1]) - .15; });
     /* the chairlift, built in its own frame: x runs down the fall line, z across it */
     var lift = D.group(C[0], 0, C[1]); lift.rotation.y = aU;
-    var xT = 2.4, xB = 12, yB = 1.8, yT = H * (1 - xT / R) + yB, Lc = Math.hypot(xB - xT, yT - yB), rr = .7, L = 2 * Lc + 2 * Math.PI * rr;
+    var xT = 2.4, xB = 12, yB = 2.05, yT = H * (1 - xT / R) + yB, Lc = Math.hypot(xB - xT, yT - yB), rr = .7, L = 2 * Lc + 2 * Math.PI * rr;
     [-rr, rr].forEach(function (z) { var c = D.box(Lc, .04, .04, pal.ink, (xT + xB) / 2, (yT + yB) / 2, z, lift, { shadow: false }); c.rotation.z = -Math.atan2(yT - yB, xB - xT); });
     [5.4, 8.7].forEach(function (x) {
       var base = H * (1 - x / R), top = yB + (yT - yB) * (xB - x) / (xB - xT) + .2;
-      D.cyl(.12, .18, top - base, pal.steel, x, (top + base) / 2, 0, lift, 10); D.box(.24, .18, 2.0, pal.ink, x, top, 0, lift);
-      D.cyl(.12, .12, .1, pal.slate, x, top + .12, -rr, lift, 10); D.cyl(.12, .12, .1, pal.slate, x, top + .12, rr, lift, 10);
+      D.cyl(.12, .18, top + .15 - base, pal.steel, x, (top + .15 + base) / 2, 0, lift, 10); D.box(.24, .18, 2.0, pal.ink, x, top + .15, 0, lift);
+      D.cyl(.12, .12, .1, pal.slate, x, top + .27, -rr, lift, 10); D.cyl(.12, .12, .1, pal.slate, x, top + .27, rr, lift, 10);
     });
     var top = D.group(xT, H * (1 - xT / R) - .45, 0, lift);
-    D.box(2.2, .3, 1.8, pal.mist, -.4, .15, 0, top); D.box(1.6, 1.6, 1.4, pal.wood, -.3, .9, -2.3, top); D.wedge(1.9, .7, 1.8, pal.accent, -.3, 1.7, -2.3, top);
+    D.box(1.9, .3, 1.8, pal.mist, -.55, -.1, 0, top); D.box(1.6, 1.6, 1.4, pal.wood, -.3, .9, -2.3, top); D.wedge(1.9, .7, 1.8, pal.accent, -.3, 1.7, -2.3, top);
     D.cyl(.12, .12, yB + .65, pal.steel, 0, (yB + .65) / 2, 0, top, 8); D.cyl(.8, .8, .12, pal.accent, 0, yB + .45, 0, top, 20);
     var station = D.group(xB, 0, 0, lift); station.name = 'lift station'; hot.push(station);
     D.box(3.4, .12, 3.2, pal.mist, .3, .06, 0, station); D.box(1.2, 2.0, 2.2, pal.wood, 1.75, 1.3, 0, station); D.wedge(1.6, .8, 2.6, pal.accent, 1.75, 2.3, 0, station);
@@ -71,10 +71,10 @@ Diorama.figure({
     }
     function run(pts) { var q = [W(xT, rr)]; pts.forEach(function (p) { q.push(W.apply(null, P(p[0], p[1]))); }); q.push(W(xB, 3.4), W(xB, 1.9), W(xB, rr)); return D.path(q, false, .6); }
     var skiers = [
-      { g: skier(pal.mustard, pal.coral), p: run([[3.5, .5], [4.9, .95], [6.4, .55], [7.9, 1.0], [9.4, .62], [10.6, .78]]), off: 0 },
-      { g: skier(pal.plum, pal.paper), p: run([[3.7, .38], [5.2, 1.1], [6.8, .7], [8.4, 1.15], [9.8, .8], [10.9, .98]]), off: .5 }
+      { g: skier(pal.mustard, pal.coral), p: run([[3.8, .5], [4.9, .95], [6.4, .55], [7.9, 1.0], [9.4, .62], [10.6, .78]]), off: 0 },
+      { g: skier(pal.plum, pal.paper), p: run([[4.0, .38], [5.2, 1.1], [6.8, .7], [8.4, 1.15], [9.8, .8], [10.9, .98]]), off: .5 }
     ];
-    skiers.forEach(function (s) { s.q = s.p.length - (1.9 - rr); });
+    skiers.forEach(function (s) { s.q = s.p.length - (2.3 - rr); });
     /* a rider on the chairs going up between the skiers, always aboard */
     var riders = [skier(pal.teal, pal.mustard), skier(pal.rose, false)];
 
