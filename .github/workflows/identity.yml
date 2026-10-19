@@ -18,7 +18,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          allowed='^(educlopez93@gmail\.com|[0-9]+\+educlopez@users\.noreply\.github\.com|noreply@github\.com|noreply@anthropic\.com)$'
+          allowed='^(educlopez93@gmail\.com|[0-9]+\+educlopez@users\.noreply\.github\.com|noreply@github\.com|noreply@anthropic\.com|[0-9]+\+github-actions\[bot\]@users\.noreply\.github\.com)$'
           if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then range="$HEAD"; else range="$BASE..$HEAD"; fi
           bad=0
           for c in $(git rev-list "$range"); do
