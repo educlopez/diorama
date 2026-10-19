@@ -123,4 +123,4 @@ Reduced motion, a thumbnail, and the look's `rest` picture all draw the loop at 
 
 ## Cost
 
-`tick` runs sixty times a second. Keep it to arithmetic and property sets: no `new THREE.*`, no array allocations, no `scene.traverse`, no material creation. Make every material in `build` and swap references in `tick`. A hero of 400 primitives at 1.5 device pixels renders in a few milliseconds on a laptop; the look prints the time in software GL as a hint.
+`tick` runs sixty times a second. Keep it to arithmetic and property sets: no `new o.M.Vector3()`, no array allocations, no `world.traverse`, no material creation. Make every material in `build` and swap references in `tick`. A part that does not move costs nothing to draw again (the kernel keeps its shapes), so the frame is the movers: a hero of 400 primitives with twenty of them moving draws in a few milliseconds on a laptop; the look prints the time in headless Chromium as a hint.

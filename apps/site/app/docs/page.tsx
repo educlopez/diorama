@@ -61,7 +61,6 @@ const FIGURE = `Diorama.figure({
 });`;
 
 const EMBED = `<div id="hero" style="width:100%"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/diorama/kit/diorama.js"></script>
 <script src="/diorama/island.js"></script>
 <script>
@@ -71,7 +70,6 @@ const EMBED = `<div id="hero" style="width:100%"></div>
 
 const REACT = `"use client";
 import { useEffect, useRef } from "react";
-import * as THREE from "three";          // npm i three@0.128
 import Diorama from "./diorama.js";
 import "./island.js";                   // registers the figure
 
@@ -79,7 +77,7 @@ export function Hero({ theme = "toy" }) {
   const el = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const fig = Diorama.figures[Diorama.figures.length - 1];
-    const ctx = Diorama.mount(fig, { el: el.current!, THREE, theme });
+    const ctx = Diorama.mount(fig, { el: el.current!, theme });
     return () => ctx.destroy();
   }, [theme]);
   return <div ref={el} style={{ width: "100%", aspectRatio: "3 / 2" }} aria-hidden />;
@@ -92,7 +90,7 @@ export default function Page() {
       <Topbar active="docs" />
       <header className="header" style={{ paddingBottom: 56 }}>
         <h1 className="title" style={{ marginTop: 24 }}>Diorama Skill</h1>
-        <p className="subtitle">The skill teaches your agent to build a small animated 3D world in one file: the kernel, five themes, thirteen examples, a validator and a browser check.</p>
+        <p className="subtitle">The skill teaches your agent to build a small animated 3D world in one file, drawn as SVG with nothing to load: the kernel, six themes, thirteen examples, a validator and a browser check.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="#installation">Get started</a>
           <a className="btn btn--secondary" href={`${REPO}/blob/main/SKILL.md`} target="_blank" rel="noopener noreferrer"><GitHub /><span>View SKILL.md</span></a>
@@ -107,7 +105,7 @@ export default function Page() {
         <Section id="installation">
           <CodeRows rows={[
             { code: INSTALL, note: "Installs the skill for every agent the skills CLI knows. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
-            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page carries three-lite and makes no network request. --three loads three.js r128 from cdnjs instead, and --inline carries it in the page." },
+            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page draws itself as SVG and makes no network request." },
           ]} />
         </Section>
 
@@ -158,8 +156,8 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
 
         <Section id="scripts">
           <CodeRows rows={[
-            { code: "node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js", note: "Writes diorama-mailbox.html: three-lite (the part of three.js the kernel uses, about 44 KB), the kernel, the figure and the bench page. Add --three to load three.js r128 from cdnjs instead, or --inline to paste three.js in." },
-            { code: "node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html", note: "Ten checks: the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base, the pointer and the renderer (three.js or three-lite, never both)." },
+            { code: "node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js", note: "Writes diorama-mailbox.html: the kernel, the figure and the bench page, one file that draws itself as SVG with nothing to load." },
+            { code: "node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html", note: "Ten checks: the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base, the pointer and the drawing (no renderer, no three.js in the page)." },
             { code: "node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js --theme line", note: "Opens the page in headless Chromium and writes one sheet: the still frame, three moments, the pointer, the tilt, a press, the thumbnail and the page, plus the console, the fill, the motion, the answer and the press as numbers." },
           ]} />
         </Section>

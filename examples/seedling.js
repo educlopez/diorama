@@ -28,7 +28,7 @@ Diorama.figure({
     var handle = D.torus(.26, .035, pal.steel, 0, .85, 0, body); handle.rotation.y = Math.PI / 2;
     var drops = []; [0, 1, 2, 3].forEach(function (k) { drops.push(D.ball(.035, pal.sky, 0, 0, 0, null)); });
     D.props.rock(.95, -.8, null, { r: .16 }); D.props.rock(-.85, .8, null, { r: .12, yaw: 2 });
-    return { can: can, face: -Math.atan2(.15 + .55, .3 + .75), body: body, rose: rose, drops: drops, nozzle: new o.THREE.Vector3(), soil: 1.03 };
+    return { can: can, face: -Math.atan2(.15 + .55, .3 + .75), body: body, rose: rose, drops: drops, nozzle: new o.M.Vector3(), soil: 1.03 };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;

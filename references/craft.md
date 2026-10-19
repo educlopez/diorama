@@ -25,10 +25,10 @@ The world is near-white and warm grey; colour belongs to the subject. The kit's 
 
 ## 04 · material: matte blocks, no textures
 
-Every surface is a matte `MeshStandardMaterial` in a flat colour, with the theme's finish (toy .8 roughness, soft .95, line 1). Light and shadow do all the shading. The only exceptions are a label on a sign and an emissive on a lamp or beacon, which `night` turns up and `line` turns off.
+Every surface is a flat colour in one tone per face: the kernel lights each face by where it faces (the sun, the fill, the sky) and paints it as one flat polygon, the way an illustrator shades a block; a cylinder gets a band per segment, a sphere a disc with a crescent. The only exceptions are a label on a sign and an emissive on a lamp or beacon, which `night` turns up and `line` turns off.
 
-- **Keep it:** pass a colour string to every primitive; the kernel caches the material in the theme. For a lamp: `{ mat: { emissive: pal.lampGlow, emissiveIntensity: .5 } }`. For a beacon that blinks, keep the mesh and set `material.emissiveIntensity` in `tick` (multiply by `ctx.theme.glow` if it must respect the theme).
-- **Rejected when:** a texture map, a gradient, a transparent glass, a metallic or a wireframe; a `MeshBasicMaterial` that ignores the light; a glow sprite.
+- **Keep it:** pass a colour string to every primitive; the kernel caches the material in the theme. For a lamp: `{ mat: { emissive: pal.lampGlow, emissiveIntensity: .5 } }`. For a beacon that blinks, keep the mesh and set `material.emissiveIntensity` in `tick` (multiply by `ctx.theme.glow` if it must respect the theme). For a beam of light or a wake: `{ mat: { transparent: true, opacity: .35 } }`.
+- **Rejected when:** a texture, a gradient, glass, a metallic look, a glow sprite; a cylinder with forty segments where twelve would do (every band is a shape to paint).
 
 ## 05 · parts: every object is a few primitives with its giveaways
 
@@ -39,10 +39,10 @@ A forklift is a yellow body, an orange counterweight, two mast rails, a carriage
 
 ## 06 · shadows: one sun, soft shadows, everything casts
 
-The sun comes from the front-left and above, with a cool fill from the back-right so shaded faces still show their colour; shadows fall toward the back-right and are soft. They give the blocks their volume and tie everything to the ground. `line` has no shadows and no shading: there, edges and silhouettes do that work, which is why a figure must also read as shapes (rule 03).
+The sun comes from the front-left and above, with a cool fill from the back-right so shaded faces still show their colour; shadows fall toward the back-right, as flat shapes thrown on the ground, the way a cut-out throws them under a lamp. They give the blocks their volume and tie everything to the ground. `line` and `print` have no thrown shadows: there, edges and silhouettes do that work, which is why a figure must also read as shapes (rule 03).
 
-- **Keep it:** the kernel sets the sun and the shadow camera to the world's bounds; every primitive casts and receives by default. Mark only ground markings and glows `{ shadow: false }`. If something big is added after `build`, call `ctx.fit()`.
-- **Rejected when:** shadows are off; a flat marking casts a shadow (it shows as a dark line); a scene is so large the shadow map blurs into blobs (split a hero across fewer, larger parts, or shrink the base).
+- **Keep it:** every primitive throws its outline along the sun onto the ground under it (the slab it stands on, at that slab's height), and the shadows land on the slabs only. Mark ground markings and glows `{ shadow: false }` so they throw none. A shadow does not fall on another object (a truck's shadow does not climb a wall), so keep the things whose shadows matter where the ground shows. If something big is added after `build`, call `ctx.fit()`.
+- **Rejected when:** shadows are off in a solid theme; a flat marking throws a shadow (it shows as a dark slab beside it); a thing that floats with its shadow at its feet.
 
 ## 07 · clock: all motion comes from `ctx.t` in `tick`
 
@@ -72,7 +72,7 @@ The scene is understood from its objects. Words go around the stage: the title, 
 - **Keep it:** no `D.label` in a mini or a card, and at most one in a hero, only when the product asked for its mark. Say "nothing here" by showing the empty thing, not by writing it. Colour says where to look: the one accent on the object the eye should start at. A building is told by its roof, its windows and its door, not by its name.
 - **Rejected when:** text floats in the air; an arrow; an icon; a number; a mini with a label; a scene that cannot be understood without its title.
 
-## The five themes
+## The six themes
 
 A theme is a set of fields the kernel applies to every primitive; a figure never branches on it. Declare it as a name or as `{ base, …overrides }`.
 
@@ -83,6 +83,7 @@ A theme is a set of fields the kernel applies to every primitive; a figure never
 | `mono` | tints of ink on white, one accent | the `accent` | `tone { paper, ink }`, `tint` | docs, product UIs with their own accent, text-heavy pages |
 | `line` | a hairline drawing: white fills, ink edges, silhouettes, no shadows | the `accent`, as a stroke with a faint fill | `edges`, `outline`, `stroke`, `strokeWidth`, optional `round` | minimal or technical pages, quiet empty states |
 | `night` | dusk: dark base, cool sky, warm lamps and windows | all colours, darker world | `glow` 2.6 | dark pages, hero sections on black |
+| `print` | flat tones per face (top, lit side, dark side) and ink lines, no thrown shadows: a printed illustration | all colours | `tones`, `edges` | editorial pages, docs that want a drawing, anything Colorfigures-like |
 
 Fields every theme takes, in the figure's `theme: { … }` or on `Diorama.mount(fig, { theme })`:
 

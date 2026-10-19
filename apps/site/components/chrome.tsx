@@ -72,7 +72,6 @@ export function Footer() {
           </div>
           <div className="footer-col">
             <p className="footer-col-title">Built on</p>
-            <a href="https://threejs.org">three.js</a>
             <a href="https://nextjs.org">Next.js</a>
             <a href="https://vercel.com">Vercel</a>
           </div>

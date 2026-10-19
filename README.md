@@ -8,7 +8,7 @@
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent_Skills-compatible-1b1b19?style=flat-square" alt="Agent Skills compatible"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1b1b19?style=flat-square" alt="MIT license"></a>
   <a href="#requirements"><img src="https://img.shields.io/badge/node-%E2%89%A5%2020-1b1b19?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node 20 or later"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/three.js-r128-1b1b19?style=flat-square" alt="three.js r128"></a>
+  <a href="#how-it-works"><img src="https://img.shields.io/badge/renders-SVG%2C_no_dependency-1b1b19?style=flat-square" alt="Renders SVG, no dependency"></a>
 </p>
 
 <p align="center">
@@ -24,14 +24,14 @@
 
 ---
 
-Ask Claude for a 3D illustration and Diorama has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun with soft shadows. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
+Ask Claude for a 3D illustration and Diorama has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun, drawn as SVG the way an illustrator fakes depth: one flat tone per face, the pieces painted from the back to the front, the shadows thrown on the ground as shapes. No three.js, no WebGL, nothing to load. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
 
 The default look is an isometric camera, matte blocks, one warm sun with soft shadows and a few accents, built into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing (by hand, if you ask), or a night scene with the lamps on. Every base throws a soft shadow on the page, so the diorama sits on it like a thing on a table. The subject is painted with the accent, so one brand colour recolours it in any theme, and the bench has swatches to try. Things answer a tap as well as the pointer, a thing can come apart under the pointer to show what it is made of, and a read-out under the stage says what the scene is doing, from the same clock that moves it.
 
 <p align="center">
   <img src="docs/media/themes.png" width="820" alt="The same warehouse scene drawn five ways: toy in pastel, soft on cream, mono in greys with a cobalt roof, line as an ink drawing on white, and night in dusk blues with lamps glowing.">
 </p>
-<p align="center"><sub>One figure file, five themes: <code>toy</code>, <code>soft</code>, <code>mono</code>, <code>line</code>, <code>night</code>. The gallery switches them live.</sub></p>
+<p align="center"><sub>One figure file, six themes: <code>toy</code>, <code>soft</code>, <code>mono</code>, <code>line</code>, <code>night</code>, <code>print</code>. The gallery switches them live.</sub></p>
 
 ## Quick start
 
@@ -87,6 +87,7 @@ Three sizes, one format:
 | `mono` | tints of ink on white | one `accent` |
 | `line` | a hairline drawing: white fills, ink edges, silhouettes, no shadows | one `accent`, as a stroke |
 | `night` | dusk: dark base, cool sky, warm lamps and windows | every colour, darker |
+| `print` | flat tones per face and ink lines, no thrown shadows: a printed illustration | every colour |
 
 A theme is a set of fields, and a figure (or a `mount` call) can override any of them:
 
@@ -97,7 +98,7 @@ theme: { base: 'mono', accent: '#5b4ae0', shadows: false, strokeWidth: 1.4 }
 
 `tone` makes any theme monochrome, `edges` and `outline` draw ink on any theme, `round` turns every box into a rounded solid, `lights` replaces any of the four lights, `halo` is the soft shadow the base throws on the page, `wobble` draws the ink by hand (`{ base: 'line', wobble: 1.4 }`), and `accent` is the subject's colour in every theme. The bench page has a theme switcher and accent swatches, and `look.mjs --theme line` writes the sheet for another theme.
 
-Every diorama ships as `diorama-<name>.html`: three-lite (the part of three.js the kernel uses, without a dependency), the kernel, the figure and a small bench page. `--three` links three.js r128 from cdnjs instead, and `--inline` pastes it in. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
+Every diorama ships as `diorama-<name>.html`: the kernel, the figure and a small bench page, one file of 30 to 35 KB gzip that draws itself as SVG, crisp at any size, styled by the page's CSS. The figure is a single `Diorama.figure({ … })` call that builds the scene with the toolkit and poses it from the clock, so it drops into React or any page with `Diorama.mount(fig, { el })`.
 
 It honours `prefers-reduced-motion` with one still frame, sleeps when offscreen or in a hidden tab, and never allocates in the loop.
 
@@ -125,17 +126,7 @@ mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/dioram
 
 - Node.js 20 or later, for `build.mjs`, `validate.mjs` and `look.mjs`.
 - Chrome or Chromium for the look. `look.mjs` finds Playwright's browser or installs `playwright-core` once into `~/.cache/diorama-look`.
-- Nothing at runtime: the page carries three-lite, so it makes no network request. With `--three` it loads three.js r128 from cdnjs; with `--inline` it carries three.js.
-
-Page weight per build mode, gzip, across the 13 gallery figures:
-
-| Build | Renderer | Page | What the browser downloads |
-|---|---|---:|---:|
-| default | three-lite, in the page | 31 to 35 KB | 31 to 35 KB |
-| `--three` | three.js r128 from cdnjs | 17 to 21 KB | 163 to 167 KB |
-| `--inline` | three.js r128, in the page | 162 to 167 KB | 162 to 167 KB |
-
-three-lite matches three.js to an SSIM of 0.997 to 0.9998 in Chromium, WebKit and a phone profile; `spike/LITE-RESULTS.md` has the numbers.
+- Nothing at runtime: the page draws SVG, so it needs no renderer, no WebGL and makes no network request. A built page is 30 to 35 KB gzip across the 13 gallery figures.
 
 ## Usage
 
@@ -148,9 +139,7 @@ Three habits help:
 Then run the scripts yourself when you want to:
 
 ```sh
-node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js            # writes diorama-mailbox.html, on three-lite
-node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --three    # three.js r128 from cdnjs instead
-node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js --inline   # three.js r128 pasted in
+node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js            # writes diorama-mailbox.html
 node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html
 node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the sheet and the numbers
 ```
@@ -176,11 +165,9 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 ## How it works
 
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
-- `kit/diorama.js` is the kernel: the orthographic isometric camera fitted to the scene, four lights (hemisphere, warm sun with PCF soft shadows, cool fill, ambient) in sRGB, the five themes with toning, edges and silhouette outlines, cached matte materials, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths, `apart`), the pointer with picking, the press (`ctx.pressed`, `ctx.active`) and camera tilt, the read-out (`ctx.read`), the halo under the base, the hand-drawn wobble, and the loop that sleeps.
-- `kit/three.min.js` is three.js r128, vendored for `--inline` builds and for looking at a `--three` page offline.
-- `kit/three-lite.js` is three-lite: the part of the three.js API the kernel uses, written without a dependency, with a WebGL1 renderer, the renderer every build uses unless `--three` or `--inline` asks for three.js. `kit/three-lite.min.js` is the copy the build pastes in, written by `scripts/minify-lite.mjs`.
+- `kit/diorama.js` is the kernel, with no dependency: a small scene graph (groups, meshes, materials, vectors and matrices), the orthographic isometric camera fitted to the scene, an SVG painter (one flat tone per face from four lights, a disc and a crescent for a sphere, bands for a cylinder, the pieces sorted back to front, the shadows thrown on the slabs, the halo, the ink with its wobble), the six themes with toning, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths, `apart`), the pointer with picking, the press (`ctx.pressed`, `ctx.active`) and camera tilt, the read-out (`ctx.read`), the halo under the base, the hand-drawn wobble, and the loop that sleeps.
 - `bench.html` is the page: a card for every figure, sized to it, with a theme switcher, accent swatches, a still-frame toggle and the live read-out.
-- `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs ten checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer, renderer); `scripts/look.mjs` takes the sheet of nine pictures in headless Chromium and measures fill, motion, the pointer's answer and a press.
+- `scripts/build.mjs` assembles the page; `scripts/validate.mjs` runs ten checks (declaration, length, clock, self-containment, kernel, words, colours, base, pointer, drawing); `scripts/look.mjs` takes the sheet of nine pictures in headless Chromium and measures fill, motion, the pointer's answer and a press.
 - `references/` hold the long form: concepts, the ten craft rules with the themes and recipes, motion patterns, the look, and embedding in React.
 - `apps/site/` is the website (see below).
 
@@ -198,11 +185,11 @@ To deploy on Vercel, import the repository and set the project's **Root Director
 
 - One scene per page, one `Diorama.figure` call per file. Several dioramas on a page are several mounts.
 - No textures, no glass, no particles: the look is matte blocks, shadows and ink lines on purpose.
-- Software GL in a sandbox renders a hero in a few milliseconds per frame; a phone with a real GPU is faster than that. Keep heroes under ~400 primitives.
-- three.js r128 is the vendored build. Newer versions work with the kernel's `{ THREE }` option but are not what the look tests.
+- A hero of four hundred parts draws in a few milliseconds a frame; what is not moving is not redrawn. Keep heroes under ~400 primitives, and give small cylinders few segments.
+- The painter sorts whole pieces by depth, as an illustrator would: a long thin thing beside a small one can be painted in the wrong order for a frame. Split it, or move the small thing.
 
 ## Credits
 
-Rendering by [three.js](https://threejs.org/).
+The flat isometric drawing owes a debt to [Anatomy](https://github.com/wheresryan22/anatomy) and [Colorfigures](https://april-zhu.com/colorfigures), two skills that fake 3D in SVG beautifully.
 
 MIT.

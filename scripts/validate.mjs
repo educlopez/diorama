@@ -12,8 +12,8 @@
  *                  ≤ 240 for a card, ≤ 150 for a mini.
  *  3 clock         no requestAnimationFrame, setTimeout, setInterval or
  *                  CSS animation in the figure: all motion runs in tick(ctx).
- *  4 self-contained no import, fetch, XMLHttpRequest, WebSocket or extra
- *                  <script src> beyond three.js; nothing loads at runtime.
+ *  4 self-contained no import, fetch, XMLHttpRequest, WebSocket or any
+ *                  <script src>; nothing loads at runtime.
  *  5 kernel        the kernel in the page is the kit's, byte for byte.
  *  6 words         D.label calls: none in a mini or a card, at most one in a
  *                  hero, and only when the product asked for its mark. Words
@@ -26,14 +26,13 @@
  *  9 pointer       a hero or card answers the pointer somewhere: it reads
  *                  ctx.pointer, ctx.hover, ctx.pressed or ctx.active, or sets
  *                  parts.hot. A mini may rely on the camera tilt alone.
- * 10 renderer      a built page carries one renderer: three-lite (the default),
- *                  or three.js r128 (the cdnjs script with --three, or inlined
- *                  with --inline), never both and never neither. A lite page
- *                  has no script src.
+ * 10 drawing       a built page draws itself: the kernel is the SVG kernel
+ *                  (no three.js, no WebGL, no renderer script), so the page
+ *                  needs nothing but a browser.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { kernelSource, THREE_CDN } from "./build.mjs";
+import { kernelSource } from "./build.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const LINES = { hero: 420, card: 240, mini: 150 };
@@ -81,7 +80,7 @@ export function validate(text) {
 
   const net = /\b(import\s*\(|^\s*import\s|fetch\s*\(|XMLHttpRequest|WebSocket|document\.createElement\s*\(\s*["']script)/m.exec(strip);
   let extra = null;
-  if (page) { const srcs = [...text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g)].map((m) => m[1]).filter((u) => u !== THREE_CDN); extra = srcs[0] || null; }
+  if (page) { const srcs = [...text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g)].map((m) => m[1]); extra = srcs[0] || null; }
   check(4, "self-contained", !net && !extra, net ? `${net[1] || net[0]} in the figure` : extra ? `<script src="${extra}">` : "");
 
   if (page) check(5, "kernel", kernel === kernelBody(kernelSource()), "the page's kernel differs from kit/diorama.js");
@@ -99,21 +98,10 @@ export function validate(text) {
   const named = !/\bhot\s*[:=]/.test(strip) || /\.name\s*=/.test(strip);
   check(9, "pointer", s === "mini" || (answers && named), !answers ? "a hero or card should read ctx.pointer / ctx.hover or set parts.hot" : "hot groups need a .name for the read-out");
 
-  if (page) {
-    const r = renderersOf(text), n = r.cdn + r.three + r.lite;
-    check(10, "renderer", n === 1, n === 0 ? "no three.js and no three-lite in the page" : r.lite && (r.cdn || r.three) ? "a lite page also carries three.js: build it without --three or --inline" : r.cdn && r.three ? "three.js is both linked from cdnjs and inlined" : "more than one renderer in the page");
-  } else check(10, "renderer", true, "");
+  const three = /Copyright 2010-20\d\d Three\.js Authors|\bREVISION:\s*["']128|\bTHREE\.\w+/.test(page ? text : figure);
+  check(10, "drawing", !three, page ? "the page carries three.js or WebGL code: the kernel draws SVG and needs no renderer" : "the figure reaches for THREE: the kernel has no three.js; use D.* and o.M");
 
   return out;
-}
-
-/** How many times each renderer is in a built page: the cdnjs script, three.js inlined, three-lite inlined. */
-export function renderersOf(text) {
-  return {
-    cdn: [...text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["']/g)].filter((m) => m[1] === THREE_CDN).length,
-    three: [...text.matchAll(/Copyright 2010-20\d\d Three\.js Authors/g)].length,
-    lite: [...text.matchAll(/\bREVISION:\s*["']128-lite["']/g)].length,
-  };
 }
 
 export function report(results) {

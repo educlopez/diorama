@@ -21,7 +21,7 @@ Diorama.figure({
     function hgt(x, z) { var d = Math.hypot(x - C[0], z - C[1]); return d < R ? H * (1 - d / R) : 0; }
     function W(lx, lz) { return [C[0] + lx * ux + lz * px, C[1] + lx * uz + lz * pz]; }     /* lift frame → world */
     function P(d, a) { return [d * Math.cos(a), d * Math.sin(a)]; }                           /* polar in the lift frame */
-    D.cone(R, H, pal.paper, C[0], H / 2, C[1], null, 40);
+    D.cone(R, H, pal.paper, C[0], H / 2, C[1], null, 40).userData.terrain = true;   /* the slope things ride up: not a clash */
     D.cone(5.6, 10.5, pal.mist, -15.6, 5.25, -10.2, null, 28); D.cone(2.35, 4.4, pal.paper, -15.6, 8.5, -10.2, null, 28);
     [[6.2, -.9, .6], [7.4, 1.7, .5], [4.2, -1.3, .45], [8.8, -1.6, .55]].forEach(function (q, k) { var p = W.apply(null, P(q[0], q[1])), r = D.props.rock(p[0], p[1], null, { r: q[2], yaw: k }); r.position.y = hgt(p[0], p[1]) - .1; });
     [[8.4, -.75], [9.2, -.55], [7.6, -1.25], [9.4, -1.05], [6.4, -1.5], [8.6, 1.45], [9.3, 1.62], [7.6, 1.85], [9.5, 1.95], [5.4, 2.2]].forEach(function (q, k) {
