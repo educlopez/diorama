@@ -27,6 +27,7 @@ Diorama.figure({
     [-1.55, 1.55].forEach(function (x) { D.cyl(.05, .05, 2.3, pal.ink, x, 2.6, -.6, cart, 8); });
     for (var k = 0; k < 7; k++) D.box(.55, .06, 1.9, k % 2 ? pal.paper : pal.accent, -1.65 + k * .55, 3.72, -.1, cart, { shadow: k === 0 });
     D.box(3.9, .08, .12, pal.ink, 0, 3.7, .85, cart);
+    var sign = D.group(-1.1, 3.66, .85, cart); D.box(.04, .2, .04, pal.ink, 0, -.1, 0, sign, { shadow: false }); D.box(.8, .45, .05, pal.paper, 0, -.42, 0, sign); D.box(.5, .07, .05, pal.ink, 0, -.36, .03, sign, { shadow: false }); D.box(.3, .07, .05, pal.ink, 0, -.5, .03, sign, { shadow: false });
     var machine = D.box(.9, .7, .6, pal.steel, .9, 2.1, -.3, cart); D.box(.3, .12, .3, pal.mustard, .9, 2.5, -.3, cart);
     D.cyl(.1, .1, .3, pal.ink, .9, 1.9, .15, cart, 8);
     var cups = []; [[-1.1, -.3], [-.7, -.3], [-.3, -.3]].forEach(function (c) { var g = D.group(c[0], 1.75, c[1], cart); D.cyl(.14, .11, .26, pal.paper, 0, .13, 0, g, 12); D.cyl(.15, .15, .04, pal.ink, 0, .28, 0, g, 12); cups.push(g); });
@@ -52,7 +53,7 @@ Diorama.figure({
     /* the customer and the cup they carry */
     var cust = D.props.person(0, 0, null, { shirt: pal.plum, hat: false }); var hand = D.group(.22, .4, 0, cust); var held = D.cyl(.12, .1, .22, pal.paper, 0, 0, 0, hand, 10); held.visible = false;
     var walk = D.path([[4.6, 2.6], [1.2, 2.6], [-.3, .9]]);
-    return { hot: hot, cups: cups, steam: steam, tail: tail, cust: cust, held: held, walk: walk, lift: {} };
+    return { hot: hot, cups: cups, steam: steam, tail: tail, sign: sign, cust: cust, held: held, walk: walk, lift: {} };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;
@@ -68,6 +69,7 @@ Diorama.figure({
     var steamOn = T >= 1 && T < 6;
     p.steam.forEach(function (b, k) { var u = D.phase(t, 1.6, k * .33); b.position.y = 2.6 + u * .9; b.scale.setScalar(steamOn ? (.6 + u) * (1 - u) * 1.6 : .001); b.position.x = .9 + .12 * D.wave(t, 1.1, k * .3); });
     p.tail.rotation.z = .5 + .35 * D.wave(t, 2.2) + .1 * D.wave(t, .9);
+    p.sign.rotation.z = .14 * D.wave(t, 2.7) + .05 * D.wave(t, 1.1);
     p.hot.forEach(function (g) {
       var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .3 : 0; s.step(ctx.dt); g.position.y = s.x;
     });

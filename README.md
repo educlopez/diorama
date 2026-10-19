@@ -173,6 +173,10 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 
 Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
+## Releases
+
+Every version is a tag and a [release on GitHub](https://github.com/educlopez/diorama/releases) with its notes, and [`CHANGELOG.md`](CHANGELOG.md) keeps them all. Watch the repository for releases to hear about the next one.
+
 ## How it works
 
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.

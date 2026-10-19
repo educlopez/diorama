@@ -38,7 +38,7 @@ Diorama.figure({
     var gantry = D.group(-.6, 0, .6); gantry.name = 'gantry'; hot.push(gantry);
     [[-.4, -.4], [.4, -.4], [-.4, .4], [.4, .4]].forEach(function (p) { D.box(.12, 6.2, .12, pal.steel, p[0], 3.1, p[1], gantry); });
     [1.2, 2.4, 3.6, 4.8, 6.0].forEach(function (y) { D.box(.95, .08, .95, pal.steel, 0, y, 0, gantry); });
-    var arm = D.group(.4, 4.2, 0, gantry); D.box(1.6, .16, .4, pal.mustard, .8, 0, 0, arm); D.box(.3, .5, .5, pal.mustard, 1.5, .1, 0, arm);
+    D.box(.3, .3, .3, pal.steel, .5, 4.2, 0, gantry); var arm = D.group(.6, 4.2, 0, gantry); D.box(.7, .16, .4, pal.mustard, .35, 0, 0, arm); D.box(.2, .5, .5, pal.mustard, .7, .1, 0, arm);
     var beacon = D.box(.16, .16, .05, pal.bad, 0, 6.3, .5, gantry, { mat: { emissive: pal.bad, emissiveIntensity: 1.5 }, shadow: false });
     /* the tank and the bunker */
     var tank = D.group(4.0, 0, 2.6); D.cyl(.8, .8, 2.4, pal.cloud, 0, 1.2, 0, tank, 18); D.dome(.8, pal.cloud, 0, 2.4, 0, tank); D.cyl(.82, .82, .15, pal.steel, 0, 1.0, 0, tank, 18);
