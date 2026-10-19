@@ -13,7 +13,7 @@ Diorama.figure({
   camera: { az: 40, el: 34, pad: 1.06 },
   still: 2,
   build: function (o) {
-    var D = o.D, pal = o.pal, hot = [], LED = '#4aa3a0';
+    var D = o.D, pal = o.pal, hot = [], LED = pal.accent;
     D.slab(10, 8, pal.ground, 0, 0, 0, null, { h: .6, r: 1.1, side: pal.base });
     for (var i = -3.5; i <= 3.5; i += 1) for (var j = -2.5; j <= 2.5; j += 1) D.box(.92, .02, .92, (i + j) % 2 ? pal.cloud : pal.ground, i, .02, j, null, { shadow: false });
     var racks = [], lights = [];

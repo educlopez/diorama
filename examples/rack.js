@@ -15,7 +15,7 @@ Diorama.figure({
   build: function (o) {
     var D = o.D, pal = o.pal;
     D.slab(9, 7, pal.ground, 0, 0, 0, null, { h: .6, r: 1, side: pal.base });
-    D.box(7.6, .012, .14, pal.safety, 0, .05, .3, null, { shadow: false });
+    D.box(7.6, .012, .14, pal.accent, 0, .05, .3, null, { shadow: false });
     for (var i = -3.4; i <= 3.4; i += 1.1) D.box(.5, .012, .12, pal.line, i, .05, 2.4, null, { shadow: false });
 
     var rack = D.group(0, 0, -1.6), levels = [], LV = [1.1, 2.2, 3.3];
@@ -25,8 +25,8 @@ Diorama.figure({
     }
     LV.forEach(function (y, k) {
       var g = D.group(0, y, 0, rack), beams = [];
-      beams.push(D.box(6.9, .14, .1, pal.safety, 0, 0, -.72, g));
-      beams.push(D.box(6.9, .14, .1, pal.safety, 0, 0, .72, g));
+      beams.push(D.box(6.9, .14, .1, pal.accent, 0, 0, -.72, g));
+      beams.push(D.box(6.9, .14, .1, pal.accent, 0, 0, .72, g));
       for (var b = -1.5; b <= 1.5; b++) D.box(1.5, .04, 1.4, pal.cloud, b * 1.7, .07, 0, g, { shadow: false });
       g.name = 'level ' + (k + 1); levels.push({ g: g, beams: beams, y: y });
     });
@@ -48,7 +48,7 @@ Diorama.figure({
     [-.26, .26].forEach(function (z) { D.box(1.1, .05, .14, pal.steel, .55, .02, z, carriage); });
     D.props.cone(3.2, 2.2); D.props.bush(-3.9, 2.6, null, { r: .3 });
 
-    var lit = D.mat(pal.safety, { emissive: pal.safety, emissiveIntensity: .55 }), plain = D.mat(pal.safety);
+    var lit = D.mat(pal.accent, { emissive: pal.accent, emissiveIntensity: .55 }), plain = D.mat(pal.accent);
     return { hot: levels.map(function (l) { return l.g; }), levels: levels, carriage: carriage, beacon: beacon, driver: driver, lit: lit, plain: plain, lift: D.spring(40, 11), look: D.spring(60, 12) };
   },
   tick: function (ctx) {

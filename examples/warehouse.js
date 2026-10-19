@@ -69,7 +69,7 @@ Diorama.figure({
     D.box(5.4, 2.5, 2.4, pal.paper, -1.05, 2.05, 0, truck);
     D.box(5.42, .3, 2.42, pal.teal, -1.05, 1.1, 0, truck);
     D.box(7.3, .35, 1.4, pal.steel, -.1, .72, 0, truck);
-    D.box(2, 2.1, 2.3, pal.coral, 2.75, 1.75, 0, truck);
+    D.box(2, 2.1, 2.3, pal.accent, 2.75, 1.75, 0, truck);
     D.box(1.5, .5, 2.2, pal.teal, 2.5, 3.05, 0, truck);
     D.box(.08, .8, 2, pal.ink, 3.76, 2.1, 0, truck);
     [3.3, 1.5, -2.2, -3.2].forEach(function (x) { [-1.05, 1.05].forEach(function (z) { tw.push(D.wheel(.46, .36, pal.tyre, x, .46, z, truck)); D.wheel(.2, .4, pal.hub, x, .46, z, truck); }); });
@@ -109,6 +109,7 @@ Diorama.figure({
     else if (T < 14) dist = dock;
     else dist = dock + D.inOut((T - 14) / 10) * (L - dock);
     D.place(p.truck, p.loop, dist); D.spin(p.tw, dist, .46);
+    ctx.read = T < 9 ? 'truck · driving to the dock' : T < 14 ? 'truck · at the dock' : 'truck · back on the lap';
     var open = D.smooth((T - 8.4) / 1.2) * (1 - D.smooth((T - 13.6) / 1.2));
     p.doors[1].scale.y = 1 - .85 * open; p.doors[1].position.y = 1.55 - 1.3 * open;
     p.doors[1].userData.lamp.material.color.set(open > .5 ? pal.bad : pal.ok); p.doors[1].userData.lamp.material.emissive.set(open > .5 ? pal.bad : pal.ok);

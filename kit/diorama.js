@@ -16,13 +16,14 @@
      size      'hero' | 'card' | 'mini'            (frame and detail budget)
      means     one sentence, ≤140 chars, shown under the stage
      hint      one line, ≤90 chars: what the pointer does ("Hover the boat or the lighthouse"), shown with means
-     theme     'toy' (default) | 'soft' | 'mono' | 'line' | 'night',
+     theme     'toy' (default) | 'soft' | 'mono' | 'line' | 'night' | 'print' (flat tones and ink lines, a drawing; a prototype),
                or { base: 'mono', …overrides } with any of the theme fields:
                  bg          css colour | 'transparent'
                  palette     { …overrides of Diorama.PAL } (also spec.palette)
-                 accent      the one colour mono and line keep (default pal.coral). A surface keeps it only when its
-                             colour is exactly this hex, so paint accented parts with pal.accent, never a palette
-                             name that happens to match; a brand hex goes here and nowhere else
+                 accent      the subject's colour in every theme, and the one colour mono and line keep (default
+                             pal.coral). Paint the thing that matters with pal.accent and nothing else with it: a
+                             brand hex goes here and nowhere else, and the bench's swatches recolour the subject live.
+                             In mono and line a surface keeps it only when its colour is exactly this hex
                  accentFill  0..1 how much of the accent fills an accented surface in line (default .1: a tinted
                              fill inside an accent outline); raise it for a solid brand shape
                  lights      { hemi: [sky, ground, i], sun: [colour, i], fill: [colour, i] | null, ambient: [colour, i] }
@@ -35,6 +36,11 @@
                  stroke      the line colour; strokeWidth in css px (default 1.1)
                  round       true → every D.box is a D.rbox (rounded, hairline-like)
                  glow        multiplier on emissive (night: 2.4, line: 0)
+                 halo        0..1 opacity of the soft shadow the base throws on the page (toy .3, line .16, night .6;
+                             0: none). It is what makes the diorama a thing on a table rather than a cut-out
+                 wobble      css px of hand tremor on the ink (default 0; 1.2 is a pen, 2.5 a felt tip). Edges bow
+                             and overshoot a little at the corners, outlines vary in width, like a figure drawn by
+                             hand. Only where the theme draws ink (line, or edges/outline on another theme)
      camera    { az: 45, el: 35.264, pad: 1.08 }    optional, degrees
      tilt      degrees the camera drifts toward the pointer, default 4 (0: none)
      fog       true | { near, far } | false         default false
@@ -42,12 +48,19 @@
      build({ D, world, pal, ctx })  build the scene once; return parts (any object);
                                     parts.hot = [groups the pointer may pick]; give each a .name ('boat'),
                                     the page shows it as a read-out while the pointer is on it
-     tick(ctx)                      per frame; ctx.t, ctx.dt, ctx.parts, ctx.pointer, ctx.hover
+     tick(ctx)                      per frame; ctx.t, ctx.dt, ctx.parts, ctx.pointer, ctx.hover, ctx.pressed,
+                                    ctx.active. Set ctx.read = 'truck · at the dock' (≤ 40 chars) to tell the page
+                                    what the scene is doing: it shows it as the read-out when the pointer is on nothing
 
    Diorama.mount(fig, { el, THREE, theme, reduced, still })  mount into an element; returns ctx:
      ctx.t ctx.dt         seconds; dt is 0 on the still frame
-     ctx.pointer          { x, y (−1..1), inside, world: Vector3|null on the ground plane }
+     ctx.pointer          { x, y (−1..1), inside, down, world: Vector3|null on the ground plane }
      ctx.hover            the group under the pointer among parts.hot, or null
+     ctx.pressed          the hot group under the last press (a click or a tap), or null; ctx.pressedAt its second
+     ctx.active           the hot group switched on by a press, until it is pressed again or another is pressed, or
+                          null: a switch. A press is how touch answers, so give a card or a hero one thing to press
+     ctx.read             a line the figure writes in tick, shown as the read-out (see tick)
+     ctx.tap(x, y)        press at (x, y) in −1..1, as a visitor would (the look script does)
      ctx.theme ctx.pal    the resolved theme and palette
      ctx.scene ctx.world ctx.cam ctx.sun ctx.renderer
      ctx.fit()            refit the camera to the world (call after adding big things)
@@ -96,6 +109,10 @@
      D.wave(t, period, offset)       −1..1 sine
      D.pulse(t, period, width)       0..1, a bump once per period lasting width·period
      D.spring(k, c)                  { x, v, t, step(dt), set(x) } a damped follow
+     D.apart(items, { k, c, stagger })  take a thing apart and put it back: items [{ g, x, y, z }, …], outermost first,
+                                     each group moved by its vector times a sprung 0..1, one after another (stagger .06 s;
+                                     closing runs the order backwards). { open(bool), step(dt), items }: in tick,
+                                     a.open(ctx.hover === rocket); a.step(ctx.dt). Hover shows the inside of a thing
      D.path(points, closed, round)   polyline on the ground, points [[x, z], …], corners rounded by `round` (.5; 0 sharp): { length, at(dist) → { x, z, yaw } }
      D.place(group, path, dist)      put a group on a path, its local +x facing along it (build vehicles nose toward +x)
      D.spin(meshes, dist, r)         roll wheels by distance travelled
@@ -115,17 +132,20 @@ var Diorama = (function () {
   };
   var SIZES = { hero: { aspect: 3 / 2, shadow: 2048 }, card: { aspect: 4 / 3, shadow: 1536 }, mini: { aspect: 1, shadow: 1024 } };
   var THEMES = {
-    toy: { bg: '#eceef2', shadows: true, finish: { roughness: .8, metalness: 0 }, tint: 1, glow: 1, strokeWidth: 1.1,
+    toy: { bg: '#eceef2', shadows: true, finish: { roughness: .8, metalness: 0 }, tint: 1, glow: 1, strokeWidth: 1.1, halo: .3, wobble: 0,
       lights: { hemi: ['#fff8ee', '#9fb0cc', .45], sun: ['#fff3dc', .7], fill: ['#c8dbff', .22], ambient: ['#e0e7f5', .08] } },
     soft: { bg: '#f5f1ea', palette: { base: '#e9e3d9', ground: '#f8f4ed', grass: '#d9e8d2', asphalt: '#ddd7cd', paper: '#fcfaf6', cloud: '#ece7df', water: '#cfe3ea', cobalt: '#6b80c9', safety: '#eac36a', mustard: '#eac36a', flame: '#e98a66', coral: '#e98a66', terracotta: '#d98468', ok: '#6fae8a', mint: '#86c6bd', teal: '#6fb3ae', lilac: '#ab9fd9', plum: '#a08fc6', leaf: '#93cf9e', leafDark: '#73b88a', leafLight: '#b4dfb9' },
-      shadows: true, finish: { roughness: .95, metalness: 0 }, tint: 1, glow: .8, strokeWidth: 1.1,
+      shadows: true, finish: { roughness: .95, metalness: 0 }, tint: 1, glow: .8, strokeWidth: 1.1, halo: .24, wobble: 0,
       lights: { hemi: ['#fff9f0', '#cfc5b6', .55], sun: ['#ffe8c6', .5], fill: ['#e9e1ff', .18], ambient: ['#f1ece4', .12] } },
-    mono: { bg: '#e9ebf1', tone: { paper: '#ffffff', ink: '#1b2638' }, tint: 0, shadows: true, finish: { roughness: .85, metalness: 0 }, glow: .6, strokeWidth: 1.1,
+    mono: { bg: '#e9ebf1', tone: { paper: '#ffffff', ink: '#1b2638' }, tint: 0, shadows: true, finish: { roughness: .85, metalness: 0 }, glow: .6, strokeWidth: 1.1, halo: .26, wobble: 0,
       lights: { hemi: ['#ffffff', '#b9c0cf', .48], sun: ['#ffffff', .7], fill: ['#dde3f0', .22], ambient: ['#e4e8f0', .08] } },
-    line: { bg: '#ffffff', tone: { paper: '#ffffff', ink: '#ffffff' }, tint: 0, edges: true, outline: true, shadows: false, stroke: '#1b2638', strokeWidth: 1.1, glow: 0,
+    line: { bg: '#ffffff', tone: { paper: '#ffffff', ink: '#ffffff' }, tint: 0, edges: true, outline: true, shadows: false, stroke: '#1b2638', strokeWidth: 1.1, glow: 0, halo: .16, wobble: 0,
       finish: { roughness: 1, metalness: 0 }, lights: { hemi: ['#ffffff', '#ededf0', 1], sun: ['#ffffff', .1], fill: null, ambient: ['#ffffff', .02] } },
+    print: { bg: '#f6f4ef', palette: { base: '#e6e2d9', ground: '#f9f7f2', paper: '#fbfaf6', cloud: '#eceae3' }, tones: [1, .9, .76], shadows: false, edges: true, stroke: '#2b2a2f', strokeWidth: .9,
+      finish: { roughness: 1, metalness: 0 }, tint: 1, glow: .3, halo: .26, wobble: 0,
+      lights: { hemi: ['#ffffff', '#ffffff', .92], sun: ['#ffffff', .14], fill: null, ambient: ['#ffffff', .04] } },
     night: { bg: '#131726', palette: { base: '#3b4359', ground: '#4b546c', grass: '#3a6353', asphalt: '#555f78', line: '#aab3c8', water: '#2f4f6e', sand: '#8c7a5a', paper: '#5a6480', cloud: '#6b7590', sky: '#ffd98a', ink: '#0d1018', steel: '#232a38', slate: '#343c4e', cobaltSoft: '#3a4a7a', lampGlow: '#ffe3a0', leaf: '#4fae78', leafDark: '#3b9262', leafLight: '#6cc48f' },
-      shadows: true, finish: { roughness: .8, metalness: 0 }, tint: 1, glow: 2.6, strokeWidth: 1.1,
+      shadows: true, finish: { roughness: .8, metalness: 0 }, tint: 1, glow: 2.6, strokeWidth: 1.1, halo: .6, wobble: 0,
       lights: { hemi: ['#7d8fbf', '#1f2435', .85], sun: ['#ffd6a0', .55], fill: ['#4a6ac8', .5], ambient: ['#3a4566', .8] } }
   };
   var figures = [];
@@ -145,6 +165,26 @@ var Diorama = (function () {
     s.step = function (dt) { var h = Math.min(dt, 1 / 30); var a = (s.t - s.x) * s.k - s.v * s.c; s.v += a * h; s.x += s.v * h; return s.x; };
     s.set = function (x) { s.x = s.t = x; s.v = 0; return s; };
     return s;
+  }
+  function apart(items, o) {
+    /* a thing taken apart: every item's group moves along its vector by a sprung 0..1, the first item
+       first and the rest one stagger later each; closing runs the order backwards, so the parts that
+       left last come home first and nothing passes through anything on the way back */
+    o = o || {};
+    var A = { target: 0, age: 1e9, dir: 1, stagger: o.stagger == null ? .06 : o.stagger };
+    A.items = items.map(function (it) { return { g: it.g, v: [it.x || 0, it.y || 0, it.z || 0], s: spring(o.k || 70, o.c || 15), b: [it.g.position.x, it.g.position.y, it.g.position.z] }; });
+    A.open = function (on) { on = on ? 1 : 0; if (on !== A.target) { A.target = on; A.age = 0; A.dir = on ? 1 : -1; } return A; };
+    A.step = function (dt) {
+      A.age += dt;
+      for (var k = 0, n = A.items.length; k < n; k++) {
+        var it = A.items[k], rank = A.dir > 0 ? k : n - 1 - k;
+        if (A.age >= rank * A.stagger) it.s.t = A.target;
+        it.s.step(dt);
+        it.g.position.set(it.b[0] + it.v[0] * it.s.x, it.b[1] + it.v[1] * it.s.x, it.b[2] + it.v[2] * it.s.x);
+      }
+      return A;
+    };
+    return A;
   }
   function path(points, closed, round) {
     /* a polyline on the ground with its corners rounded (arcs of radius `round`, .5 by default, 0 for sharp),
@@ -211,7 +251,7 @@ var Diorama = (function () {
 
   /* ---------- toolkit, one per mount ---------- */
   function toolkit(THREE, world, pal, ctx) {
-    var MATS = {}, GEOS = {}, EDGES = {}, LINES = {}, theme = ctx.theme;
+    var MATS = {}, GEOS = {}, EDGES = {}, LINES = {}, theme = ctx.theme, wobbleSeed = 0;
     var accent = hexOf(theme.accent || pal.accent || pal.coral), paperC = theme.tone ? new THREE.Color(theme.tone.paper) : null, inkC = theme.tone ? new THREE.Color(theme.tone.ink) : null;
     /* the colour a surface really gets: toned to paper/ink in mono and line, except the accent */
     function toned(c) {
@@ -224,8 +264,8 @@ var Diorama = (function () {
       if (c && c.isMaterial) return c;
       var k = c + (o ? JSON.stringify(o) : '');
       if (!MATS[k]) {
-        var opts = Object.assign({ roughness: theme.finish.roughness, metalness: theme.finish.metalness }, o || {});
-        opts.color = toned(c).convertSRGBToLinear();
+        var opts = Object.assign({ roughness: theme.finish.roughness, metalness: theme.finish.metalness }, o || {}), shade = opts.shade == null ? 1 : opts.shade; delete opts.shade;
+        opts.color = toned(c).multiplyScalar(shade).convertSRGBToLinear();
         if (opts.emissive) { opts.emissive = toned(opts.emissive).convertSRGBToLinear(); opts.emissiveIntensity = (opts.emissiveIntensity == null ? 1 : opts.emissiveIntensity) * (theme.glow == null ? 1 : theme.glow); }
         if (theme.edges || theme.outline) { opts.polygonOffset = true; opts.polygonOffsetFactor = 1; opts.polygonOffsetUnits = 1; }
         var m = new THREE.MeshStandardMaterial(opts); m.userData.glow = theme.glow == null ? 1 : theme.glow; m.userData.src = c;
@@ -237,14 +277,42 @@ var Diorama = (function () {
     function hullMat(c) {
       var k = 'h' + hexOf(c);
       if (!LINES[k]) {
+        /* the silhouette: the same shape pushed out along its normals by w, drawn back-face only; with wobble the
+           push varies with where the vertex lands on the screen, so the outline's width breathes like a pen's */
         LINES[k] = new THREE.ShaderMaterial({
-          uniforms: { color: { value: new THREE.Color(c).convertSRGBToLinear() }, w: { value: .02 } }, side: THREE.BackSide,
-          vertexShader: 'uniform float w; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); mv.xyz += n * w; gl_Position = projectionMatrix * mv; }',
+          uniforms: { color: { value: new THREE.Color(c).convertSRGBToLinear() }, w: { value: .02 }, wob: { value: 0 } }, side: THREE.BackSide,
+          vertexShader: 'uniform float w; uniform float wob; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); vec4 c = projectionMatrix * mv; float k = wob * (0.55 * sin(c.x * 31.0 + c.y * 7.0) + 0.45 * sin(c.y * 43.0 - c.x * 11.0)); mv.xyz += n * w * (1.0 + k); gl_Position = projectionMatrix * mv; }',
           fragmentShader: 'uniform vec3 color; void main(){ gl_FragColor = vec4(color, 1.0); }'
         });
         ctx.hulls.push(LINES[k]);
       }
       return LINES[k];
+    }
+    function wobbled(eg, seed) {
+      /* a hand's copy of an edge set: every edge split in eight, bowed by a sine and an S of its own, its ends
+         now and then run a little past the corner; the ends themselves stay put, so lines still meet. The
+         offsets are kept unit-sized in userData and scaled to css px by the mount when the view is fitted */
+      var p = eg.attributes.position, n = p.count / 2, SUB = 8, base = [], dir = [], s = (seed * 7919 + 13) % 2147483647 || 1;
+      var rnd = function () { s = (s * 16807) % 2147483647; return s / 2147483647 * 2 - 1; };
+      for (var i = 0; i < n; i++) {
+        var ax = p.getX(2 * i), ay = p.getY(2 * i), az = p.getZ(2 * i), bx = p.getX(2 * i + 1), by = p.getY(2 * i + 1), bz = p.getZ(2 * i + 1);
+        var dx = bx - ax, dy = by - ay, dz = bz - az, L = Math.hypot(dx, dy, dz); if (L < 1e-6) continue;
+        var ux = dx / L, uy = dy / L, uz = dz / L, px, py, pz;
+        if (Math.abs(uy) < .9) { px = uz; py = 0; pz = -ux; } else { px = 0; py = -uz; pz = uy; }
+        var pl = Math.hypot(px, py, pz); px /= pl; py /= pl; pz /= pl;
+        var r1 = rnd(), r2 = rnd() * .6, o0 = rnd(), o1 = rnd();
+        for (var k = 0; k < SUB; k++) for (var e = 0; e < 2; e++) {
+          var t = (k + e) / SUB, w = Math.sin(t * Math.PI) * r1 + Math.sin(2 * t * Math.PI) * r2;
+          var over = t === 0 && o0 > .2 ? -o0 : t === 1 && o1 > .2 ? o1 : 0;
+          base.push(ax + dx * t, ay + dy * t, az + dz * t);
+          dir.push(px * w + ux * over, py * w + uy * over, pz * w + uz * over);
+        }
+      }
+      var g = new THREE.BufferGeometry(), pos = new Float32Array(base);
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.userData = g.userData || {}; g.userData.wobble = { base: new Float32Array(base), dir: new Float32Array(dir) };
+      ctx.wobbly.push(g);
+      return g;
     }
     function geo(k, make) { return GEOS[k] || (GEOS[k] = make()); }
     var SMOOTH = {};
@@ -265,13 +333,15 @@ var Diorama = (function () {
     }
     function mesh(g, c, x, y, z, parent, o, flat, angle) {
       var m = new THREE.Mesh(g, mat(c, o && o.mat));
+      /* flat tones (print): a box's top, its front-left face and its right face each get their own shade, as a drawing would */
+      if (theme.tones && g.type === 'BoxGeometry' && !(o && o.mat)) { var T = theme.tones; m.material = [mat(c, { shade: T[2] }), mat(c, { shade: T[1] }), mat(c, { shade: T[0] }), mat(c, { shade: T[2] }), mat(c, { shade: T[1] }), mat(c, { shade: T[2] })]; }
       m.position.set(x || 0, y || 0, z || 0); m.castShadow = !(o && o.shadow === false); m.receiveShadow = true;
       if (theme.edges || theme.outline) {
         var strokeC = hexOf(c) === accent ? accent : (theme.stroke || pal.ink);
         if (theme.edges && flat !== 'mark') {
           var ang = flat ? 1 : (angle || 25), ek = g.uuid + '|' + ang;
           var eg = EDGES[ek] || (EDGES[ek] = new THREE.EdgesGeometry(g, ang));
-          var ls = new THREE.LineSegments(eg, lineMat(strokeC)); ls.userData.stroke = true; m.add(ls);
+          var ls = new THREE.LineSegments(theme.wobble > 0 ? wobbled(eg, ++wobbleSeed) : eg, lineMat(strokeC)); ls.userData.stroke = true; m.add(ls);
         }
         if (theme.outline && !flat) { var h = new THREE.Mesh(smoothed(g), hullMat(strokeC)); h.userData.stroke = true; m.add(h); }
       }
@@ -283,9 +353,24 @@ var Diorama = (function () {
       s.lineTo(-hw + r, hd); s.quadraticCurveTo(-hw, hd, -hw, hd - r); s.lineTo(-hw, -hd + r); s.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
       return s;
     }
+    function halo(w, d, r, h, parent) {
+      /* the shadow the base throws on the page: a rounded shape of the slab's proportions, blurred wide, laid
+         under the slab and nudged toward where the sun sends the shadows; drawn once into a canvas, since the
+         figure may draw no gradient but the kernel may */
+      var N = 256, m = .36, cv = document.createElement('canvas'); cv.width = N; cv.height = N; var g = cv.getContext('2d');
+      var sx = N / (w * (1 + 2 * m)), sz = N / (d * (1 + 2 * m)), rw = w * sx, rd = d * sz, rr = Math.min(r * Math.min(sx, sz), rw / 2, rd / 2);
+      var ox = N / 2 + w * .035 * sx - rw / 2, oy = N / 2 - d * .03 * sz - rd / 2, blur = N * m * .62;
+      g.shadowColor = hexOf(pal.ink); g.shadowBlur = blur; g.shadowOffsetX = 0; g.shadowOffsetY = N * 2; g.fillStyle = '#000';
+      g.beginPath(); g.moveTo(ox + rr, oy - N * 2); g.lineTo(ox + rw - rr, oy - N * 2); g.quadraticCurveTo(ox + rw, oy - N * 2, ox + rw, oy - N * 2 + rr); g.lineTo(ox + rw, oy - N * 2 + rd - rr);
+      g.quadraticCurveTo(ox + rw, oy - N * 2 + rd, ox + rw - rr, oy - N * 2 + rd); g.lineTo(ox + rr, oy - N * 2 + rd); g.quadraticCurveTo(ox, oy - N * 2 + rd, ox, oy - N * 2 + rd - rr); g.lineTo(ox, oy - N * 2 + rr); g.quadraticCurveTo(ox, oy - N * 2, ox + rr, oy - N * 2); g.closePath(); g.fill();
+      var tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
+      var mesh = new THREE.Mesh(new THREE.PlaneGeometry(w * (1 + 2 * m), d * (1 + 2 * m)), new THREE.MeshStandardMaterial({ color: 0xffffff, map: tex, transparent: true, opacity: theme.halo, depthWrite: false, roughness: 1, metalness: 0 }));
+      mesh.rotation.x = -Math.PI / 2; mesh.position.y = -h - .02; mesh.castShadow = false; mesh.receiveShadow = false; mesh.userData.halo = true; mesh.renderOrder = -1;
+      (parent || world).add(mesh); return mesh;
+    }
     var D = {
       pal: pal, THREE: THREE, theme: theme, clamp: clamp, lerp: lerp, smooth: smooth, out: out, inOut: inOut, phase: phase, wave: wave, pulse: pulse,
-      spring: spring, path: path, place: place, spin: spin, stagger: stagger, mat: mat,
+      spring: spring, apart: apart, path: path, place: place, spin: spin, stagger: stagger, mat: mat,
       group: function (x, y, z, parent) { var g = new THREE.Group(); g.position.set(x || 0, y || 0, z || 0); (parent || world).add(g); return g; },
       box: function (w, h, d, c, x, y, z, parent, o) {
         if ((theme.round || (o && o.r)) && Math.min(w, h, d) > .06) return D.rbox(w, h, d, c, x, y, z, parent, o);
@@ -317,6 +402,7 @@ var Diorama = (function () {
           var g = new THREE.ExtrudeGeometry(roundedRect(new THREE.Shape(), w, d, r), { depth: h, bevelEnabled: false, curveSegments: 6 }); g.rotateX(-Math.PI / 2); g.translate(0, -h, 0); return g;
         }), c || pal.base, x, y, z, parent, { shadow: false }, false);
         if (o.side) m.material = [mat(c || pal.base), mat(o.side)];
+        if (theme.halo > 0 && o.halo !== false && !ctx.halo) ctx.halo = halo(w, d, r, h, m);
         return m;
       },
       label: function (text, w, h, o) {
@@ -421,7 +507,7 @@ var Diorama = (function () {
     if (bg === 'auto') bg = fig.size === 'mini' ? 'transparent' : theme.bg || pal.bg;
     var reduced = opts.reduced != null ? !!opts.reduced : (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
     var stillAt = opts.still != null ? opts.still : (fig.still == null ? 2 : fig.still);
-    var ctx = { fig: fig, pal: pal, theme: theme, t: 0, dt: 0, pointer: { x: 0, y: 0, inside: false, world: null }, hover: null, reduced: reduced, parts: null, hulls: [] };
+    var ctx = { fig: fig, pal: pal, theme: theme, t: 0, dt: 0, pointer: { x: 0, y: 0, inside: false, down: false, world: null }, hover: null, pressed: null, pressedAt: -1, active: null, read: '', reduced: reduced, parts: null, hulls: [], wobbly: [], halo: null };
     var lin = function (c) { return new THREE.Color(c).convertSRGBToLinear(); };
 
     var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: bg === 'transparent' });
@@ -429,9 +515,13 @@ var Diorama = (function () {
     renderer.outputEncoding = THREE.sRGBEncoding;
     var shadows = fig.shadows != null ? fig.shadows : theme.shadows !== false;
     renderer.shadowMap.enabled = shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    if (bg === 'transparent') renderer.setClearColor(0x000000, 0); else renderer.setClearColor(lin(bg), 1);
+    /* the clear colour is not encoded on output, so it is given as written, not in linear space */
+    if (bg === 'transparent') renderer.setClearColor(0x000000, 0); else renderer.setClearColor(new THREE.Color(bg), 1);
     renderer.domElement.style.display = 'block'; renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%';
+    renderer.domElement.style.touchAction = 'pan-y';
     el.appendChild(renderer.domElement);
+    if (!el.getAttribute('role')) el.setAttribute('role', 'img');
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', (fig.title || fig.name) + (fig.means ? '. ' + fig.means : ''));
     ctx.renderer = renderer;
 
     var scene = new THREE.Scene(), L = theme.lights;
@@ -461,15 +551,22 @@ var Diorama = (function () {
       cam.lookAt(center); cam.updateMatrixWorld(true);
     }
     function strokeWidth() {
-      /* the ink hull is as wide as the edge lines: one device pixel, or half the stroke width when that is more */
+      /* the ink hull is as wide as the edge lines: one device pixel, or half the stroke width when that is more;
+         the hand's tremor is `wobble` css px, written into every wobbled edge set and into the hulls' width */
       var px = (frustum.r - frustum.l) / Math.max(1, el.clientWidth || 300), dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
-      var w = px * Math.max((theme.strokeWidth || 1.1) * .5, .7 / dpr);
-      for (var i = 0; i < ctx.hulls.length; i++) ctx.hulls[i].uniforms.w.value = w;
+      var w = px * Math.max((theme.strokeWidth || 1.1) * .5, .7 / dpr), wob = theme.wobble || 0;
+      for (var i = 0; i < ctx.hulls.length; i++) { ctx.hulls[i].uniforms.w.value = w; ctx.hulls[i].uniforms.wob.value = Math.min(.9, wob * .45); }
+      var amp = px * wob;
+      for (var j = 0; j < ctx.wobbly.length; j++) {
+        var g = ctx.wobbly[j], a = g.attributes.position, p = a.array, u = g.userData.wobble;
+        for (var k = 0; k < p.length; k++) p[k] = u.base[k] + u.dir[k] * amp;
+        a.needsUpdate = true; g.version = (g.version || 0) + 1;
+      }
     }
     function fit() {
       world.updateMatrixWorld(true);
       var box = new THREE.Box3();
-      world.traverse(function (o) { if (o.isMesh && !o.userData.stroke) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld)); } });
+      world.traverse(function (o) { if (o.isMesh && !o.userData.stroke && !o.userData.halo) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld)); } });
       if (box.isEmpty()) box.set(new THREE.Vector3(-1, 0, -1), new THREE.Vector3(1, 1, 1));
       box.getCenter(center); radius = box.getSize(new THREE.Vector3()).length() / 2;
       placeCam(azRest, elRest);
@@ -501,22 +598,36 @@ var Diorama = (function () {
     /* pointer */
     var ray = new THREE.Raycaster(), groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
     var pSpringX = spring(60, 12), pSpringY = spring(60, 12);
-    function onMove(e) {
+    function at(e) {
       var r = renderer.domElement.getBoundingClientRect();
       ctx.pointer.x = clamp(((e.clientX - r.left) / r.width) * 2 - 1, -1, 1);
       ctx.pointer.y = clamp(-(((e.clientY - r.top) / r.height) * 2 - 1), -1, 1);
-      ctx.pointer.inside = true; wake();
+      ctx.pointer.inside = true;
     }
-    function onLeave() { ctx.pointer.inside = false; ctx.pointer.world = null; ctx.hover = null; wake(); }
+    function onMove(e) { at(e); wake(); }
+    function onLeave() { ctx.pointer.inside = false; ctx.pointer.down = false; ctx.pointer.world = null; ctx.hover = null; wake(); }
+    function press() {
+      /* a click or a tap: what is under it is pressed, and switched on until it or another is pressed again */
+      updatePointer();
+      ctx.pressed = ctx.hover; ctx.pressedAt = ctx.t;
+      if (ctx.hover) ctx.active = ctx.active === ctx.hover ? null : ctx.hover;
+      wake();
+    }
+    function onDown(e) { if (e.button != null && e.button !== 0) return; at(e); ctx.pointer.down = true; press(); }
+    function onUp(e) { ctx.pointer.down = false; if (e.pointerType === 'touch') onLeave(); else wake(); }
+    ctx.tap = function (x, y) { ctx.pointer.x = clamp(x, -1, 1); ctx.pointer.y = clamp(y, -1, 1); ctx.pointer.inside = true; press(); return ctx.pressed; };
     el.addEventListener('pointermove', onMove); el.addEventListener('pointerleave', onLeave); el.addEventListener('pointercancel', onLeave);
+    el.addEventListener('pointerdown', onDown); el.addEventListener('pointerup', onUp);
     function updatePointer() {
       var hot = ctx.parts && ctx.parts.hot;
       if (!ctx.pointer.inside) { ctx.pointer.world = null; ctx.hover = null; return; }
       ndc.set(ctx.pointer.x, ctx.pointer.y); ray.setFromCamera(ndc, cam);
       ctx.pointer.world = ray.ray.intersectPlane(groundPlane, hit) ? hit.clone() : null;
       if (hot && hot.length) {
-        var hits = ray.intersectObjects(hot, true); ctx.hover = null;
-        if (hits.length) { var o = hits[0].object; while (o && hot.indexOf(o) < 0) o = o.parent; ctx.hover = o || null; }
+        /* the ink (edge lines, hulls) is not pickable: a line counts as hit a whole unit wide, which would make every outline a target */
+        var hits = ray.intersectObjects(hot, true), hit0 = null; ctx.hover = null;
+        for (var hi = 0; hi < hits.length && !hit0; hi++) if (!hits[hi].object.userData.stroke) hit0 = hits[hi];
+        if (hit0) { var o = hit0.object; while (o && hot.indexOf(o) < 0) o = o.parent; ctx.hover = o || null; }
       }
     }
     function tiltCam(dt) {
@@ -569,6 +680,7 @@ var Diorama = (function () {
       ctx.stop(); if (io) io.disconnect(); if (ro) ro.disconnect();
       document.removeEventListener('visibilitychange', onVis);
       el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerleave', onLeave); el.removeEventListener('pointercancel', onLeave);
+      el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointerup', onUp);
       renderer.dispose(); if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
     };
 
@@ -584,6 +696,6 @@ var Diorama = (function () {
   }
 
   return { PAL: PAL, SIZES: SIZES, THEMES: THEMES, figures: figures, figure: figure, mount: mount, toolkit: toolkit, resolveTheme: resolveTheme,
-    clamp: clamp, lerp: lerp, smooth: smooth, out: out, inOut: inOut, phase: phase, wave: wave, pulse: pulse, spring: spring, path: path, place: place, spin: spin, stagger: stagger };
+    clamp: clamp, lerp: lerp, smooth: smooth, out: out, inOut: inOut, phase: phase, wave: wave, pulse: pulse, spring: spring, apart: apart, path: path, place: place, spin: spin, stagger: stagger };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Diorama;

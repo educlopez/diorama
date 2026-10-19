@@ -24,8 +24,8 @@
  *  8 base          the scene stands on a D.slab (the diorama base) so the
  *                  shadows have somewhere to land.
  *  9 pointer       a hero or card answers the pointer somewhere: it reads
- *                  ctx.pointer or ctx.hover, or sets parts.hot. A mini may
- *                  rely on the camera tilt alone.
+ *                  ctx.pointer, ctx.hover, ctx.pressed or ctx.active, or sets
+ *                  parts.hot. A mini may rely on the camera tilt alone.
  * 10 renderer      a built page carries one renderer: three-lite (the default),
  *                  or three.js r128 (the cdnjs script with --three, or inlined
  *                  with --inline), never both and never neither. A lite page
@@ -95,7 +95,7 @@ export function validate(text) {
 
   check(8, "base", /\bD\.slab\s*\(/.test(strip), "no D.slab: the scene needs a base");
 
-  const answers = /\bctx\.(pointer|hover)\b|\bhot\s*[:=]/.test(strip);
+  const answers = /\bctx\.(pointer|hover|pressed|active)\b|\bhot\s*[:=]/.test(strip);
   const named = !/\bhot\s*[:=]/.test(strip) || /\.name\s*=/.test(strip);
   check(9, "pointer", s === "mini" || (answers && named), !answers ? "a hero or card should read ctx.pointer / ctx.hover or set parts.hot" : "hot groups need a .name for the read-out");
 

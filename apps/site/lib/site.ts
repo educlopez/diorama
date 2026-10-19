@@ -18,13 +18,13 @@ export const THEME_ROWS = [
   { name: "toy", reads: "pastel blocks, one warm sun, a cool fill, soft shadows", keeps: "every colour", use: "product pages, READMEs, anything warm" },
   { name: "soft", reads: "the same on cream, gentler light, desaturated accents", keeps: "every colour, shifted warm", use: "editorial pages, paper backgrounds" },
   { name: "mono", reads: "tints of ink on white", keeps: "one accent", use: "docs, product UIs with their own accent, text-heavy pages" },
-  { name: "line", reads: "a hairline drawing: white fills, ink edges, silhouettes, no shadows", keeps: "one accent, as a stroke", use: "minimal or technical pages, small quiet figures" },
+  { name: "line", reads: "a hairline drawing: white fills, ink edges, silhouettes, no shadows; by hand with wobble", keeps: "one accent, as a stroke", use: "minimal or technical pages, small quiet figures" },
   { name: "night", reads: "dusk: dark base, cool sky, warm lamps and windows", keeps: "every colour, darker", use: "dark pages, hero sections on black" },
 ];
 export const THEME_FIELDS = [
   ["bg", "the stage colour, or 'transparent'"],
   ["palette", "overrides of any palette entry: base, ground, grass, water, paper, ink, coral, mustard, teal, plum, …"],
-  ["accent", "the one colour mono and line keep"],
+  ["accent", "the subject's colour in every theme, and the one mono and line keep"],
   ["lights", "{ hemi: [sky, ground, i], sun: [c, i], fill: [c, i] | null, ambient: [c, i] }"],
   ["shadows", "true or false"],
   ["finish", "{ roughness, metalness }"],
@@ -33,15 +33,17 @@ export const THEME_FIELDS = [
   ["stroke, strokeWidth", "the line colour and width in css px"],
   ["round", "every box becomes a rounded solid"],
   ["glow", "a multiplier on every emissive"],
+  ["halo", "0..1, the soft shadow the base throws on the page"],
+  ["wobble", "css px of hand tremor on the ink: 1.2 a pen, 2.5 a felt tip"],
 ];
 export const SKILL_FILES = [
   ["SKILL.md", "the workflow: size and concept, build, check, hand over, adjust"],
   ["kit/diorama.js", "the kernel: camera, lights, shadows, themes, primitives, props, paths, springs, the loop"],
   ["kit/three-lite.js", "three-lite: the part of three.js the kernel uses, without a dependency; every build carries it unless --three or --inline asks for three.js"],
-  ["bench.html", "the page a figure is built into; a theme switcher and a still-frame toggle"],
+  ["bench.html", "the page a figure is built into; a theme switcher, accent swatches, a live read-out and a still-frame toggle"],
   ["scripts/build.mjs", "writes diorama-<name>.html on three-lite; --three links three.js r128 from cdnjs, --inline pastes it in"],
   ["scripts/validate.mjs", "ten checks: declaration, length, clock, self-contained, kernel, words, colours, base, pointer, renderer"],
-  ["scripts/look.mjs", "a sheet of eight pictures and the numbers, in headless Chromium; --theme for another theme"],
+  ["scripts/look.mjs", "a sheet of nine pictures and the numbers, in headless Chromium; --theme for another theme, --three for three.js"],
   ["references/", "concepts, the ten craft rules and the themes, motion, the look, React"],
   ["examples/", "thirteen figures across sizes and themes, the format to write"],
 ];

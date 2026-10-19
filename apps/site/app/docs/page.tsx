@@ -153,14 +153,14 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
         <Section id="figure">
           <p className="note">One <C>Diorama.figure</C> call: a declaration, a <C>build</C> that makes the scene once with the toolkit and returns the parts that move, and a <C>tick</C> that poses them from <C>ctx.t</C>. No timers, no <C>new THREE.*</C>, no words inside the scene.</p>
           <Block title="mailbox.js, abridged">{FIGURE}</Block>
-          <p className="note">The toolkit: <C>D.box</C>, <C>D.rbox</C>, <C>D.cyl</C>, <C>D.cone</C>, <C>D.ball</C>, <C>D.dome</C>, <C>D.wedge</C>, <C>D.slab</C>, <C>D.torus</C>, <C>D.wheel</C>, <C>D.label</C>; the props <C>tree</C>, <C>bush</C>, <C>rock</C>, <C>cloud</C>, <C>person</C>, <C>lamp</C>, <C>crate</C>, <C>pallet</C>, <C>cone</C>, <C>flag</C>; for motion <C>phase</C>, <C>pulse</C>, <C>wave</C>, the eases, <C>spring</C>, <C>path</C>, <C>place</C>, <C>spin</C>, <C>stagger</C>. The index at the top of <a href={`${REPO}/blob/main/kit/diorama.js`}>kit/diorama.js</a> lists them all.</p>
+          <p className="note">The toolkit: <C>D.box</C>, <C>D.rbox</C>, <C>D.cyl</C>, <C>D.cone</C>, <C>D.ball</C>, <C>D.dome</C>, <C>D.wedge</C>, <C>D.slab</C>, <C>D.torus</C>, <C>D.wheel</C>, <C>D.label</C>; the props <C>tree</C>, <C>bush</C>, <C>rock</C>, <C>cloud</C>, <C>person</C>, <C>lamp</C>, <C>crate</C>, <C>pallet</C>, <C>cone</C>, <C>flag</C>; for motion <C>phase</C>, <C>pulse</C>, <C>wave</C>, the eases, <C>spring</C>, <C>apart</C>, <C>path</C>, <C>place</C>, <C>spin</C>, <C>stagger</C>. The index at the top of <a href={`${REPO}/blob/main/kit/diorama.js`}>kit/diorama.js</a> lists them all.</p>
         </Section>
 
         <Section id="scripts">
           <CodeRows rows={[
             { code: "node ~/.claude/skills/diorama/scripts/build.mjs mailbox.js", note: "Writes diorama-mailbox.html: three-lite (the part of three.js the kernel uses, about 44 KB), the kernel, the figure and the bench page. Add --three to load three.js r128 from cdnjs instead, or --inline to paste three.js in." },
             { code: "node ~/.claude/skills/diorama/scripts/validate.mjs diorama-mailbox.html", note: "Ten checks: the declaration, the length, the clock, self-containment, the kernel, the words, the colours, the base, the pointer and the renderer (three.js or three-lite, never both)." },
-            { code: "node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js --theme line", note: "Opens the page in headless Chromium and writes one sheet: the still frame, three moments, the pointer, the tilt, the thumbnail and the page, plus the console, the fill, the motion and the answer as numbers." },
+            { code: "node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js --theme line", note: "Opens the page in headless Chromium and writes one sheet: the still frame, three moments, the pointer, the tilt, a press, the thumbnail and the page, plus the console, the fill, the motion, the answer and the press as numbers." },
           ]} />
         </Section>
 

@@ -16,7 +16,9 @@ The built page is one HTML file: three-lite inlined (or, with `--three`, a `<scr
 </script>
 ```
 
-The kernel sizes the canvas to the element's width and the figure's aspect, watches resizes, sleeps offscreen, and honours `prefers-reduced-motion`. Pass `{ theme: 'night' }` or `{ theme: { base: 'mono', accent: '#5b4ae0' } }` to `mount` to draw the same figure in another theme, for a dark mode or a brand: remount on change (`ctx.destroy()`, then `mount` again). Give the element a width; the kernel sets its height. For a mini in an empty state, a 200px-wide element above the heading is the usual place; the canvas is transparent so the card's background shows through.
+The kernel sizes the canvas to the element's width and the figure's aspect, watches resizes, sleeps offscreen, and honours `prefers-reduced-motion`. Pass `{ theme: 'night' }` or `{ theme: { base: 'mono', accent: '#5b4ae0' } }` to `mount` to draw the same figure in another theme, for a dark mode or a brand: remount on change (`ctx.destroy()`, then `mount` again). Give the element a width; the kernel sets its height. For a mini in an empty state, a 200px-wide element above the heading is the usual place; the canvas is transparent so the card's background shows through, and the base's soft shadow lands on the card.
+
+`{ theme: { accent: '#5b4ae0' } }` recolours the subject (every figure paints it with `pal.accent`) and is all a brand needs; `{ theme: { halo: 0 } }` drops the base's shadow when the host card draws its own; `{ theme: { base: 'line', wobble: 1.4 } }` draws the figure by hand. `ctx.read` holds the scene's own line (`'truck · at the dock'`) for a caption the host renders; `ctx.hover`, `ctx.pressed` and `ctx.active` tell the host what the visitor is on, pressed and switched on. Taps work on touch: the canvas keeps `touch-action: pan-y`, so the page still scrolls. The kernel gives the element `role="img"` and an `aria-label` from the title and the means unless it already has one.
 
 ## React or Next.js
 
@@ -36,7 +38,7 @@ export function Hero() {
     const ctx = Diorama.mount(fig, { el: el.current!, THREE });
     return () => ctx.destroy();
   }, []);
-  return <div ref={el} style={{ width: "100%" }} aria-hidden />;
+  return <div ref={el} style={{ width: "100%" }} />;
 }
 ```
 
@@ -46,7 +48,7 @@ Notes:
 - A figure file ends with `Diorama.figure({ … })`, which needs `Diorama` in scope. In a bundler, change its first line to `import Diorama from "./diorama.js";` or wrap it as `export default (Diorama) => Diorama.figure({ … })` and call it in the effect. Nothing else in the figure changes.
 - Server rendering: render the `<div>` empty with a fixed aspect ratio (`aspectRatio: "3 / 2"`, `"4 / 3"` or `"1"`) so nothing shifts when the canvas mounts.
 - One canvas per diorama. Several on one page are fine; each sleeps when offscreen.
-- The figure's `title` and `means` are yours to render as React text next to the stage, along with any heading or button your UI needs; the kernel never writes words.
+- The figure's `title` and `means` are yours to render as React text next to the stage, along with any heading or button your UI needs; the kernel never writes words. Read `ctx.read` in your own loop (or on hover) for a live caption. Set `aria-hidden` on the element instead when the words beside it already say it all.
 
 ## Shipping the page itself
 

@@ -2,15 +2,17 @@
    A rocket on its pad, a gantry with an arm, a fuel tank, a control bunker
    with lit windows, floodlights. Every twenty seconds the arm swings away,
    the engine lights and the rocket climbs out of the frame, then it is back
-   on the pad. Hover the rocket, the gantry or the bunker and it lifts. */
+   on the pad. Hover the rocket and it comes apart into its stages, nose
+   first, and closes up when you leave; tap the control room and the count
+   reaches zero now. The read-out says where the count is. */
 Diorama.figure({
   name: 'launchpad',
   size: 'card',
   theme: 'night',
   title: 'Launchpad',
-  means: 'A rocket waits on its pad under floodlights; every so often the arm swings away and it launches.',
-  hint: 'Hover the rocket, the gantry or the control room; wait for the launch.',
-  camera: { az: 38, el: 33, pad: 1.06 },
+  means: 'A rocket waits on its pad under floodlights; the arm swings away and it launches, on the clock or on your call.',
+  hint: 'Hover the rocket to see its stages; tap the control room to launch now.',
+  camera: { az: 38, el: 33, pad: 1.0 },
   still: 4,
   build: function (o) {
     var D = o.D, pal = o.pal, hot = [];
@@ -18,14 +20,17 @@ Diorama.figure({
     D.box(7.5, .03, 7, pal.asphalt, .4, .04, .2, null, { shadow: false });
     D.cyl(2.2, 2.2, .3, pal.cloud, 1.2, .15, .6, null, 24); D.cyl(1.6, 1.6, .06, pal.ink, 1.2, .3, .6, null, 24);
     [[-3.2, 3.2], [4.4, 3.4], [4.6, -3.0], [-3.4, -3.1]].forEach(function (p) { D.props.lamp(p[0], p[1], null, { h: 2.8 }); });
-    /* the rocket */
+    /* the rocket, in three stages so it can come apart: the engine on the pad, the body, the nose */
     var rocket = D.group(1.2, .3, .6); rocket.name = 'rocket'; hot.push(rocket);
-    D.cyl(.5, .5, 3.6, pal.paper, 0, 2.3, 0, rocket, 20); D.cyl(.52, .52, .5, pal.coral, 0, 1.1, 0, rocket, 20); D.cyl(.52, .52, .3, pal.coral, 0, 3.6, 0, rocket, 20);
-    D.cone(.5, 1.2, pal.coral, 0, 4.7, 0, rocket, 20); D.cyl(.3, .45, .5, pal.steel, 0, .5, 0, rocket, 14);
-    [0, 1, 2, 3].forEach(function (k) { var f = D.wedge(.08, .9, .7, pal.coral, 0, .4, 0, rocket); f.position.set(Math.cos(k * Math.PI / 2) * .62, .35, Math.sin(k * Math.PI / 2) * .62); f.rotation.y = -k * Math.PI / 2 + Math.PI / 2; });
-    D.box(.5, .4, .06, pal.sky, 0, 3.1, .5, rocket, { shadow: false, mat: { emissive: pal.sky, emissiveIntensity: .4 } });
+    var engine = D.group(0, 0, 0, rocket), body = D.group(0, 0, 0, rocket), nose = D.group(0, 0, 0, rocket);
+    D.cyl(.3, .45, .5, pal.steel, 0, .5, 0, engine, 14);
+    [0, 1, 2, 3].forEach(function (k) { var f = D.wedge(.08, .9, .7, pal.accent, 0, .4, 0, engine); f.position.set(Math.cos(k * Math.PI / 2) * .62, .35, Math.sin(k * Math.PI / 2) * .62); f.rotation.y = -k * Math.PI / 2 + Math.PI / 2; });
+    D.cyl(.5, .5, 3.4, pal.paper, 0, 2.4, 0, body, 20); D.cyl(.52, .52, .5, pal.accent, 0, 1.1, 0, body, 20); D.cyl(.52, .52, .3, pal.accent, 0, 3.6, 0, body, 20);
+    D.box(.5, .4, .06, pal.sky, 0, 3.1, .5, body, { shadow: false, mat: { emissive: pal.sky, emissiveIntensity: .4 } });
+    D.cyl(.5, .5, .2, pal.paper, 0, 4.2, 0, nose, 20); D.cone(.5, 1.2, pal.accent, 0, 4.9, 0, nose, 20);
+    var apart = D.apart([{ g: nose, y: 1.5 }, { g: body, y: .7 }], { stagger: .08 });
     var flame = D.group(0, .2, 0, rocket); var f1 = D.cone(.42, 1.6, pal.mustard, 0, -.8, 0, flame, 12); f1.rotation.x = Math.PI; f1.castShadow = false; f1.material = D.mat(pal.mustard, { emissive: pal.mustard, emissiveIntensity: 1.6 });
-    var f2 = D.cone(.26, 2.4, pal.coral, 0, -1.2, 0, flame, 12); f2.rotation.x = Math.PI; f2.castShadow = false; f2.material = D.mat(pal.coral, { emissive: pal.coral, emissiveIntensity: 1.2 });
+    var f2 = D.cone(.26, 2.4, pal.accent, 0, -1.2, 0, flame, 12); f2.rotation.x = Math.PI; f2.castShadow = false; f2.material = D.mat(pal.accent, { emissive: pal.accent, emissiveIntensity: 1.2 });
     var smoke = []; [0, 1, 2, 3, 4].forEach(function (k) { var s = D.ball(.35, pal.cloud, 0, 0, 0, null); s.castShadow = false; smoke.push(s); });
     /* the tank vents a wisp of vapour all the time, so the pad is never quite still */
     var vent = []; [0, 1, 2].forEach(function (k) { var v = D.ball(.16, pal.cloud, 0, 0, 0, null); v.castShadow = false; vent.push(v); });
@@ -47,16 +52,21 @@ Diorama.figure({
     /* a technician walks the apron between the bunker and the pad */
     var tech = D.props.person(0, 0, null, { shirt: pal.mustard, hat: pal.paper }), walk = D.path([[-3.0, 3.5], [1.6, 3.5]]);
     D.props.rock(-4.2, 3.4, null, { r: .3 }); D.props.bush(4.6, -3.6, null, { r: .35 }); D.props.bush(-4.4, -3.6, null, { r: .28 });
-    return { hot: hot, rocket: rocket, flame: flame, smoke: smoke, vent: vent, dish: dish, tech: tech, walk: walk, arm: arm, beacon: beacon, lift: {} };
+    return { hot: hot, rocket: rocket, apart: apart, bunker: bunker, flame: flame, smoke: smoke, vent: vent, dish: dish, tech: tech, walk: walk, arm: arm, beacon: beacon, base: 0, lastPress: -1, lift: {} };
   },
   tick: function (ctx) {
     var D = ctx.D, p = ctx.parts, t = ctx.t;
+    /* a tap on the control room while the rocket waits moves the clock to T−0 now; the loop goes on from there, seamless */
+    if (ctx.pressed === p.bunker && ctx.pressedAt !== p.lastPress) { p.lastPress = ctx.pressedAt; if (D.phase(t - p.base, 20) * 20 < 12) p.base = t - 12; }
     /* 20 s: 0–12 on the pad, 12–13.5 the arm swings away, 13.5–18 the launch, 18–20 back on the pad */
-    var T = D.phase(t, 20) * 20, armOut = D.smooth((T - 12) / 1.5) * (1 - D.smooth((T - 18.5) / 1.2));
+    var T = D.phase(t - p.base, 20) * 20, armOut = D.smooth((T - 12) / 1.5) * (1 - D.smooth((T - 18.5) / 1.2));
     p.arm.rotation.y = -1.6 * armOut;
     var burn = T > 13.5 && T < 18, u = D.clamp((T - 13.5) / 4.5, 0, 1), rise = u * u * 16;
     p.rocket.position.y = .3 + rise;
     var back = D.smooth((T - 18) / 1.5); if (T >= 18) p.rocket.position.y = .3 + 16 * (1 - back);
+    ctx.read = T < 12 ? 'on the pad · T−' + Math.ceil(12 - T) + ' s' : T < 13.5 ? 'arm away · ignition' : T < 18 ? 'lift-off · ' + Math.round(rise) + ' m' : 'back on the pad';
+    /* the stages come apart under the pointer, or stay apart after a tap, but never while the rocket is busy */
+    p.apart.open((ctx.hover === p.rocket || ctx.active === p.rocket) && !(T >= 12 && T < 18)); p.apart.step(ctx.dt);
     p.beacon.material.emissiveIntensity = D.phase(t, 1.2) < .5 ? 1.6 : .15;
     p.dish.rotation.y = t * .5;
     var W = D.phase(t, 11), wd = W < .5 ? D.smooth(W * 2) : 1 - D.smooth((W - .5) * 2);
@@ -64,6 +74,6 @@ Diorama.figure({
     p.vent.forEach(function (v, k) { var w = D.phase(t, 2.4, k * .33); v.position.set(4.0 + .35 + .1 * D.wave(t, 1.3, k), 2.55 + w * 1.1, 2.6 - .3 + .08 * D.wave(t, .9, k)); v.scale.setScalar((.5 + w) * (1 - w) * 2 + .1); });
     p.flame.visible = burn; p.flame.scale.set(1, .8 + .5 * Math.abs(D.wave(t, .15)) + .6 * u, 1);
     p.smoke.forEach(function (s, k) { var on = burn && u < .8; var v = D.phase(t, 1.1, k * .2); s.visible = on; s.position.set(1.2 + Math.cos(k * 1.26) * (.4 + v * 1.6), .5 + v * .6, .6 + Math.sin(k * 1.26) * (.4 + v * 1.6)); s.scale.setScalar(.5 + v * 1.1); });
-    p.hot.forEach(function (g) { var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .25 : 0; s.step(ctx.dt); if (g !== p.rocket) g.position.y = s.x; else p.rocket.position.y += s.x; });
+    p.hot.forEach(function (g) { if (g === p.rocket) return; var s = p.lift[g.id] || (p.lift[g.id] = D.spring(120, 18)); s.t = ctx.hover === g ? .25 : 0; s.step(ctx.dt); g.position.y = s.x; });
   }
 });

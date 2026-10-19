@@ -1,6 +1,7 @@
 /* mailbox · a mini.
    A letterbox on a post, door open, nothing inside. The flag rests down; now
-   and then it lifts as if to check, finds nothing, and settles. */
+   and then it lifts as if to check, finds nothing, and settles. The box is
+   painted with pal.accent, so a brand colour or a swatch recolours it. */
 Diorama.figure({
   name: 'mailbox',
   size: 'mini',
@@ -19,8 +20,8 @@ Diorama.figure({
     D.cyl(.07, .09, 1.1, pal.wood, 0, .55, 0, post, 8);
     D.box(.5, .06, .5, pal.wood, 0, 1.12, 0, post);
     var body = D.group(0, 1.15, 0, post);
-    D.box(.95, .5, .6, pal.coral, 0, .25, 0, body);
-    var top = D.cyl(.3, .3, .95, pal.coral, 0, .5, 0, body, 18); top.rotation.z = Math.PI / 2;
+    D.box(.95, .5, .6, pal.accent, 0, .25, 0, body);
+    var top = D.cyl(.3, .3, .95, pal.accent, 0, .5, 0, body, 18); top.rotation.z = Math.PI / 2;
     D.box(.86, .42, .5, pal.ink, .06, .25, 0, body);
     var door = D.group(-.475, .02, 0, body);
     D.box(.04, .5, .58, pal.cloud, 0, .25, 0, door);

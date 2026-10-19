@@ -2,7 +2,7 @@
 /**
  * The look in one command, run from the working directory:
  *
- *   node <skill>/scripts/look.mjs <name>.js [--pointer x,y] [--out dir] [--theme name]
+ *   node <skill>/scripts/look.mjs <name>.js [--pointer x,y] [--out dir] [--theme name] [--three]
  *
  * It builds the page as build.mjs does, validates it as validate.mjs does,
  * opens it in headless Chromium with WebGL, and writes one sheet of pictures,
@@ -14,6 +14,7 @@
  *   t+8s      later in the loop (a loop should have moved on, not reset)
  *   pointer   the pointer at --pointer (default the centre), after settling
  *   corner    the pointer at the top-right corner (the camera tilt)
+ *   press     a click or a tap at --pointer, 1.5 s later: what a visitor on a phone gets
  *   thumb     the stage at thumbnail size: 160px for a mini, 390px for the others
  *   page      the whole bench, as a visitor sees it
  *
@@ -23,6 +24,9 @@
  *   fill      how much of the stage the scene covers (a small scene is reported)
  *   motion    the share of stage pixels that change between t+1.5s and t+4s
  *   answer    the share that changes when the pointer arrives
+ *   press     the share that changes because of the press (against the same second without one);
+ *             MUTE when the hint promises a tap, a click or a press and nothing changes (under 0.1%: one arm
+ *             swinging in a line drawing is a few tenths of a percent)
  *   frame     milliseconds per tick+render in this headless browser (a budget hint, not a verdict)
  *   clash     moving parts that pass through other parts over the first 40 s: the pair, how deep,
  *             when first. A vehicle through a tree or two cars in one lane is a bug; forks in a rack,
@@ -31,7 +35,8 @@
  *
  * Exits 1 when the validator rejects the page, the console has an error, or
  * no WebGL context was made; 2 when it cannot run; 0 otherwise. Everything
- * else is for eyes, on the sheet.
+ * else is for eyes, on the sheet. --three looks at the page on three.js r128
+ * (the kit's copy, served in place of the cdnjs script) instead of three-lite.
  *
  * Playwright: it looks for playwright-core (or playwright) next to the working
  * directory, globally, or in a cache folder of the user's, and installs
@@ -133,11 +138,12 @@ const MEASURE = async ([a, b]) => {
   const load = async (b64) => { const img = new Image(); img.src = "data:image/png;base64," + b64; await img.decode();
     const c = Object.assign(document.createElement("canvas"), { width: img.width, height: img.height }), x = c.getContext("2d"); x.drawImage(img, 0, 0); return { d: x.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height }; };
   const IA = await load(a), IB = b ? await load(b) : null, A = IA.d, B = IB && IB.d, w = IA.w, h = IA.h, n = w * h;
-  const g = [A[4 * 6], A[4 * 6 + 1], A[4 * 6 + 2], A[4 * 6 + 3]];
+  /* the background is read two pixels in from the corner, and the outermost pixel ring is left out, so a border or an antialiased edge is not counted as scene */
+  const g0 = 4 * (2 * w + 2), g = [A[g0], A[g0 + 1], A[g0 + 2], A[g0 + 3]];
   const diff = (P, k, Q, l) => Math.max(Math.abs(P[k] - Q[l]), Math.abs(P[k + 1] - Q[l + 1]), Math.abs(P[k + 2] - Q[l + 2]), Math.abs(P[k + 3] - Q[l + 3]));
   let filled = 0, changed = 0;
-  for (let y = 0; y < h; y++) { let first = -1, last = -1;
-    for (let x = 0; x < w; x++) { const k = 4 * (y * w + x);
+  for (let y = 1; y < h - 1; y++) { let first = -1, last = -1;
+    for (let x = 1; x < w - 1; x++) { const k = 4 * (y * w + x);
       if (diff(A, k, g, 0) >= 18) { if (first < 0) first = x; last = x; }
       if (B && diff(A, k, B, k) >= 18) changed++; }
     if (first >= 0) filled += last - first + 1; }
@@ -151,8 +157,9 @@ async function main() {
   const name = nameOf(figure) ?? basename(src, ".js");
   const outDir = resolve(arg("--out", "."));
   mkdirSync(outDir, { recursive: true });
-  const html = assemble(figure);
-  const pageFile = join(outDir, `diorama-${name}.html`);
+  const onThree = process.argv.includes("--three");
+  const html = assemble(figure, { three: onThree });
+  const pageFile = join(outDir, `diorama-${name}${onThree ? "-three" : ""}.html`);
   writeFileSync(pageFile, html);
   console.log(pageFile);
   const valid = report(validate(html));
@@ -197,6 +204,26 @@ async function main() {
   await fresh(); await goto(4); const before = await stageShot();
   await goto(4 + SETTLE, pointer); shots.pointer = await stageShot();
   await goto(4 + 2 * SETTLE, [0.95, 0.95]); shots.corner = await stageShot();
+  /* the press: on the hot group --press names (or x,y), else on the one the hint names after "tap", "click" or
+     "press", else at the pointer; the same second with and without it, so motion does not count as an answer */
+  const pressArg = arg("--press", null);
+  const hintText = /\bhint:\s*["'`]([^"'`]*)["'`]/.exec(figure)?.[1] ?? "";
+  const TARGET = ([pressArg, hint, cur]) => {
+    const c = window.__diorama, hot = (c.parts && c.parts.hot) || [], h = hint.toLowerCase();
+    const ndcOf = (g) => { const v = new THREE.Vector3(); g.getWorldPosition(v); v.y += 0.4; v.applyMatrix4(c.cam.matrixWorldInverse).applyMatrix4(c.cam.projectionMatrix); return [v.x, v.y]; };
+    if (pressArg && /^-?[\d.]+,-?[\d.]+$/.test(pressArg)) return { at: pressArg.split(",").map(Number), name: "" };
+    let g = null;
+    if (pressArg) g = hot.find((o) => (o.name || "").toLowerCase() === pressArg.toLowerCase()) || null;
+    else { const m = /\b(tap|click|press)/.exec(h), from = m ? m.index : -1;
+      g = hot.filter((o) => o.name && h.indexOf(o.name.toLowerCase()) > from).sort((a, b) => h.indexOf(a.name.toLowerCase()) - h.indexOf(b.name.toLowerCase()))[0] || null; }
+    return g ? { at: ndcOf(g), name: g.name } : { at: cur, name: "" };
+  };
+  await fresh(); await goto(2);
+  const target = await page.evaluate(TARGET, [pressArg, hintText, pointer]);
+  await fresh(); await goto(4 + 3 * SETTLE, target.at); const unpressed = await stageShot();
+  await fresh(); await goto(4 + 2 * SETTLE, target.at);
+  const pressedName = await page.evaluate(([T, args, named]) => { const c = window.__diorama, at = named ? eval("(" + T + ")")(args).at : args[2]; const g = c.tap(at[0], at[1]); return g ? g.name || "something" : ""; }, [TARGET.toString(), [pressArg, hintText, target.at], !!target.name]);
+  await goto(4 + 3 * SETTLE, target.at); shots.press = await stageShot();
   const frameMs = await page.evaluate(() => { const c = window.__diorama; const t0 = performance.now(); for (let i = 0; i < 20; i++) { c.step(1 / 60); c.render(); } return (performance.now() - t0) / 20; });
   await fresh(); await goto(2); shots.page = (await page.screenshot({ fullPage: true })).toString("base64");
 
@@ -212,12 +239,13 @@ async function main() {
   m.fill = await page.evaluate(MEASURE, [shots.rest, null]);
   m.motion = await page.evaluate(MEASURE, [shots["t+1.5s"], shots["t+4s"]]);
   m.answer = await page.evaluate(MEASURE, [before, shots.pointer]);
+  m.press = await page.evaluate(MEASURE, [unpressed, shots.press]);
 
-  const order = ["rest", "t+1.5s", "t+4s", "t+8s", "pointer", "corner", "thumb", "page"];
+  const order = ["rest", "t+1.5s", "t+4s", "t+8s", "pointer", "corner", "press", "thumb", "page"];
   const sheet = await page.evaluate(async ([shots, order, name]) => {
     const imgs = {};
     for (const k of order) { const img = new Image(); img.src = "data:image/png;base64," + shots[k]; await img.decode(); imgs[k] = img; }
-    const cell = 420, pad = 16, label = 26, cols = 4, rows = Math.ceil(order.length / cols);
+    const cell = 420, pad = 16, label = 26, cols = 3, rows = Math.ceil(order.length / cols);
     const c = Object.assign(document.createElement("canvas"), { width: cols * (cell + pad) + pad, height: rows * (cell + label + pad) + pad + 30 });
     const x = c.getContext("2d"); x.fillStyle = "#f3f5fa"; x.fillRect(0, 0, c.width, c.height);
     x.fillStyle = "#1b2638"; x.font = "700 16px system-ui, sans-serif"; x.fillText("diorama · " + name + (new URLSearchParams(location.search).get("theme") ? "" : ""), pad, 22);
@@ -232,7 +260,7 @@ async function main() {
     return [c.width, c.height];
   }, [shots, order, name + (themeName ? " · " + themeName : "")]);
   await page.setViewportSize({ width: sheet[0], height: sheet[1] });
-  const sheetFile = join(outDir, `diorama-${name}${themeName ? "-" + themeName : ""}-look.png`);
+  const sheetFile = join(outDir, `diorama-${name}${themeName ? "-" + themeName : ""}${onThree ? "-three" : ""}-look.png`);
   await page.locator("canvas").first().screenshot({ path: sheetFile });
   await browser.close();
 
@@ -244,6 +272,9 @@ async function main() {
   console.log(`${m.fill.fill < 0.22 ? "SMALL" : "ok  "} fill: ${pct(m.fill.fill)} of the stage is scene (under 22% reads small)`);
   console.log(`${m.motion.changed < 0.003 ? "STILL" : "ok  "} motion: ${pct(m.motion.changed)} of the stage changes between t+1.5s and t+4s`);
   console.log(`${m.answer.changed < 0.003 ? "FAINT" : "ok  "} answer: ${pct(m.answer.changed)} of the stage changes when the pointer arrives`);
+  const hint = /\bhint:\s*["'`]([^"'`]*)["'`]/.exec(figure)?.[1] ?? "";
+  const promisesPress = /\b(tap|click|press)/i.test(hint);
+  console.log(`${promisesPress && m.press.changed < 0.001 ? "MUTE" : promisesPress ? "ok  " : "info"} press: ${pct(m.press.changed)} of the stage changes after a press${pressedName ? ` on ${pressedName}` : " on nothing"}${promisesPress ? "" : " (the hint promises none)"}`);
   console.log(`info frame: ${frameMs.toFixed(1)} ms per tick+render here (software GL; a real GPU is far faster)`);
   if (clashes.length) { console.log(`CLASH clash: ${clashes.length} pair${clashes.length > 1 ? "s" : ""} pass through each other (depth in world units; look at the sheet at that second)`); for (const c of clashes.slice(0, 8)) console.log(`      ${c.pair}  depth ${c.depth}  from ${c.first}s  ${c.frames} frames`); }
   else console.log("ok   clash: nothing moving passes through anything else");
