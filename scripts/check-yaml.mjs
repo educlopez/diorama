@@ -11,7 +11,7 @@ const skip = new Set([".git", "node_modules"]);
 
 function loadParse() {
   const dir = mkdtempSync(join(tmpdir(), "diorama-yaml-"));
-  const install = spawnSync("npm", ["install", "--silent", "--prefix", dir, "yaml"], {
+  const install = spawnSync("npm", ["install", "--silent", "--prefix", dir, "yaml@2.9.1"], {
     stdio: ["ignore", "pipe", "inherit"],
   });
   if (install.status !== 0) process.exit(install.status ?? 1);
