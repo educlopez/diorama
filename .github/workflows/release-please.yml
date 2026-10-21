@@ -19,7 +19,15 @@ jobs:
     name: Keep the release pull request, publish on merge
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - id: release
+        uses: googleapis/release-please-action@v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+      # release-please names the release after the tag; keep the "Diorama vX.Y.Z" title of the others.
+      - name: Title the release
+        if: steps.release.outputs.release_created
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Diorama $TAG"
