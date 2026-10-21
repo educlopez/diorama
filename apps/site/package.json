@@ -1,11 +1,11 @@
 {
   "name": "diorama-site",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "node scripts/examples.mjs",
-    "predev": "node scripts/examples.mjs",
+    "prebuild": "node scripts/examples.mjs && node scripts/worlds.mjs",
+    "predev": "node scripts/examples.mjs && node scripts/worlds.mjs",
     "build": "next build",
     "dev": "next dev -p 3000",
     "start": "next start -p 3000",
@@ -22,7 +22,9 @@
     "@types/node": "^22",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "esbuild": "0.28.2",
     "tailwindcss": "4.3.3",
+    "three": "0.186.1",
     "typescript": "5.9.3"
   }
 }

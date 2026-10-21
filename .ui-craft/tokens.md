@@ -1,0 +1,4 @@
+# Visual proof tokens
+Use existing site's white/near-black visual language. Bench only: white stage, ink #0d0d0d, secondary #60605b, stroke #deded8, active control #17181c with white text. System sans-serif, system monospace only for technical data. Spacing 4/8/16/24/32/48. Controls minimum 44px high, 6px radius; stage no decorative card. Focus 2px ink outline with 3px offset. No UI entrances or scroll effects. Animated scene is the focal point; camera never moves.
+
+Worlds site follows existing site Inter/Roboto Mono, --color-text/--color-muted/--color-bg and --card-border variables. New scoped page spacing 8/16/24/32/48/64/96; headline 64px desktop / 40px mobile, body 16px, utility 13px. One existing coral accent (#e8714f), only small identity/link details. Minimum 44px new controls. One light theme, matching existing site; no invented dark mode.

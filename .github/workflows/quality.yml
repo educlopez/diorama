@@ -1,0 +1,57 @@
+name: Quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Packages, renderers and production site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Install pinned build tools without lifecycle scripts
+        run: |
+          npm ci --ignore-scripts --prefix skills/diorama-worlds
+          npm ci --ignore-scripts --prefix apps/site
+      - name: Install browser for real output checks
+        working-directory: skills/diorama-worlds
+        run: |
+          ./node_modules/.bin/playwright install --with-deps chromium
+          echo "CHROME_PATH=$(node -e "console.log(require('playwright').chromium.executablePath())")" >> "$GITHUB_ENV"
+      - name: Check release and legacy SVG contracts
+        run: |
+          node scripts/release-check.mjs
+          for source in examples/*.js; do node scripts/validate.mjs "$source"; done
+      - name: Check clean skill installation and self-contained builds
+        run: node scripts/install-smoke.mjs "$RUNNER_TEMP/install-smoke"
+      - name: Check seven real worlds in all four finishes
+        env:
+          WORLDS_TEST_OUTPUT: ${{ runner.temp }}/worlds-runtime
+        run: npm test --prefix skills/diorama-worlds
+      - name: Build production site and check TypeScript
+        run: |
+          npm run build --prefix apps/site
+          npm run typecheck --prefix apps/site
+      - name: Check real production-site flows
+        run: |
+          (cd apps/site && ./node_modules/.bin/next start -H 127.0.0.1 -p 4180) > "$RUNNER_TEMP/site.log" 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for i in $(seq 1 30); do if curl -fsS http://localhost:4180/worlds > /dev/null; then break; fi; sleep 1; done
+          node skills/diorama-worlds/scripts/site-check.mjs "$RUNNER_TEMP/worlds-site"
+      - name: Keep visual reports for review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: diorama-quality-reports
+          path: |
+            ${{ runner.temp }}/worlds-runtime
+            ${{ runner.temp }}/worlds-site
+            ${{ runner.temp }}/site.log
+          retention-days: 7

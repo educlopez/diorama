@@ -7,7 +7,7 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const skip = new Set([".git", "node_modules"]);
+const skip = new Set([".git", "node_modules", ".next", "work"]);
 
 function loadParse() {
   const dir = mkdtempSync(join(tmpdir(), "diorama-yaml-"));
@@ -56,7 +56,7 @@ for (const path of files) {
   }
   try {
     const data = parse(body);
-    if (rel === "SKILL.md") {
+    if (rel === "SKILL.md" || rel.endsWith("/SKILL.md")) {
       if (!data || typeof data !== "object") throw new Error("frontmatter is not a mapping");
       if (typeof data.name !== "string" || typeof data.description !== "string") {
         throw new Error(`name and description must be strings (got ${typeof data.name} and ${typeof data.description})`);

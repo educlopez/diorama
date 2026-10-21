@@ -1,6 +1,6 @@
 <h1 align="center">Diorama</h1>
 
-<p align="center"><b>A Claude Code skill that builds small animated 3D worlds for the web.</b><br>Isometric scenes made of blocks and soft shadows, with little trucks, forklifts and people that keep their own time. A hero for a landing page, a card for your docs, or a mini figure for an empty state. Five themes, from pastel toy to a hairline drawing, all of them yours to tune.</p>
+<p align="center"><b>Two agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Describe a place; get one self-contained offline HTML file.</p>
 
 <p align="center">
   <a href="https://diorama.educalvolopez.com"><img src="https://img.shields.io/badge/site-diorama.educalvolopez.com-1b1b19?style=flat-square" alt="Site: diorama.educalvolopez.com"></a>
@@ -8,7 +8,7 @@
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent_Skills-compatible-1b1b19?style=flat-square" alt="Agent Skills compatible"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1b1b19?style=flat-square" alt="MIT license"></a>
   <a href="#requirements"><img src="https://img.shields.io/badge/node-%E2%89%A5%2020-1b1b19?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node 20 or later"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/renders-SVG%2C_no_dependency-1b1b19?style=flat-square" alt="Renders SVG, no dependency"></a>
+  <a href="#how-it-works"><img src="https://img.shields.io/badge/renders-SVG_%2B_Three.js-1b1b19?style=flat-square" alt="Separate SVG and Three.js renderers"></a>
 </p>
 
 <p align="center">
@@ -24,6 +24,52 @@
 
 ---
 
+## Choose your skill
+
+| | Diorama SVG | Diorama Worlds |
+|---|---|---|
+| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story |
+| Renderer | Dependency-free SVG | Three.js / WebGL 2 |
+| Look | Six tunable themes | Miniature, pixel, halftone, blueprint |
+| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects |
+| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested |
+| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed |
+| Guide | [SVG guide](https://diorama.educalvolopez.com/docs) | [Worlds guide](https://diorama.educalvolopez.com/docs/worlds) |
+
+The file sizes use different measures; they are not a like-for-like benchmark. Install either skill or both. They do not share renderers or dependencies.
+
+<p align="center"><img src="apps/site/public/worlds/posters/flat-ground-1/florist.png" width="720" alt="Diorama Worlds: a florist and customer in an animated flower stall with flat irregular ground, no display platform."></p>
+
+## Quick start
+
+**Diorama SVG** — small illustrations, six themes:
+
+```sh
+npx skills add educlopez/diorama --skill diorama -g
+```
+
+```text
+/diorama a card-sized illustration for the build queue in our docs, mono theme with a teal accent
+```
+
+**Diorama Worlds** — detailed miniature stories, four finishes:
+
+```sh
+npx skills add educlopez/diorama/skills/diorama-worlds -g
+```
+
+```text
+/diorama-worlds a baker rolling dough beside a brick oven for our landing page. Flat irregular ground, no platform. Halftone finish.
+```
+
+In agents without slash commands, ask “Use the diorama skill…” or “Use the diorama-worlds skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
+
+Worlds uses a direct subdirectory source because the CLI stops discovery at the root SVG `SKILL.md` by default. To list both from a checkout, use `npx skills add . --list --full-depth`. Do not assume an unqualified root install selects Worlds.
+
+Your agent follows the installed skill’s setup, builds the scene, opens the actual offline output and checks all required views and contacts. For Worlds it first runs `npm ci --ignore-scripts --prefix <installed-worlds-folder>` once. No global build tools or API keys.
+
+## SVG figures
+
 Ask Claude for a 3D illustration and Diorama has it build a place: a yard, a street corner, a rack, a letterbox on a post. Every object is a handful of boxes and cylinders standing on a rounded base, seen from an isometric camera and lit by one warm sun, drawn as SVG the way an illustrator fakes depth: one flat tone per face, the pieces painted from the back to the front, the shadows thrown on the ground as shapes. No three.js, no WebGL, nothing to load. Two or three things keep their own time (a truck on a lap, a forklift shuttle, a flag), one thing answers the pointer, and the camera tilts a few degrees toward the mouse.
 
 The default look is an isometric camera, matte blocks, one warm sun with soft shadows and a few accents, built into a skill with themes, so the same scene file can be a pastel toy town, a cream editorial figure, a monochrome with one accent, a hairline drawing (by hand, if you ask), or a night scene with the lamps on. Every base throws a soft shadow on the page, so the diorama sits on it like a thing on a table. The subject is painted with the accent, so one brand colour recolours it in any theme, and the bench has swatches to try. Things answer a tap as well as the pointer, a thing can come apart under the pointer to show what it is made of, and a read-out under the stage says what the scene is doing, from the same clock that moves it.
@@ -33,23 +79,7 @@ The default look is an isometric camera, matte blocks, one warm sun with soft sh
 </p>
 <p align="center"><sub>One figure file, six themes: <code>toy</code>, <code>soft</code>, <code>mono</code>, <code>line</code>, <code>night</code>, <code>print</code>. The gallery switches them live.</sub></p>
 
-## Quick start
-
-```sh
-npx skills add educlopez/diorama -g
-```
-
-Then, in Claude Code:
-
-```text
-/diorama a hero illustration for our logistics landing page: a warehouse yard with trucks docking and forklifts moving pallets
-/diorama an empty state for the inbox when there are no messages, small and cute
-/diorama a card-sized scene for the docs explaining how the build queue works
-```
-
-Claude offers two or three concepts, builds the one you choose, checks it in a headless browser, and hands you one HTML file.
-
-## Gallery
+### SVG gallery
 
 | | |
 |---|---|
@@ -108,12 +138,12 @@ Every diorama ships as `diorama-<name>.html`: the kernel, the figure and a small
 
 It honours `prefers-reduced-motion` with one still frame, sleeps when offscreen or in a hidden tab, and never allocates in the loop.
 
-## Install
+## SVG installation alternatives
 
 With the skills CLI:
 
 ```sh
-npx skills add educlopez/diorama -g -a claude-code
+npx skills add educlopez/diorama --skill diorama -g -a claude-code
 ```
 
 With git:
@@ -132,7 +162,7 @@ mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/dioram
 
 - Node.js 20 or later, for `build.mjs`, `validate.mjs` and `look.mjs`.
 - Chrome or Chromium for the look. `look.mjs` finds Playwright's browser or installs `playwright-core` once into `~/.cache/diorama-look`.
-- Nothing at runtime: the page draws SVG, so it needs no renderer, no WebGL and makes no network request. A built page is 30 to 35 KB gzip across the 13 gallery figures.
+- Nothing at runtime: the page draws SVG, so it needs no renderer, no WebGL and makes no network request. A built page is 30 to 35 KB gzip across the SVG gallery figures.
 
 ## Usage
 
@@ -177,7 +207,7 @@ Build any of them with `node scripts/build.mjs examples/<name>.js`.
 
 Every version is a tag and a [release on GitHub](https://github.com/educlopez/diorama/releases) with its notes, and [`CHANGELOG.md`](CHANGELOG.md) keeps them all. The releases make themselves: a pull request titled `feat: …` asks for a minor version, `fix: …` for a patch, a `!` after the type for a major; once merged, release-please keeps one pull request open with the changelog and the version bumped, and merging that one creates the tag and the release. Watch the repository for releases to hear about the next one.
 
-## How it works
+## How SVG works
 
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
 - `kit/diorama.js` is the kernel, with no dependency: a small scene graph (groups, meshes, materials, vectors and matrices), the orthographic isometric camera fitted to the scene, an SVG painter (one flat tone per face from four lights, a disc and a crescent for a sphere, bands for a cylinder, the pieces sorted back to front, the shadows thrown on the slabs, the halo, the ink with its wobble), the six themes with toning, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths, `apart`), the pointer with picking, the press (`ctx.pressed`, `ctx.active`) and camera tilt, the read-out (`ctx.read`), the halo under the base, the hand-drawn wobble, and the loop that sleeps.
@@ -196,7 +226,22 @@ cd apps/site && npm install && npm run dev
 
 To deploy on Vercel, import the repository and set the project's **Root Directory** to `apps/site`; `vercel.json` sets the framework and the defaults do the rest.
 
-## Limits
+## Diorama Worlds
+
+The original `diorama` skill still builds lightweight, dependency-free SVG illustrations. A separate [`diorama-worlds`](skills/diorama-worlds/SKILL.md) skill lives in this same repository for a different purpose: narrative miniature worlds with textured ground, articulated people, fixed orthographic framing and coordinated actions. It owns a Three.js renderer; it does not modify the SVG kernel or its themes.
+
+Four finishes share the same scene: **miniature**, **pixel**, **halftone** and **blueprint**. Halftone adds warm/cool ink dots; blueprint combines blue tonal planes, pale screen-space edges and a faint grid. Both preserve white surroundings using scene depth. Pixel uses a lower-resolution render, nearest-neighbour enlargement, ordered dithering and channel quantization; it is not voxel geometry or hand-authored sprite art. The default showcase uses four original settings: a flower stall, a pottery studio, a morning bakery and a hilltop observatory. Ground defaults to a flat irregular cutout, without a thick platform or soil wall; a raised slab is explicit opt-in. Adult-proportioned characters use planted-foot knee compensation, separate chest/head motion and actual hand/prop anchors. Cricket, basketball and a street juggler remain as regression examples, not the landing’s main content. Worlds is a public first release, not a claim of exact reference fidelity or equal performance on every phone.
+
+```sh
+npm ci --ignore-scripts --prefix skills/diorama-worlds
+node skills/diorama-worlds/scripts/build-world.mjs skills/diorama-worlds/examples/bakery.js world-bakery.html
+node skills/diorama-worlds/scripts/look-world.mjs skills/diorama-worlds/examples/bakery.js work/bakery-look
+npm test --prefix skills/diorama-worlds
+```
+
+Built Worlds HTML bundles its renderer and needs no network at runtime, but is around 0.76 MB uncompressed, unlike the smaller SVG skill. The look command writes real desktop/mobile screenshots in all four finishes and a JSON report. Open the pictures: runtime checks cannot judge a convincing contact pose or artistic fidelity. The skill has its own dependencies, reference guide and checks under `skills/diorama-worlds/`. The existing website now has a dedicated `/worlds` playground: one live scene at a time, finish and playback controls, a gallery of real rendered posters, local setup instructions and renderer tradeoffs. The home, SVG gallery and SVG docs do not load the Worlds renderer. Site prebuild uses site-owned pinned build dependencies, so a clean site install does not require installing the skill’s own tools first.
+
+## SVG limits
 
 - One scene per page, one `Diorama.figure` call per file. Several dioramas on a page are several mounts.
 - No textures, no glass, no particles: the look is matte blocks, shadows and ink lines on purpose.

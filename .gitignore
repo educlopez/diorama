@@ -2,3 +2,6 @@ node_modules/
 *-look.png
 .DS_Store
 diorama-*.html
+
+# Default local visual-test artifacts.
+/work/
