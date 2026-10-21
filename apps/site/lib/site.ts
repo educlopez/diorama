@@ -2,11 +2,11 @@ export const SITE = "https://diorama.educalvolopez.com";
 export const REPO = "https://github.com/educlopez/diorama";
 export const AUTHOR = { name: "Eduardo Calvo", url: "https://github.com/educlopez" };
 export const INSTALL = "npx skills add educlopez/diorama --skill diorama -g";
-export const INSTALL_WORLDS = "npx skills add educlopez/diorama/skills/diorama-worlds -g";
+export const INSTALL_WORLDS = "npx skills add educlopez/diorama --skill diorama-worlds -g";
 export const INSTALL_ALL = [
   { label: "skills", code: INSTALL },
   { label: "claude-code", code: "npx skills add educlopez/diorama --skill diorama -g -a claude-code" },
-  { label: "git", code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama" },
+  { label: "git", code: "git clone https://github.com/educlopez/diorama.git ~/.diorama && mkdir -p ~/.claude/skills && ln -s ~/.diorama/skills/diorama ~/.claude/skills/diorama" },
 ];
 export const THEMES = ["toy", "soft", "mono", "line", "night", "print"] as const;
 export type Theme = (typeof THEMES)[number];

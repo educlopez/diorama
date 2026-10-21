@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The prebuild: every figure in ../../examples becomes a page in
+ * The prebuild: every figure in ../../skills/diorama/examples becomes a page in
  * public/examples/<name>.html (the skill's own build: the SVG kernel, the
  * figure and the bench, nothing to load), and lib/figures.json lists them with
  * what the site needs to show: name, size, theme, title, means, hint and the
@@ -9,10 +9,10 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assemble, nameOf } from "../../../scripts/build.mjs";
+import { assemble, nameOf } from "../../../skills/diorama/scripts/build.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
-const EXAMPLES = here("../../../examples");
+const EXAMPLES = here("../../../skills/diorama/examples");
 const OUT = here("../public/examples");
 const ORDER = ["town", "harbour", "powder", "island", "farm", "warehouse", "cafe", "kitchen", "launchpad", "server", "assembly", "rack", "mailbox", "seedling", "observatory", "desk", "turntable", "vending"];
 

@@ -55,7 +55,7 @@ npx skills add educlopez/diorama --skill diorama -g
 **Diorama Worlds** — detailed miniature stories, four finishes:
 
 ```sh
-npx skills add educlopez/diorama/skills/diorama-worlds -g
+npx skills add educlopez/diorama --skill diorama-worlds -g
 ```
 
 ```text
@@ -64,7 +64,7 @@ npx skills add educlopez/diorama/skills/diorama-worlds -g
 
 In agents without slash commands, ask “Use the diorama skill…” or “Use the diorama-worlds skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
 
-Worlds uses a direct subdirectory source because the CLI stops discovery at the root SVG `SKILL.md` by default. To list both from a checkout, use `npx skills add . --list --full-depth`. Do not assume an unqualified root install selects Worlds.
+Each skill lives in its own folder under `skills/`. `npx skills add educlopez/diorama` without `--skill` lists them all and lets you pick; `npx skills add educlopez/diorama --list` prints them without installing.
 
 Your agent follows the installed skill’s setup, builds the scene, opens the actual offline output and checks all required views and contacts. For Worlds it first runs `npm ci --ignore-scripts --prefix <installed-worlds-folder>` once. No global build tools or API keys.
 
@@ -149,13 +149,13 @@ npx skills add educlopez/diorama --skill diorama -g -a claude-code
 With git:
 
 ```sh
-git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama
+git clone https://github.com/educlopez/diorama.git ~/.diorama && mkdir -p ~/.claude/skills && ln -s ~/.diorama/skills/diorama ~/.claude/skills/diorama
 ```
 
 Without git:
 
 ```sh
-mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/diorama/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/diorama
+mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/diorama/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C ~/.claude/skills/diorama diorama-main/skills/diorama
 ```
 
 ### Requirements
@@ -201,13 +201,15 @@ node ~/.claude/skills/diorama/scripts/look.mjs mailbox.js             # the shee
 - `examples/observatory.js`: a mini in `line` with a wobble. A round observatory whose dome turns; the telescope lifts to look now and then.
 - `examples/vending.js`: a mini in `print`. A vending machine with bare coils behind an open front, a fan on its side; a coil turns a notch now and then, or now, on a tap.
 
-Build any of them with `node scripts/build.mjs examples/<name>.js`.
+Build any of them with `node skills/diorama/scripts/build.mjs skills/diorama/examples/<name>.js`.
 
 ## Releases
 
 Every version is a tag and a [release on GitHub](https://github.com/educlopez/diorama/releases) with its notes, and [`CHANGELOG.md`](CHANGELOG.md) keeps them all. The releases make themselves: a pull request titled `feat: …` asks for a minor version, `fix: …` for a patch, a `!` after the type for a major; once merged, release-please keeps one pull request open with the changelog and the version bumped, and merging that one creates the tag and the release. Watch the repository for releases to hear about the next one.
 
 ## How SVG works
+
+Everything below lives in `skills/diorama/`, the folder the skills CLI installs.
 
 - `SKILL.md` is the skill: size and concept, build, check, hand over, adjust, and the table of what goes wrong.
 - `kit/diorama.js` is the kernel, with no dependency: a small scene graph (groups, meshes, materials, vectors and matrices), the orthographic isometric camera fitted to the scene, an SVG painter (one flat tone per face from four lights, a disc and a crescent for a sphere, bands for a cylinder, the pieces sorted back to front, the shadows thrown on the slabs, the halo, the ink with its wobble), the six themes with toning, the primitives (`box`, `rbox`, `cyl`, `cone`, `ball`, `dome`, `wedge`, `slab`, `torus`, `wheel`, `label`), the props (trees, bushes, people, lamps, crates, pallets, cones, flags), the clock helpers (`phase`, `pulse`, `wave`, eases, springs, paths, `apart`), the pointer with picking, the press (`ctx.pressed`, `ctx.active`) and camera tilt, the read-out (`ctx.read`), the halo under the base, the hand-drawn wobble, and the loop that sleeps.

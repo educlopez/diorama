@@ -11,7 +11,7 @@ npm ci --ignore-scripts --prefix skills/diorama-worlds
 npm ci --ignore-scripts --prefix apps/site
 node scripts/release-check.mjs
 node scripts/check-yaml.mjs
-for source in examples/*.js; do node scripts/validate.mjs "$source"; done
+for source in skills/diorama/examples/*.js; do node skills/diorama/scripts/validate.mjs "$source"; done
 WORLDS_TEST_OUTPUT=work/worlds-tests npm test --prefix skills/diorama-worlds
 npm run build --prefix apps/site
 npm run typecheck --prefix apps/site

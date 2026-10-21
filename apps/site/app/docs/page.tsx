@@ -94,7 +94,7 @@ export default function Page() {
         <p className="subtitle">Diorama SVG builds lightweight interactive figures in one offline HTML file: a dependency-free renderer, six themes, eighteen examples and browser checks. Worlds uses a separate Three.js renderer and its own install command.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="#installation">Get started</a>
-          <a className="btn btn--secondary" href={`${REPO}/blob/main/SKILL.md`} target="_blank" rel="noopener noreferrer"><GitHub /><span>View SKILL.md</span></a>
+          <a className="btn btn--secondary" href={`${REPO}/blob/main/skills/diorama/SKILL.md`} target="_blank" rel="noopener noreferrer"><GitHub /><span>View SKILL.md</span></a>
         </div>
       </header>
 
@@ -106,7 +106,7 @@ export default function Page() {
         <Section id="installation">
           <CodeRows rows={[
             { code: INSTALL, note: "Selects only Diorama SVG. The CLI lets you choose target agents. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
-            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page draws itself as SVG and makes no network request." },
+            { code: "git clone https://github.com/educlopez/diorama.git ~/.diorama && mkdir -p ~/.claude/skills && ln -s ~/.diorama/skills/diorama ~/.claude/skills/diorama", note: "The same, with git: the clone stays in ~/.diorama, git pull there updates it. Nothing is needed at runtime: a finished page draws itself as SVG and makes no network request." },
           ]} />
         </Section>
 
@@ -152,7 +152,7 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
         <Section id="figure">
           <p className="note">One <C>Diorama.figure</C> call: a declaration, a <C>build</C> that makes the scene once with the toolkit and returns the parts that move, and a <C>tick</C> that poses them from <C>ctx.t</C>. No timers, no <C>new THREE.*</C>, no words inside the scene.</p>
           <Block title="mailbox.js, abridged">{FIGURE}</Block>
-          <p className="note">The toolkit: <C>D.box</C>, <C>D.rbox</C>, <C>D.cyl</C>, <C>D.cone</C>, <C>D.ball</C>, <C>D.dome</C>, <C>D.wedge</C>, <C>D.slab</C>, <C>D.torus</C>, <C>D.wheel</C>, <C>D.label</C>; the props <C>tree</C>, <C>bush</C>, <C>rock</C>, <C>cloud</C>, <C>person</C>, <C>lamp</C>, <C>crate</C>, <C>pallet</C>, <C>cone</C>, <C>flag</C>; for motion <C>phase</C>, <C>pulse</C>, <C>wave</C>, the eases, <C>spring</C>, <C>apart</C>, <C>path</C>, <C>place</C>, <C>spin</C>, <C>stagger</C>. The index at the top of <a href={`${REPO}/blob/main/kit/diorama.js`}>kit/diorama.js</a> lists them all.</p>
+          <p className="note">The toolkit: <C>D.box</C>, <C>D.rbox</C>, <C>D.cyl</C>, <C>D.cone</C>, <C>D.ball</C>, <C>D.dome</C>, <C>D.wedge</C>, <C>D.slab</C>, <C>D.torus</C>, <C>D.wheel</C>, <C>D.label</C>; the props <C>tree</C>, <C>bush</C>, <C>rock</C>, <C>cloud</C>, <C>person</C>, <C>lamp</C>, <C>crate</C>, <C>pallet</C>, <C>cone</C>, <C>flag</C>; for motion <C>phase</C>, <C>pulse</C>, <C>wave</C>, the eases, <C>spring</C>, <C>apart</C>, <C>path</C>, <C>place</C>, <C>spin</C>, <C>stagger</C>. The index at the top of <a href={`${REPO}/blob/main/skills/diorama/kit/diorama.js`}>kit/diorama.js</a> lists them all.</p>
         </Section>
 
         <Section id="scripts">
@@ -170,7 +170,7 @@ theme: { base: 'night', glow: 3, lights: { sun: ['#ffd6a0', .3] } }`}</Block>
         </Section>
 
         <Section id="craft">
-          <p className="note">Ten rules separate a diorama from a pile of cubes: the world stands on a rounded <b>base</b> with its zones inside the corners; the <b>camera</b> is true isometric, subject front-left; the <b>palette</b> is pale with two or three accents and one named accent; <b>materials</b> are matte blocks, no textures; every object is a few primitives with the two or three <b>features</b> that give it away; one sun and <b>soft shadows</b> under everything; all motion comes from the <b>clock</b> in <C>tick</C>; vehicles ride <b>paths</b> on a schedule with stops that have a cause; a few loops with different <b>tempos</b> and one rare thing; and <b>no words</b> inside the scene. The long form, with recipes, is in <a href={`${REPO}/blob/main/references/craft.md`}>references/craft.md</a>.</p>
+          <p className="note">Ten rules separate a diorama from a pile of cubes: the world stands on a rounded <b>base</b> with its zones inside the corners; the <b>camera</b> is true isometric, subject front-left; the <b>palette</b> is pale with two or three accents and one named accent; <b>materials</b> are matte blocks, no textures; every object is a few primitives with the two or three <b>features</b> that give it away; one sun and <b>soft shadows</b> under everything; all motion comes from the <b>clock</b> in <C>tick</C>; vehicles ride <b>paths</b> on a schedule with stops that have a cause; a few loops with different <b>tempos</b> and one rare thing; and <b>no words</b> inside the scene. The long form, with recipes, is in <a href={`${REPO}/blob/main/skills/diorama/references/craft.md`}>references/craft.md</a>.</p>
         </Section>
 
         <Section id="files">

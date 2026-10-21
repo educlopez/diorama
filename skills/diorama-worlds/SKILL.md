@@ -1,6 +1,6 @@
 ---
 name: diorama-worlds
-description: 'Build narrative miniature worlds with a fixed orthographic camera, textured terrain, articulated people and coordinated looping actions. Use for detailed low-poly 3D dioramas or pixel-finish animated vignettes: sports grounds, street performers, gardens or other small places with a story. Four finishes, miniature, pixel, halftone and blueprint, use the same Three.js scene. This is a separate skill from the root Diorama SVG illustrations; prefer the root skill for lightweight UI illustrations, line art and empty states.'
+description: 'Build narrative miniature worlds with a fixed orthographic camera, textured terrain, articulated people and coordinated looping actions. Use for detailed low-poly 3D dioramas or pixel-finish animated vignettes: sports grounds, street performers, gardens or other small places with a story. Four finishes, miniature, pixel, halftone and blueprint, use the same Three.js scene. This is a separate skill from the diorama SVG illustrations; prefer the diorama skill for lightweight UI illustrations, line art and empty states.'
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 Requires Node.js 20+, npm and a WebGL 2 browser. Chrome/Chromium is needed for automated visual checks. Build dependencies install once; generated HTML bundles Three.js and needs no network.
 
-Make a little place that is alive, not a rotating model or a video on a plane. This skill belongs to the Diorama repository, but owns its renderer and dependencies. Never edit the root `kit/diorama.js`, `bench.html` or existing SVG examples to make a world work.
+Make a little place that is alive, not a rotating model or a video on a plane. This skill belongs to the Diorama repository, but owns its renderer and dependencies. Never edit the diorama skill's `kit/diorama.js`, `bench.html` or SVG examples to make a world work.
 
 All paths below are relative to this skill folder. Write the user's scene and built output in their working directory, not over the bundled examples.
 
@@ -59,7 +59,7 @@ Build a single offline HTML file:
 node <skill>/scripts/build-world.mjs <subject>.js <output.html>
 ```
 
-The result includes Three.js, generated textures, scene and controls. It is larger than root Diorama's SVG output: disclose that tradeoff. No CDN imports, stock textures, model downloads or API keys are needed. Keep new external assets optional and disclose their licensing and network cost if requested.
+The result includes Three.js, generated textures, scene and controls. It is larger than the diorama skill's SVG output: disclose that tradeoff. No CDN imports, stock textures, model downloads or API keys are needed. Keep new external assets optional and disclose their licensing and network cost if requested.
 
 ## Prove the actual output
 

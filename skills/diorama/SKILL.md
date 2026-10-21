@@ -9,7 +9,7 @@ metadata:
 
 # Diorama: a small world that moves
 
-For detailed narrative miniatures or pixel-finish scenes, use the separate [Diorama Worlds skill](skills/diorama-worlds/SKILL.md). This skill remains the dependency-free SVG illustration workflow.
+For detailed narrative miniatures or pixel-finish scenes, use the separate `diorama-worlds` skill. This skill remains the dependency-free SVG illustration workflow.
 
 You are making one diorama: a scene built from blocks on a rounded base, seen from an isometric camera, with a few things that move on their own and answer the pointer, drawn in a theme. The default theme, `toy`, is pastel blocks, one warm sun, soft shadows, every object a handful of boxes and cylinders, nothing textured, cheerful and readable at a glance. The same scene file draws in `soft` (cream, gentler), `mono` (one accent, the rest tints of ink), `line` (a hairline drawing: white fills, ink edges, no shadows), `print` (flat tones per face and ink lines, a printed illustration) and `night` (dusk, lamps on), and every theme field can be overridden: `wobble` draws the ink by hand, `halo` is the soft shadow the base throws on the page, `accent` is the subject's colour in every theme. The eighteen examples in `examples/` are the bar, and they are in the format you will write.
 
