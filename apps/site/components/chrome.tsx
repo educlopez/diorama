@@ -29,7 +29,6 @@ export function Topbar({ active }: { active?: "svg" | "how" | "docs" | "worlds" 
           <a className="brand" href="/" aria-label="Diorama home">
             <span className="brand-mark"><Mark /></span>
             <span className="brand-word"><span>Diorama</span></span>
-            <span className="beta beta--sm">Beta</span>
           </a>
           <nav className="nav-menu" aria-label="Primary">
             <a className={`pill${active === "svg" ? " pill--active" : ""}`} href="/svg">SVG</a>
