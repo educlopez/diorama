@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/*TITLE*/</title>
+<style>
+  :root { color-scheme: light; }
+  html, body { margin: 0; background: #ffffff; color: #4a4d55; font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; box-sizing: border-box; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; max-width: 100%; height: auto; }
+  p { margin: 0; max-width: 60ch; text-align: center; text-wrap: balance; }
+  h1 { margin: 0; font-size: 15px; font-weight: 600; color: #2c2f36; }
+</style>
+</head>
+<body>
+<main>
+  <canvas id="stage" role="img"></canvas>
+  <h1 id="title"></h1>
+  <p id="means"></p>
+</main>
+<script>
+/*KERNEL*/
+</script>
+<script>
+/*SCENE*/
+</script>
+<script>
+(function () {
+  var spec = Pixel.scenes[Pixel.scenes.length - 1], canvas = document.getElementById('stage');
+  var q = new URLSearchParams(location.search);
+  document.getElementById('title').textContent = spec.title || spec.name;
+  document.getElementById('means').textContent = spec.means || '';
+  canvas.setAttribute('aria-label', spec.means || spec.title || spec.name);
+  var rt = Pixel.mount(spec, canvas, { still: q.has('still'), reduced: q.has('reduced') ? true : undefined });
+  /* whole-number enlargement so every pixel is the same size */
+  function fit() {
+    var avail = Math.min(document.documentElement.clientWidth - 32, 1100), k = Math.max(1, Math.floor(avail / canvas.width));
+    if (avail < canvas.width) { canvas.style.width = avail + 'px'; return; }
+    canvas.style.width = canvas.width * k + 'px';
+  }
+  fit(); addEventListener('resize', fit);
+  window.__pixel = { spec: spec, runtime: rt };
+})();
+</script>
+</body>
+</html>
