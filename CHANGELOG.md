@@ -2,6 +2,18 @@
 
 All notable changes to Diorama are listed here. The versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes. From 1.0.0 on, [release-please](https://github.com/googleapis/release-please) writes each new section from the pull requests merged since the last version (`feat:` under Added, `fix:` under Fixed, `perf:` and `refactor:` under Changed, `docs:` under Documentation) and opens the release pull request that publishes it.
 
+## [1.3.0](https://github.com/educlopez/diorama/compare/v1.2.0...v1.3.0) (2026-10-21)
+
+
+### Added
+
+* diorama-pixel, a third skill for pixel-art miniatures without three.js ([#24](https://github.com/educlopez/diorama/issues/24)) ([1614b5e](https://github.com/educlopez/diorama/commit/1614b5ec16a81d108d560ea42916f12b95dd6d21))
+
+
+### Fixed
+
+* name the SVG gallery after its skill and repair moved links ([#22](https://github.com/educlopez/diorama/issues/22)) ([e498960](https://github.com/educlopez/diorama/commit/e4989606b0873e43972d649bf44c26ef674ec6ba))
+
 ## [1.2.0](https://github.com/educlopez/diorama/compare/v1.1.0...v1.2.0) (2026-10-21)
 
 
