@@ -30,6 +30,10 @@ export async function inspectWorld(input, outputDirectory) {
   try {
     const context = await browser.newContext({viewport:{width:1100,height:1040}});
     await context.route(/^https?:/, route=>{report.network.push(route.request().url());return route.abort();});
+    await context.addInitScript(()=>{
+      const Native=window.IntersectionObserver;window.__worldTestIntersections=[];
+      window.IntersectionObserver=class extends Native{constructor(callback,options){super(callback,options);window.__worldTestIntersections.push(callback);}};
+    });
     const page = await context.newPage();
     page.on('pageerror',e=>report.errors.push(e.message));
     page.on('console',msg=>{if(msg.type()==='error')report.errors.push(msg.text());});
@@ -94,6 +98,10 @@ export async function inspectWorld(input, outputDirectory) {
     await page.evaluate(()=>{window.__world.stage.style.marginTop='2400px';window.scrollTo(0,0);});await delay(page,350);const off=await getStats();await delay(page);const offAgain=await getStats();
     check('offscreen suspends rendering',!offAgain.running&&off.frames===offAgain.frames,{off,offAgain});
     await page.evaluate(()=>{window.__world.stage.style.marginTop='';window.scrollTo(0,0);});await delay(page,350);const on=await getStats();check('onscreen resumes rendering',on.running&&on.frames>offAgain.frames,on);
+    await page.evaluate(()=>window.__worldTestIntersections[0]([{isIntersecting:true},{isIntersecting:false}]));
+    check('batched intersections stop on newest offscreen state',!(await getStats()).running);
+    await page.evaluate(()=>window.__worldTestIntersections[0]([{isIntersecting:false},{isIntersecting:true}]));
+    check('batched intersections resume on newest onscreen state',(await getStats()).running);
     // Exercise the visibility listener explicitly; not a physical background-tab benchmark.
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
     check('hidden-document handler stops loop',!(await getStats()).running);

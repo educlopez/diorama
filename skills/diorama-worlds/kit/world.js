@@ -354,7 +354,7 @@ export function mountWorld(def, { el, finish = 'miniature', paused = false } = {
   const restore = () => { contextLost = false; el.dataset.state = 'ready'; resize(); synchronize(); };
   canvas.addEventListener('webglcontextlost', lose); canvas.addEventListener('webglcontextrestored', restore);
   document.addEventListener('visibilitychange', visibility); media.addEventListener('change', reduced);
-  const io = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; synchronize(); }); io.observe(el);
+  const io = new IntersectionObserver(entries => { const latest = entries.at(-1); if (latest) { visible = latest.isIntersecting; synchronize(); } }); io.observe(el);
   const ro = new ResizeObserver(resize); ro.observe(el); resize(); synchronize();
   return {
     setFinish(value) { if (!FINISHES.includes(value)) throw new Error('Unknown finish.'); finish = value; postMaterial.uniforms.mode.value = FINISHES.indexOf(value); resize(); },

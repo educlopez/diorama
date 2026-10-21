@@ -26,7 +26,7 @@ The Quality workflow runs these on a clean checkout and retains visual reports. 
 ## Measured renderer contracts
 
 - Fourteen renderer tests: deterministic clocks/detail, dropped-frame pacing, definition validation, adult mesh proportions, grounded knees/feet, opt-in slab geometry, juggling contacts and seven actual offline browser outputs.
-- Each original scene has 55 browser checks spanning all four finishes, multiple phases and mobile layouts, real hand/prop contacts, loop seam, deterministic seeking, visible geometry/framing, white negative space, resolution policy, invalid finishes, pose-preserving switches and no per-frame GPU allocations.
+- Each original scene has 57 browser checks spanning all four finishes, multiple phases and mobile layouts, real hand/prop contacts, loop seam, deterministic seeking, visible geometry/framing, white negative space, resolution policy, invalid finishes, pose-preserving switches and no per-frame GPU allocations.
 - Play/pause, real-time speed, reduced-motion stills, hidden/offscreen sleep, dispose/remount and readable missing-WebGL fallback are exercised.
 - Standalone files bundle Three.js, generated textures and its MIT notice. Build dependencies are pinned; generated HTML needs no runtime network connection.
 
@@ -51,3 +51,5 @@ The clock no longer drops elapsed time on slow frames. Cached iframe readiness i
 Stylized adults and repeatable gestures are not biomechanical simulation. Pottery spins without actual clay deformation; bakery dough is a simple posed shape. Halftone and blueprint are screen-space treatments, not physical ink or CAD. Small face/foliage details merge on mobile, especially in blueprint. No physical-phone FPS/battery certification or exact reference-fidelity claim. Standalone Worlds files are about 0.77 MB uncompressed; SVG figures are around 30–35 KB gzip, a different measure.
 
 See `docs/releasing.md` for publication, version consistency, installer verification and the existing manual fallback when repository settings block release-please from opening PRs.
+
+Pre-release review additionally tested batched IntersectionObserver notifications: the most recent visibility state wins, preventing a scene remaining asleep after a fast offscreen/onscreen round trip. The installed skill ignores its own default test-output directory, and its license refers to the actually bundled Three.js version notice rather than an obsolete vendored file.
