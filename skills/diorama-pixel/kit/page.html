@@ -13,6 +13,13 @@
   .soft { color: #7a7d85; font-size: 13px; }
   .read { min-height: 1.45em; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #5a5d65; }
   h1 { margin: 0; font-size: 15px; font-weight: 600; color: #2c2f36; }
+  canvas { touch-action: manipulation; }
+  /* ?embed: the canvas fills the frame, the words belong to the host page, the read-out sits in a corner */
+  .embed main { min-height: 0; padding: 0; gap: 0; position: relative; }
+  .embed canvas { width: 100% !important; max-width: none; }
+  .embed h1, .embed #means, .embed #hint { display: none; }
+  .embed .read { position: absolute; left: 10px; bottom: 8px; text-align: left; background: rgba(255, 255, 255, .88); padding: 0 6px; border-radius: 4px; }
+  .embed .read:empty { display: none; }
 </style>
 </head>
 <body>
@@ -32,7 +39,8 @@
 <script>
 (function () {
   var spec = Pixel.scenes[Pixel.scenes.length - 1], canvas = document.getElementById('stage');
-  var q = new URLSearchParams(location.search);
+  var q = new URLSearchParams(location.search), embed = q.has('embed');
+  if (embed) document.documentElement.className = 'embed';
   document.getElementById('title').textContent = spec.title || spec.name;
   document.getElementById('means').textContent = spec.means || '';
   document.getElementById('hint').textContent = spec.hint || '';
@@ -41,6 +49,7 @@
   var rt = Pixel.mount(spec, canvas, { still: q.has('still'), reduced: q.has('reduced') ? true : undefined, onRead: function (line) { read.textContent = line; } });
   /* whole-number enlargement so every pixel is the same size */
   function fit() {
+    if (embed) return;
     var avail = Math.min(document.documentElement.clientWidth - 32, 1100), k = Math.max(1, Math.floor(avail / canvas.width));
     if (avail < canvas.width) { canvas.style.width = avail + 'px'; return; }
     canvas.style.width = canvas.width * k + 'px';
