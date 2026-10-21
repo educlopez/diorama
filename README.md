@@ -3,7 +3,7 @@
 <p align="center"><b>Three agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Describe a place; get one self-contained offline HTML file.</p>
 
 <p align="center">
-  <a href="https://diorama.educalvolopez.com"><img src="https://img.shields.io/badge/site-diorama.educalvolopez.com-1b1b19?style=flat-square" alt="Site: diorama.educalvolopez.com"></a>
+  <a href="https://dioramas.dev"><img src="https://img.shields.io/badge/site-dioramas.dev-1b1b19?style=flat-square" alt="Site: dioramas.dev"></a>
   <a href="https://code.claude.com/docs/en/skills"><img src="https://img.shields.io/badge/Claude_Code-skill-1b1b19?style=flat-square&logo=claude&logoColor=white" alt="Claude Code skill"></a>
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent_Skills-compatible-1b1b19?style=flat-square" alt="Agent Skills compatible"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1b1b19?style=flat-square" alt="MIT license"></a>
@@ -34,7 +34,7 @@
 | Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment |
 | Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page |
 | Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) |
-| Guide | [SVG guide](https://diorama.educalvolopez.com/docs) | [Worlds guide](https://diorama.educalvolopez.com/docs/worlds) | [Pixel guide](https://diorama.educalvolopez.com/docs/pixel) |
+| Guide | [SVG guide](https://dioramas.dev/docs) | [Worlds guide](https://dioramas.dev/docs/worlds) | [Pixel guide](https://dioramas.dev/docs/pixel) |
 
 The file sizes use different measures; they are not a like-for-like benchmark. Install one skill, two or all three. They do not share renderers or dependencies.
 
@@ -230,7 +230,7 @@ Everything below lives in `skills/diorama/`, the folder the skills CLI installs.
 
 ## Site
 
-`apps/site` is [diorama.educalvolopez.com](https://diorama.educalvolopez.com): the landing, the SVG and Worlds pages and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
+`apps/site` is [dioramas.dev](https://dioramas.dev): the landing, the SVG, Worlds and Pixel pages and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
 
 ```sh
 cd apps/site && npm install && npm run dev
