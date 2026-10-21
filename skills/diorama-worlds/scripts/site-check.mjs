@@ -57,14 +57,14 @@ try{
   const controls=await page.locator('.world-toolbar button,.world-toolbar select').evaluateAll(es=>es.map(e=>({name:e.getAttribute('aria-label')??e.textContent,height:e.getBoundingClientRect().height})));
   check('new controls meet 44px touch height',controls.every(c=>c.height>=44),controls);
   await page.screenshot({path:join(output,'worlds-landing-mobile.png'),fullPage:true});
-  for(const route of ['/','/svg','/docs','/docs/worlds']){
+  for(const route of ['/','/svg','/docs','/docs/worlds','/pixel','/docs/pixel']){
     const requests=[];const handler=r=>requests.push(r.url());page.on('request',handler);
     const response=await page.goto(base+route);check(`${route} still responds`,response.status()===200);
     check(`${route} does not load Worlds HTML`,!requests.some(u=>/\/worlds\/.*\.html/.test(u)),requests.filter(u=>/worlds/.test(u)));
     check(`${route} mobile navigation fits`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     if(route==='/'){
-      const expected={SVG:'npx skills add educlopez/diorama --skill diorama -g',Worlds:'npx skills add educlopez/diorama --skill diorama-worlds -g'};
-      check('home presents both skill paths',await page.getByRole('heading',{name:'Diorama SVG',exact:true}).count()===1&&await page.getByRole('heading',{name:'Diorama Worlds',exact:true}).count()===1);
+      const expected={SVG:'npx skills add educlopez/diorama --skill diorama -g',Worlds:'npx skills add educlopez/diorama --skill diorama-worlds -g',Pixel:'npx skills add educlopez/diorama --skill diorama-pixel -g'};
+      check('home presents all three skill paths',await page.getByRole('heading',{name:'Diorama SVG',exact:true}).count()===1&&await page.getByRole('heading',{name:'Diorama Worlds',exact:true}).count()===1&&await page.getByRole('heading',{name:'Diorama Pixel',exact:true}).count()===1);
       for(const [name,command] of Object.entries(expected)){
         await page.getByRole('button',{name:`Copy Diorama ${name} install command`,exact:true}).click();
         check(`${name} command copies exactly`,await page.evaluate(()=>navigator.clipboard.readText())===command);
@@ -77,9 +77,18 @@ try{
       check('Worlds guide includes definitive command and invocation',await page.locator('.code-row code').innerText()==='npx skills add educlopez/diorama --skill diorama-worlds -g'&&(await page.locator('main').innerText()).includes('/diorama-worlds'));
       await page.screenshot({path:join(output,'release-worlds-guide-mobile.png'),fullPage:true});
     }
+    if(route==='/pixel'){
+      check('Pixel page shows every scene live',await page.locator('.pixel-live iframe').count()===3);
+      await page.getByRole('button',{name:'Copy Diorama Pixel install command',exact:true}).click();
+      check('Pixel page command copies exactly',await page.evaluate(()=>navigator.clipboard.readText())==='npx skills add educlopez/diorama --skill diorama-pixel -g');
+      await page.screenshot({path:join(output,'release-pixel-mobile.png'),fullPage:true});
+    }
+    if(route==='/docs/pixel'){
+      check('Pixel guide includes definitive command and invocation',await page.locator('.code-row code').innerText()==='npx skills add educlopez/diorama --skill diorama-pixel -g'&&(await page.locator('main').innerText()).includes('/diorama-pixel'));
+    }
     page.off('request',handler);
   }
-  const sitemap=await context.request.get(base+'/sitemap.xml');check('sitemap covers both guides and worlds',(await sitemap.text()).includes('/docs/worlds')&&sitemap.status()===200);
+  const sitemap=await context.request.get(base+'/sitemap.xml');const map=await sitemap.text();check('sitemap covers the guides, worlds and pixel',map.includes('/docs/worlds')&&map.includes('/docs/pixel')&&map.includes('/pixel<')&&sitemap.status()===200);
   const robots=await context.request.get(base+'/robots.txt');check('robots publishes sitemap',robots.status()===200&&(await robots.text()).includes('/sitemap.xml'));
   const llms=await context.request.get(base+'/llms.txt');check('agent docs route includes separate skill',(await llms.text()).includes('/worlds:'));
   await context.close();

@@ -234,3 +234,13 @@ code.chip-code, .prose code { font-family: var(--font-mono); font-size: 12.5px; 
 @media(max-width:700px){.home-hero .badge{margin-top:24px}.home-hero .title{font-size:42px;line-height:1.06}.home-hero .subtitle{font-size:15px}}
 @media(max-width:360px){.nav-inner{align-items:flex-start}.nav-left{flex:1;flex-wrap:wrap;gap:4px}.nav-menu{width:100%;gap:0}.nav-menu .pill{min-height:44px;padding:0 5px}.brand{height:44px}.nav-right{padding-top:4px}.skill-path-heading{flex-wrap:wrap;gap:8px}}
 .doc-section>.mx-auto{width:100%;min-width:0}.doc-content .code-row{width:100%;min-width:0;max-width:100%}.doc-content .code-row code{white-space:normal;overflow-wrap:anywhere;padding:12px 0}
+
+/* Five navigation links: the in-page 'How to use' link yields first on narrow phones. */
+@media(max-width:430px){.nav-menu .pill--how{display:none}}
+
+/* Three skill paths: three columns on a wide screen, one below. */
+.skill-trio{grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
+.skill-trio .skill-path h2{font-size:24px}
+@media(min-width:961px){.skill-trio .skill-path>p{min-height:102px}}
+.skill-path--pixel .skill-path-art img{image-rendering:pixelated}
+@media(max-width:960px){.skill-trio{grid-template-columns:1fr;gap:48px;max-width:560px;margin-left:auto;margin-right:auto}.skill-trio .skill-path>p{min-height:0}}

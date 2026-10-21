@@ -3,6 +3,7 @@ export const REPO = "https://github.com/educlopez/diorama";
 export const AUTHOR = { name: "Eduardo Calvo", url: "https://github.com/educlopez" };
 export const INSTALL = "npx skills add educlopez/diorama --skill diorama -g";
 export const INSTALL_WORLDS = "npx skills add educlopez/diorama --skill diorama-worlds -g";
+export const INSTALL_PIXEL = "npx skills add educlopez/diorama --skill diorama-pixel -g";
 export const INSTALL_ALL = [
   { label: "skills", code: INSTALL },
   { label: "claude-code", code: "npx skills add educlopez/diorama --skill diorama -g -a claude-code" },

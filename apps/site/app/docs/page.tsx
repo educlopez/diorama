@@ -6,7 +6,7 @@ import { CodeRow, CodeRows } from "@/components/install";
 import { byName } from "@/lib/figures";
 import { INSTALL, REPO, SIZES, SKILL_FILES, THEME_FIELDS, THEME_ROWS } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Guides · Diorama SVG", description: "Choose a Diorama skill. Install SVG for lightweight interactive figures, or Worlds for detailed miniature scenes. SVG setup, themes and embedding." };
+export const metadata: Metadata = { title: "Guides · Diorama SVG", description: "Choose a Diorama skill. Install SVG for lightweight interactive figures, Worlds for detailed miniature scenes, or Pixel for dithered pixel-art miniatures. SVG setup, themes and embedding." };
 
 const SECTIONS = [
   { id: "installation", title: "Installation" },
@@ -90,8 +90,8 @@ export default function Page() {
       <Topbar active="docs" />
       <header className="header" style={{ paddingBottom: 56 }}>
         <h1 className="title" style={{ marginTop: 24 }}>Diorama guides</h1>
-        <p className="note" style={{ marginTop: 16 }}>This page covers <b>Diorama SVG</b>. For textured miniature stories and four live finishes, read the <a href="/docs/worlds" className="underline underline-offset-4">Diorama Worlds guide</a>.</p>
-        <p className="subtitle">Diorama SVG builds lightweight interactive figures in one offline HTML file: a dependency-free renderer, six themes, eighteen examples and browser checks. Worlds uses a separate Three.js renderer and its own install command.</p>
+        <p className="note" style={{ marginTop: 16 }}>This page covers <b>Diorama SVG</b>. For textured miniature stories and four live finishes, read the <a href="/docs/worlds" className="underline underline-offset-4">Diorama Worlds guide</a>; for dithered pixel-art miniatures, the <a href="/docs/pixel" className="underline underline-offset-4">Diorama Pixel guide</a>.</p>
+        <p className="subtitle">Diorama SVG builds lightweight interactive figures in one offline HTML file: a dependency-free renderer, six themes, eighteen examples and browser checks. Worlds and Pixel use separate renderers and their own install commands.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="#installation">Get started</a>
           <a className="btn btn--secondary" href={`${REPO}/blob/main/skills/diorama/SKILL.md`} target="_blank" rel="noopener noreferrer"><GitHub /><span>View SKILL.md</span></a>

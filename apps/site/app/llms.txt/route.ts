@@ -1,5 +1,6 @@
 import { FIGURES } from "@/lib/figures";
-import { INSTALL, INSTALL_WORLDS, REPO, THEME_ROWS } from "@/lib/site";
+import { INSTALL, INSTALL_PIXEL, INSTALL_WORLDS, REPO, THEME_ROWS } from "@/lib/site";
+import { PIXEL } from "@/lib/pixel";
 
 export const dynamic = "force-static";
 
@@ -7,7 +8,7 @@ export const dynamic = "force-static";
 export function GET() {
   const text = `# Diorama
 
-> Two coding-agent skills for animated scenes: Diorama SVG for lightweight interactive figures and Diorama Worlds for detailed narrative miniatures. Both deliver one self-contained offline HTML file. Separate renderers, setup and installation commands.
+> Three coding-agent skills for animated scenes: Diorama SVG for lightweight interactive figures, Diorama Worlds for detailed narrative miniatures and Diorama Pixel for dithered pixel-art miniatures. Each delivers one self-contained offline HTML file. Separate renderers, setup and installation commands.
 
 Repository: ${REPO}
 
@@ -26,10 +27,18 @@ Invoke: /diorama-worlds (or ask your agent to use the diorama-worlds skill)
 Skill: ${REPO}/blob/main/skills/diorama-worlds/SKILL.md
 Node.js 20+ build tools; install pinned dependencies once. Fixed camera, flat irregular ground by default, four original showcase scenes.
 
+## Diorama Pixel
+A third skill in the same repository: skills/diorama-pixel/SKILL.md. Pixel-art miniatures from a dependency-free software renderer on a 2D canvas (no three.js, no WebGL): 320 x 240 enlarged with square pixels, 8 x 8 Bayer dithering, procedural materials (planks, thatch, paving, stone, grass, water, leaves), a ground that dissolves into the page, a shadow map, a jointed person rig with poses, hover and tap answers. About 55 KB per offline HTML; 24 fps, offscreen sleep, reduced motion. Install: ${INSTALL_PIXEL}
+Invoke: /diorama-pixel (or ask your agent to use the diorama-pixel skill)
+Skill: ${REPO}/blob/main/skills/diorama-pixel/SKILL.md
+${PIXEL.map((s) => `- ${s.name}: ${s.means}`).join("\n")}
+
 ## Pages
 - /svg: the Diorama SVG examples, live, in every theme
 - /docs: SVG installation, prompts, themes, scripts and embedding
 - /docs/worlds: Worlds installation, invocation, setup, finishes, browser checks and embedding
+- /pixel: the Diorama Pixel examples, live, with the install command
+- /docs/pixel: Pixel installation, prompts, checks and embedding
 - /worlds: live miniature/pixel playground, four original scenes in miniature, pixel, halftone and blueprint finishes, installation and renderer tradeoffs
 `;
   return new Response(text, { headers: { "content-type": "text/plain; charset=utf-8" } });
