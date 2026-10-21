@@ -2,6 +2,29 @@
 
 All notable changes to Diorama are listed here. The versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes. From 1.0.0 on, [release-please](https://github.com/googleapis/release-please) writes each new section from the pull requests merged since the last version (`feat:` under Added, `fix:` under Fixed, `perf:` and `refactor:` under Changed, `docs:` under Documentation) and opens the release pull request that publishes it.
 
+## [1.1.0](https://github.com/educlopez/diorama/compare/v1.0.0...v1.1.0) (2026-10-21)
+
+### Added
+
+- **Diorama Worlds**, a separate installable skill in the same repository. Detailed miniature stories, shared adult human rig, coordinated hand/prop contacts and flat irregular ground by default.
+- Four original scenes: flower stall, pottery studio, morning bakery and hilltop observatory. Cricket, basketball and juggling remain additional regression subjects.
+- Four live finishes: miniature, pixel, halftone and blueprint, sharing scene geometry and animation time.
+- Offline HTML builder bundling Three.js and generated textures, with pause, playback speed, reduced-motion stills, offscreen sleep and WebGL fallback.
+- Browser checks for all finishes, actual contacts, loop seams, real-time pacing, mobile framing, lifecycle and disposal; isolated installation smoke tests and release quality gates.
+- A shared home presenting both SVG and Worlds, separate definitive install commands, `/worlds` playground, `/docs/worlds` guide, sitemap and agent-readable documentation.
+
+### Fixed
+
+- Slow-motion drift caused by dropping elapsed frame time; animation now follows an absolute wall-clock anchor.
+- Cached iframe readiness race, preserving scene state across finish changes and warm reloads.
+- Stale generated poster caches through revisioned asset paths.
+- Missing static thumbnails for five existing SVG gallery entries.
+
+### Compatibility
+
+- The original SVG renderer, figure API, six themes and eighteen examples remain unchanged. SVG routes do not load the Worlds WebGL runtime.
+- Worlds requires WebGL 2 and its own pinned build dependencies. Built files are about 0.77 MB uncompressed; SVG files are about 30–35 KB gzip. No claim of equal physical-device performance or realistic material/biomechanical simulation.
+
 ## [1.0.1](https://github.com/educlopez/diorama/compare/v1.0.0...v1.0.1) (2026-10-20)
 
 

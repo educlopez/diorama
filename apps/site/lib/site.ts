@@ -1,10 +1,11 @@
 export const SITE = "https://diorama.educalvolopez.com";
 export const REPO = "https://github.com/educlopez/diorama";
 export const AUTHOR = { name: "Eduardo Calvo", url: "https://github.com/educlopez" };
-export const INSTALL = "npx skills add educlopez/diorama -g";
+export const INSTALL = "npx skills add educlopez/diorama --skill diorama -g";
+export const INSTALL_WORLDS = "npx skills add educlopez/diorama/skills/diorama-worlds -g";
 export const INSTALL_ALL = [
-  { label: "skills", code: "npx skills add educlopez/diorama -g" },
-  { label: "claude-code", code: "npx skills add educlopez/diorama -g -a claude-code" },
+  { label: "skills", code: INSTALL },
+  { label: "claude-code", code: "npx skills add educlopez/diorama --skill diorama -g -a claude-code" },
   { label: "git", code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama" },
 ];
 export const THEMES = ["toy", "soft", "mono", "line", "night", "print"] as const;

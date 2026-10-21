@@ -6,7 +6,7 @@ import { CodeRow, CodeRows } from "@/components/install";
 import { byName } from "@/lib/figures";
 import { INSTALL, REPO, SIZES, SKILL_FILES, THEME_FIELDS, THEME_ROWS } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Skill", description: "Install the Diorama skill, ask for a figure, the sizes, the themes, the figure file, the scripts and how to embed a scene." };
+export const metadata: Metadata = { title: "Guides · Diorama SVG", description: "Choose a Diorama skill. Install SVG for lightweight interactive figures, or Worlds for detailed miniature scenes. SVG setup, themes and embedding." };
 
 const SECTIONS = [
   { id: "installation", title: "Installation" },
@@ -89,8 +89,9 @@ export default function Page() {
     <main id="main" className="app">
       <Topbar active="docs" />
       <header className="header" style={{ paddingBottom: 56 }}>
-        <h1 className="title" style={{ marginTop: 24 }}>Diorama Skill</h1>
-        <p className="subtitle">The skill teaches your agent to build a small animated 3D world in one file, drawn as SVG with nothing to load: the kernel, six themes, thirteen examples, a validator and a browser check.</p>
+        <h1 className="title" style={{ marginTop: 24 }}>Diorama guides</h1>
+        <p className="note" style={{ marginTop: 16 }}>This page covers <b>Diorama SVG</b>. For textured miniature stories and four live finishes, read the <a href="/docs/worlds" className="underline underline-offset-4">Diorama Worlds guide</a>.</p>
+        <p className="subtitle">Diorama SVG builds lightweight interactive figures in one offline HTML file: a dependency-free renderer, six themes, eighteen examples and browser checks. Worlds uses a separate Three.js renderer and its own install command.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="#installation">Get started</a>
           <a className="btn btn--secondary" href={`${REPO}/blob/main/SKILL.md`} target="_blank" rel="noopener noreferrer"><GitHub /><span>View SKILL.md</span></a>
@@ -104,7 +105,7 @@ export default function Page() {
       <section className="doc-content" aria-label="Skill contents">
         <Section id="installation">
           <CodeRows rows={[
-            { code: INSTALL, note: "Installs the skill for every agent the skills CLI knows. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
+            { code: INSTALL, note: "Selects only Diorama SVG. The CLI lets you choose target agents. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
             { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page draws itself as SVG and makes no network request." },
           ]} />
         </Section>

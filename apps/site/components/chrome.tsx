@@ -23,7 +23,7 @@ export const Arrow = () => (
 );
 
 /** The bar on every page: the brand (strong "3D", dim "World"), the pills, GitHub. */
-export function Topbar({ active }: { active?: "figures" | "how" | "docs" }) {
+export function Topbar({ active }: { active?: "figures" | "how" | "docs" | "worlds" }) {
   return (
     <header className="nav">
       <div className="nav-inner">
@@ -35,8 +35,9 @@ export function Topbar({ active }: { active?: "figures" | "how" | "docs" }) {
           </a>
           <nav className="nav-menu" aria-label="Primary">
             <a className={`pill${active === "figures" ? " pill--active" : ""}`} href="/figures">Figures</a>
+            <a className={`pill${active === "worlds" ? " pill--active" : ""}`} href="/worlds">Worlds</a>
             <a className={`pill${active === "how" ? " pill--active" : ""}`} href="/#how-to-use">How to use</a>
-            <a className={`pill${active === "docs" ? " pill--active" : ""}`} href="/docs">Skill</a>
+            <a className={`pill${active === "docs" ? " pill--active" : ""}`} href="/docs">Guides</a>
           </nav>
         </div>
         <div className="nav-right">
@@ -53,20 +54,22 @@ export function Footer() {
       <div className="footer-top">
         <div className="footer-brand">
           <a className="footer-brand-logo" href="/"><Mark size={18} /><span className="brand-word"><span>Diorama</span></span></a>
-          <p className="footer-tagline">Small animated 3D worlds for the web, built by your coding agent. One file, five themes, MIT.</p>
+          <p className="footer-tagline">Two skills for small animated worlds: SVG figures and detailed 3D scenes. One offline HTML file. MIT.</p>
         </div>
         <div className="footer-cols">
           <div className="footer-col">
             <p className="footer-col-title">Site</p>
             <a href="/figures">Figures</a>
+            <a href="/worlds">Worlds</a>
             <a href="/#how-to-use">How to use</a>
-            <a href="/docs">Skill</a>
+            <a href="/docs">Guides</a>
             <a href="/llms.txt">llms.txt</a>
           </div>
           <div className="footer-col">
             <p className="footer-col-title">Code</p>
             <a href={REPO}>GitHub</a>
-            <a href={`${REPO}/blob/main/SKILL.md`}>SKILL.md</a>
+            <a href={`${REPO}/blob/main/SKILL.md`}>SVG skill</a>
+            <a href={`${REPO}/blob/main/skills/diorama-worlds/SKILL.md`}>Worlds skill</a>
             <a href={`${REPO}/tree/main/examples`}>Examples</a>
             <a href={`${REPO}/blob/main/LICENSE`}>License</a>
           </div>

@@ -217,3 +217,20 @@ code.chip-code, .prose code { font-family: var(--font-mono); font-size: 12.5px; 
 .footer-col a { color: var(--color-muted); text-decoration: none; }
 .footer-col a:hover { color: var(--color-text); }
 .footer-bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: var(--color-faint); border-top: 1px solid var(--card-border); padding-top: 20px; }
+
+/* Four shared navigation links still fit compact screens. */
+@media (max-width: 600px) { .nav-inner { gap: 8px; } .nav-left { gap: 8px; } .nav-menu .pill { padding: 0 6px; font-size: 12px; } }
+
+/* Two distinct skill paths; real artwork, one shared identity. */
+.home-hero{padding-bottom:32px}.home-title-dim{color:var(--color-muted)}
+.skill-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;scroll-margin-top:24px;margin-bottom:80px}
+.skill-path{min-width:0}.skill-path-art{position:relative;display:block;aspect-ratio:4/3;background:#fff}.skill-path-art img{object-fit:contain}
+.skill-path-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--card-border);padding-top:24px;margin-top:8px}
+.skill-path h2{margin:0;font-size:26px;font-weight:500;letter-spacing:-.035em}.skill-path h2 span{color:var(--color-muted)}
+.skill-facts{font-size:11px;color:var(--color-muted);white-space:nowrap}.skill-path>p{font-size:15px;line-height:1.7;color:var(--color-muted);margin:16px 0 24px;min-height:76px}.skill-path .code-row{margin:0;min-height:68px}.skill-path .code-row code{white-space:normal;overflow-wrap:anywhere;font-size:11px}.skill-path-links{display:flex;justify-content:space-between;gap:16px;margin-top:20px}.skill-path-links a{display:inline-flex;align-items:center;gap:6px;font-size:13px;text-underline-offset:4px;min-height:44px}.skill-path-links svg{width:14px;height:14px}
+.skill-path a:focus-visible{outline:2px solid var(--color-text);outline-offset:4px}
+@media(max-width:700px){.skill-pair{grid-template-columns:1fr;gap:48px;margin-bottom:56px}.skill-path-art{aspect-ratio:16/10}.skill-path>p{min-height:0}.skill-path-heading{padding-top:20px}.home-hero{padding-bottom:16px}}
+.home-hero .badge{margin-top:88px}.home-hero .title{font-size:64px;line-height:1.03;letter-spacing:-.055em;max-width:700px}.copy-btn{width:44px;height:44px}.copy-btn:focus-visible{outline:2px solid var(--color-text);outline-offset:3px}
+@media(max-width:700px){.home-hero .badge{margin-top:24px}.home-hero .title{font-size:42px;line-height:1.06}.home-hero .subtitle{font-size:15px}}
+@media(max-width:360px){.nav-inner{align-items:flex-start}.nav-left{flex:1;flex-wrap:wrap;gap:4px}.nav-menu{width:100%;gap:0}.nav-menu .pill{min-height:44px;padding:0 5px}.brand{height:44px}.nav-right{padding-top:4px}.skill-path-heading{flex-wrap:wrap;gap:8px}}
+.doc-section>.mx-auto{width:100%;min-width:0}.doc-content .code-row{width:100%;min-width:0;max-width:100%}.doc-content .code-row code{white-space:normal;overflow-wrap:anywhere;padding:12px 0}

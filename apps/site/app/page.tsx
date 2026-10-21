@@ -2,22 +2,16 @@ import { FigureCard } from "@/components/card";
 import { Arrow, Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
 import { FIGURES, byName } from "@/lib/figures";
-import { INSTALL, THEMES } from "@/lib/site";
-
-const TILES = [
-  ["town", "a", "Town"],
-  ["island", "b", "Island"],
-  ["launchpad", "c", "Launchpad"],
-  ["cafe", "d", "Corner coffee"],
-  ["desk", "e", "Desk"],
-] as const;
+import Image from "next/image";
+import { WORLD_POSTER_REVISION } from "@/lib/worlds";
+import { INSTALL, INSTALL_WORLDS, THEMES } from "@/lib/site";
 
 const STRIP = ["island", "launchpad", "cafe", "server", "mailbox", "desk"];
 
 const PLAYS = [
   ["Move the pointer", "The camera tilts a few degrees toward it and settles back on a spring. Nothing is a video: every frame is drawn as you watch."],
   ["Hover a part", "What answers lifts, lights or turns. The read-out in the corner names it, and the list under the figure says what else answers."],
-  ["Switch the theme", "The chips swap the whole look without reloading: toy, soft, mono, line, night. A figure carries one; a page may pass another."],
+  ["Switch the theme", "The chips swap the whole look without reloading: toy, soft, mono, line, night and print. A figure carries one; a page may pass another."],
   ["Pause it", "The still frame is the pose the figure chose for reduced motion and thumbnails. Play again and the loop picks up where its clock is."],
 ] as const;
 
@@ -31,34 +25,37 @@ export default function Page() {
   return (
     <main id="main" className="app">
       <Topbar />
-      <header className="header header--tiles">
-        <p className="badge"><span className="beta">Beta</span><span>A Claude Code skill</span><span className="badge-dim">· {FIGURES.length} examples · {THEMES.length} themes</span></p>
-        <h1 className="title">Small 3D worlds that move, built by your agent</h1>
-        <p className="subtitle">Install the skill, describe a place, get one HTML file: an animated isometric scene for a landing page, a doc or any spot in your app. Everything on this site was made with it.</p>
+      <header className="header home-hero">
+        <p className="badge"><span className="beta">Open source</span><span>Two skills for your coding agent</span></p>
+        <h1 className="title">Small worlds.<br /><span className="home-title-dim">Made to move.</span></h1>
+        <p className="subtitle">Lightweight SVG figures or detailed miniature worlds. Describe a place; your agent builds an animated scene and hands you one self-contained HTML file.</p>
         <div className="cta-row">
-          <a className="btn btn--primary" href="/docs">Get the skill</a>
-          <a className="btn btn--secondary" href="/figures">See the examples</a>
-        </div>
-        <div className="float-row" id="float-tiles">
-          <div className="float-box">
-            {TILES.map(([name, pos, label]) => (
-              <a key={name} className={`float-tile float-tile--${pos}`} href={`/figures#${name}`} aria-label={label}>
-                <span className="float-tile-stage"><img src={`/tiles/${name}.png`} alt="" loading="eager" decoding="async" /></span>
-                <span className="float-tile-pill">{label} <Arrow /></span>
-              </a>
-            ))}
-          </div>
+          <a className="btn btn--primary" href="/worlds">Explore Worlds <Arrow /></a>
+          <a className="btn btn--secondary" href="#choose-skill">Choose your skill</a>
         </div>
       </header>
 
-      <section className="col" aria-label="Install">
-        <div className="mx-auto max-w-[664px]"><CodeRow code={INSTALL} label="Copy install command" /></div>
+      <section className="col skill-pair" id="choose-skill" aria-label="Choose your Diorama skill">
+        <article className="skill-path">
+          <a className="skill-path-art" href="/figures" aria-label="Explore Diorama SVG figures"><Image src="/tiles/town-home.png" alt="A small SVG town with streets, houses, a tram and a crane." fill priority sizes="(max-width: 700px) 100vw, 480px" /></a>
+          <div className="skill-path-heading"><h2>Diorama <span>SVG</span></h2><span className="skill-facts">{FIGURES.length} figures · {THEMES.length} themes</span></div>
+          <p>Small, interactive illustrations for interfaces, docs and empty states. Crisp SVG, pointer reactions, no WebGL.</p>
+          <CodeRow code={INSTALL} label="Copy Diorama SVG install command" />
+          <div className="skill-path-links"><a href="/figures">Explore figures <Arrow /></a><a href="/docs#installation">SVG guide</a></div>
+        </article>
+        <article className="skill-path">
+          <a className="skill-path-art" href="/worlds" aria-label="Explore Diorama Worlds"><Image src={`/worlds/posters/${WORLD_POSTER_REVISION}/florist.png`} alt="An adult florist works on a bouquet in a detailed miniature flower stall, with a waiting customer." fill priority sizes="(max-width: 700px) 100vw, 480px" /></a>
+          <div className="skill-path-heading"><h2>Diorama <span>Worlds</span></h2><span className="skill-facts">4 scenes · 4 finishes</span></div>
+          <p>Little places with a story. Articulated people, textured ground and coordinated action. Three.js and WebGL 2.</p>
+          <CodeRow code={INSTALL_WORLDS} label="Copy Diorama Worlds install command" />
+          <div className="skill-path-links"><a href="/worlds">Explore Worlds <Arrow /></a><a href="/docs/worlds">Worlds guide</a></div>
+        </article>
       </section>
 
       <section className="section" id="play" aria-labelledby="play-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
-          <h2 className="steps-title" id="play-title">Play with one.<br /><span className="steps-title-dim">It answers the pointer</span></h2>
-          <p className="steps-lede">This is the town, the first example in the skill, as the agent wrote it: one file, no build step. Try it before reading on.</p>
+          <h2 className="steps-title" id="play-title">Try an SVG figure.<br /><span className="steps-title-dim">It answers the pointer</span></h2>
+          <p className="steps-lede">This is the town, an example from the SVG skill, as the agent wrote it: one file, no build step. Try it before reading on.</p>
         </div>
         <div className="cards">
           <FigureCard fig={town} index={1} full />
@@ -75,7 +72,7 @@ export default function Page() {
 
       <section className="section" id="components" aria-labelledby="made-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
-          <h2 className="steps-title" id="made-title">Made with the skill.<br /><span className="steps-title-dim">Heroes, cards and minis</span></h2>
+          <h2 className="steps-title" id="made-title">Made with Diorama SVG.<br /><span className="steps-title-dim">Heroes, cards and minis</span></h2>
           <p className="steps-lede">Three sizes, six themes, and a different place each time: an island, a launchpad, a coffee bar, a server, a mailbox, a desk. The gallery has all {FIGURES.length}, live.</p>
         </div>
         <div className="cards">
@@ -89,12 +86,12 @@ export default function Page() {
       <section className="section" id="how-to-use" aria-labelledby="how-to-use-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
           <h2 className="steps-title" id="how-to-use-title">Describe the place.<br /><span className="steps-title-dim">Your agent builds the world</span></h2>
-          <p className="steps-lede">Every figure is one HTML file your coding agent writes, checks in a browser and hands you. Three steps, no setup.</p>
+          <p className="steps-lede">Both skills write one HTML file. Your agent builds the scene, opens the real output in a browser and checks it before handing it over.</p>
         </div>
         <ol className="steps">
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">1</span><h3 className="step-title">Install the skill</h3></div>
-            <p className="step-text">One command adds Diorama to Claude Code, Cursor or Codex: the kernel, the themes, {FIGURES.length} examples and the checks.</p>
+            <p className="step-text">Choose SVG or Worlds above. Each command installs the matching skill for Claude Code, Cursor or Codex; your agent follows its renderer-specific setup.</p>
           </li>
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">2</span><h3 className="step-title">Ask for a place</h3></div>
@@ -102,7 +99,7 @@ export default function Page() {
           </li>
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">3</span><h3 className="step-title">Drop in the file</h3></div>
-            <p className="step-text">Serve the HTML, frame it, or mount the figure in React with one call. Switch the theme with one field. <a href="/docs#embed">See how</a>.</p>
+            <p className="step-text">Serve the offline HTML, frame it, or mount the renderer in React. <a href="/docs#embed">Embed SVG</a> or <a href="/docs/worlds#worlds-embed">embed Worlds</a>.</p>
           </li>
         </ol>
       </section>
@@ -111,12 +108,12 @@ export default function Page() {
         <h2 className="section-title" id="faq-title">FAQs</h2>
         <div className="faq-list">
           {[
-            ["What is this, exactly?", "A skill: a folder of instructions, a small kernel that draws SVG, themes, examples and checks that a coding agent reads when you ask it for a 3D scene. We made it, and every figure on this site is its output. The site is the gallery and the manual."],
-            ["Is it free?", "Yes. The skill, the kernel and the examples are MIT. Use them in any project, commercial or not."],
-            ["What do I need?", "Claude Code or another agent that reads skills, Node.js 20 or later for the scripts, and Chrome or Chromium for the look. A finished page needs nothing: the kernel draws SVG, no three.js, no WebGL, one file of about 30 KB gzip."],
-            ["Does it work in React?", "Yes. The kernel takes an element; mount a figure in an effect, destroy it on unmount, and pass a theme. Plain pages use two script tags. Nothing to install."],
-            ["Why is everything isometric and blocky?", "On purpose. One camera, flat blocks, one sun with thrown shadows and a few accents is what makes a scene read at a glance and stay cheap to draw: it is SVG, painted the way an illustrator fakes depth."],
-            ["Can I change the colours?", "Every theme is a set of fields: palette, accent, lights, shadows, tones, tone, edges, stroke, glow, halo, wobble. Override any of them in the figure or when you mount it, or start from mono and line for a one-colour or hairline look."],
+            ["Which skill should I choose?", "Diorama SVG makes lightweight interactive illustrations for UI, docs and empty states. Diorama Worlds makes detailed 3D miniature stories with articulated people and four finishes. Same repository; separate renderers and install commands."],
+            ["Is it free?", "Yes. Both skills, their renderers and examples are MIT. Use them in personal or commercial projects. Your coding agent may have its own usage costs."],
+            ["What do I need?", "An agent that reads skills and Node.js 20+ for the build/check scripts. Browser checks need Chrome or Chromium. Worlds also installs its pinned build dependencies once and needs WebGL 2 in the viewer. The install CLI may require a newer Node release; see each guide."],
+            ["Does a finished file need a network connection?", "No. SVG includes its small renderer; Worlds bundles Three.js and generated textures. SVG files are roughly 30–35 KB gzip; Worlds files are about 0.77 MB uncompressed. These are different size measures, not a like-for-like benchmark."],
+            ["Does it work in React?", "Yes. Both renderers mount into an element and release their resources on cleanup. Use the corresponding guide: their APIs and dependencies are deliberately separate."],
+            ["Can I change the look?", "SVG has six tunable themes. Worlds has miniature, pixel, halftone and blueprint finishes sharing the same action and clock. Both honor reduced motion and can pause."],
           ].map(([q, a]) => (
             <details key={q} className="faq">
               <summary>{q}</summary>
