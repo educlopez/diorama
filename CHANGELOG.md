@@ -2,6 +2,18 @@
 
 All notable changes to Diorama are listed here. The versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes. From 1.0.0 on, [release-please](https://github.com/googleapis/release-please) writes each new section from the pull requests merged since the last version (`feat:` under Added, `fix:` under Fixed, `perf:` and `refactor:` under Changed, `docs:` under Documentation) and opens the release pull request that publishes it.
 
+## [1.2.0](https://github.com/educlopez/diorama/compare/v1.1.0...v1.2.0) (2026-10-21)
+
+
+### Added
+
+* every skill lives in its own folder under skills/ ([138b75b](https://github.com/educlopez/diorama/commit/138b75ba17cb745f19a3ce73b99aa366ba7f005b))
+
+
+### Fixed
+
+* point the git and curl installs at skills/diorama ([081f89d](https://github.com/educlopez/diorama/commit/081f89d7bcbdb9da7dc930261d13ce27f09f7df2))
+
 ## [1.1.0](https://github.com/educlopez/diorama/compare/v1.0.0...v1.1.0) (2026-10-21)
 
 ### Added
