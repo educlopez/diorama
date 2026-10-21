@@ -10,6 +10,8 @@
   main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; box-sizing: border-box; }
   canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; max-width: 100%; height: auto; }
   p { margin: 0; max-width: 60ch; text-align: center; text-wrap: balance; }
+  .soft { color: #7a7d85; font-size: 13px; }
+  .read { min-height: 1.45em; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #5a5d65; }
   h1 { margin: 0; font-size: 15px; font-weight: 600; color: #2c2f36; }
 </style>
 </head>
@@ -18,6 +20,8 @@
   <canvas id="stage" role="img"></canvas>
   <h1 id="title"></h1>
   <p id="means"></p>
+  <p id="hint" class="soft"></p>
+  <p id="read" class="read" aria-live="polite"></p>
 </main>
 <script>
 /*KERNEL*/
@@ -31,8 +35,10 @@
   var q = new URLSearchParams(location.search);
   document.getElementById('title').textContent = spec.title || spec.name;
   document.getElementById('means').textContent = spec.means || '';
+  document.getElementById('hint').textContent = spec.hint || '';
+  var read = document.getElementById('read');
   canvas.setAttribute('aria-label', spec.means || spec.title || spec.name);
-  var rt = Pixel.mount(spec, canvas, { still: q.has('still'), reduced: q.has('reduced') ? true : undefined });
+  var rt = Pixel.mount(spec, canvas, { still: q.has('still'), reduced: q.has('reduced') ? true : undefined, onRead: function (line) { read.textContent = line; } });
   /* whole-number enlargement so every pixel is the same size */
   function fit() {
     var avail = Math.min(document.documentElement.clientWidth - 32, 1100), k = Math.max(1, Math.floor(avail / canvas.width));

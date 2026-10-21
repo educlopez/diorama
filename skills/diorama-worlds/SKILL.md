@@ -1,6 +1,6 @@
 ---
 name: diorama-worlds
-description: 'Build narrative miniature worlds with a fixed orthographic camera, textured terrain, articulated people and coordinated looping actions. Use for detailed low-poly 3D dioramas or pixel-finish animated vignettes: sports grounds, street performers, gardens or other small places with a story. Four finishes, miniature, pixel, halftone and blueprint, use the same Three.js scene. This is a separate skill from the diorama SVG illustrations; prefer the diorama skill for lightweight UI illustrations, line art and empty states.'
+description: 'Build narrative miniature worlds with a fixed orthographic camera, textured terrain, articulated people and coordinated looping actions. Use for detailed low-poly 3D dioramas or pixel-finish animated vignettes: sports grounds, street performers, gardens or other small places with a story. Four finishes, miniature, pixel, halftone and blueprint, use the same Three.js scene. This is a separate skill from the diorama SVG illustrations; prefer the diorama skill for lightweight UI illustrations, line art and empty states, and diorama-pixel for dependency-free dithered pixel-art miniatures.'
 license: MIT
 ---
 

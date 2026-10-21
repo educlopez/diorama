@@ -18,7 +18,7 @@
    INDEX · what a scene may call.
 
    Pixel.scene(spec)    declare a scene; spec is:
-     name, title, means       strings shown by the page
+     name, title, means, hint strings shown by the page (hint: what to hover, what to tap)
      width, height            internal resolution (default 320 x 240)
      duration                 seconds in the loop (ctx.q = t / duration, 0..1)
      still                    seconds into the loop shown for reduced motion and thumbnails
@@ -28,8 +28,10 @@
      outline                  true: one ramp step darker on silhouettes against farther things (default true)
      ground                   { rx, rz, wobble: .3, fade: .45, zone(x, z, P) -> material key or object }
      materials                { key: material } extra named materials
-     build(P)                 build once; return parts
-     tick({ t, q, dt, parts, P })   pose the parts from absolute time; never accumulate
+     build(P)                 build once; return parts; parts.hot = [groups the pointer may pick], each with a .name
+     tick(ctx)                pose the parts from absolute time; never accumulate. ctx: t, q (0..1 in the loop), dt,
+                              parts, P, hover (hot group under the pointer, lit one shade), pressed + pressedAt (last
+                              press), active (a switch), pointer { x, y, inside }, read (set a line for the read-out)
 
    P (toolkit given to build and tick):
      P.group(x, y, z, parent)                     a node; .position .rotation (radians, yaw-pitch-roll) .scale .visible
@@ -39,15 +41,20 @@
      P.ball(r, mat, x, y, z, parent, seg)
      P.wedge(w, h, d, mat, x, y, z, parent)        a gable along x, base on y (thatch roofs)
      P.line(points, mat, parent)                   a polyline of 1 px, [[x, y, z], ...] in parent space
-     P.person(x, z, parent, { shirt, pants, skin, hair, hat, yaw, h })  -> { root, hips, body, head, armL, armR, legL, legR, handL, handR }
+     P.person(x, z, parent, { shirt, pants, skin, hair, hat, shoes, sleeve, bare, yaw, h: 1.3 })
+                                                    -> { root, hips, body, head, armL, armR, elbowL, elbowR, handL, handR, legL, legR, kneeL, kneeR }
+     P.pose(person, 'stand'|'work'|'hold'|'carry'|'sit'|'wave', amount)   set every joint, then add motion on top
+     P.tree(x, z, parent, { r, h, clusters, mat, trunk, yaw, seed })      a trunk and a crown of round leaf clumps
+     P.bush(x, z, parent, { r, clusters, mat, flowers })                  a low clump, flowers a hex
      P.mat(spec)                                    a material: a hex colour, a key ('grass', 'water', 'wood', 'thatch',
                                                     'stone', 'paving', 'leaf', 'cloth', 'dirt', 'sand'), or
-                                                    { color | ramp, tex, grain: 'x'|'y'|'z', plank, size, stripe, alt, rough, dither, glow, flat }
+                                                    { color | ramp, tex, grain: 'x'|'y'|'z', plank, size, stripe, alt, rough, dither, glow, round, flat }
      P.update()                                     compose every world matrix now, so tick can read node.worldPoint(x, y, z)
      P.wave(t, period, offset) P.phase(t, period, offset) P.pulse(t, period, width) P.smooth(t) P.lerp(a, b, t) P.clamp
      P.noise(x, y) P.fbm(x, y) P.hash(x, y)        the same noise the textures use (for zones and outlines)
 
-   Pixel.mount(spec, canvas, { reduced, still }) -> runtime { renderAt(t), start(), stop(), stats(), destroy() }
+   Pixel.mount(spec, canvas, { reduced, still, onRead }) -> runtime { renderAt(t), start(), stop(), setCap(fps), hoverAt(x, y),
+                                                       tap(x, y), stats(), destroy(), parts, ctx }
    ============================================================================ */
 var Pixel = (function () {
   'use strict';
@@ -90,6 +97,16 @@ var Pixel = (function () {
     var c = rgb(hex);
     return [mix(scl(c, .42), [38, 36, 72], .38), mix(scl(c, .64), [58, 56, 96], .2), scl(c, .84), c, mix(scl(c, 1.08), [255, 246, 220], .32)];
   }
+  function shade(hex, k) { var c = rgb(hex); return '#' + c.map(function (v) { return ('0' + clamp(Math.round(v * k), 0, 255).toString(16)).slice(-2); }).join(''); }
+  /* joint rotations in radians [x, y, z]; negative x swings a limb forward */
+  var POSES = {
+    stand: { armL: [0, 0, -.08], armR: [0, 0, .08], elbowL: [-.15, 0, 0], elbowR: [-.15, 0, 0] },
+    work: { armL: [-.55, 0, -.2], armR: [-.55, 0, .2], elbowL: [-.95, 0, 0], elbowR: [-.95, 0, 0], body: [.12, 0, 0], head: [.35, 0, 0] },
+    hold: { armL: [-.3, 0, -.12], armR: [-.3, 0, .12], elbowL: [-1.25, 0, 0], elbowR: [-1.25, 0, 0], head: [.2, 0, 0] },
+    carry: { armL: [0, 0, -.1], armR: [-.15, 0, .12], elbowL: [-.1, 0, 0], elbowR: [-1.4, 0, 0] },
+    sit: { hips: .3, legL: [-1.5, 0, -.04], legR: [-1.5, 0, .04], kneeL: [1.45, 0, 0], kneeR: [1.45, 0, 0], armL: [-.35, 0, -.1], armR: [-.35, 0, .1], elbowL: [-.6, 0, 0], elbowR: [-.6, 0, 0] },
+    wave: { armL: [0, 0, -.08], armR: [0, 0, 2.5], elbowR: [0, 0, .4], elbowL: [-.15, 0, 0] }
+  };
   function packRamp(r) { return Uint32Array.from(r.map(function (c) { return pack(typeof c === 'string' ? rgb(c) : c); })); }
 
   /* ---------- materials: a ramp, a texture, a grain ---------- */
@@ -113,7 +130,7 @@ var Pixel = (function () {
     dirt: function (m, x, y, z, al, ac, t, px, py) { return (fbm(x * 2.2, z * 2.2) - .5) * .4 + (hash(px, py) - .5) * .22; },
     sand: function (m, x, y, z, al, ac, t, px, py) { return (fbm(x * 1.7, z * 1.7) - .5) * .24 + (hash(px, py) - .5) * .2; },
     water: function (m, x, y, z, al, ac, t, px, py) {
-      var b = fbm(x * .9 + t * .07, z * 1.4 - t * .05), r = noise(x * 3.2 - t * .25, z * 6 + t * .1);
+      var ca = Math.cos(t), sa = Math.sin(t), b = fbm(x * .9 + ca * .45, z * 1.4 + sa * .3), r = noise(x * 3.2 + ca * 1.2, z * 6 + sa * .9);
       return (b - .5) * .55 + (r > .7 ? (r - .7) * 1.4 : 0) - .04;
     },
     paving: function (m, x, y, z, al, ac, t, px, py) {
@@ -146,7 +163,7 @@ var Pixel = (function () {
     sand: { ramp: 'sand', tex: 'sand', ground: true },
     wood: { ramp: 'wood', tex: 'wood', plank: .14, grain: 'x' }, darkwood: { ramp: 'darkwood', tex: 'wood', plank: .12, grain: 'x' },
     thatch: { ramp: 'thatch', tex: 'thatch', grain: 'x' }, stone: { ramp: 'stone', tex: 'stone', size: .3, grain: 'x' },
-    leaf: { ramp: 'leaf', tex: 'leaf' }, cloth: { ramp: 'cloth', tex: 'cloth' }, canvas: { ramp: 'canvas', tex: 'cloth' }
+    leaf: { ramp: 'leaf', tex: 'leaf' }, leafLight: { ramp: ['#3d5a2e', '#557638', '#6f9243', '#8cab52', '#aac46a', '#c8d98f'], tex: 'leaf' }, cloth: { ramp: 'cloth', tex: 'cloth' }, canvas: { ramp: 'canvas', tex: 'cloth' }
   };
   function makeMaterial(spec, registry) {
     if (spec && spec.isMaterial) return spec;
@@ -155,7 +172,7 @@ var Pixel = (function () {
     var o = typeof spec === 'string' ? (registry.named[spec] || DEFAULTS[spec] || { color: spec }) : spec;
     if (o.isMaterial) return o;
     var m = { isMaterial: true, id: registry.list.length, tex: TEX[o.tex || 'plain'], grain: o.grain || 'x', plank: o.plank || .14, size: o.size || .4,
-      rough: o.rough == null ? 1 : o.rough, blades: !!o.blades, dither: o.dither != null ? o.dither : (o.tex && o.tex !== 'plain' ? 1 : .55), stripe: o.stripe || 0, ground: !!o.ground, water: !!o.water, flat: !!o.flat, glow: o.glow || 0 };
+      rough: o.rough == null ? 1 : o.rough, blades: !!o.blades, dither: o.dither != null ? o.dither : (o.tex && o.tex !== 'plain' ? 1 : .55), stripe: o.stripe || 0, ground: !!o.ground, water: !!o.water, flat: !!o.flat, glow: o.glow || 0, round: o.round != null ? !!o.round : o.tex === 'leaf' };
     var r = o.ramp ? (typeof o.ramp === 'string' ? RAMPS[o.ramp] : o.ramp) : autoRamp(o.color || '#999999');
     m.ramp = packRamp(r); m.n = m.ramp.length;
     if (o.alt) { var ra = typeof o.alt === 'string' && RAMPS[o.alt] ? RAMPS[o.alt] : (Array.isArray(o.alt) ? o.alt : autoRamp(o.alt)); m.alt = packRamp(ra); }
@@ -232,24 +249,56 @@ var Pixel = (function () {
       wedge: function (w, h, d, mat, x, y, z, parent) { return solid(geoWedge(w, h, d), mat, x, y, z, parent); },
       line: function (points, mat, parent) { var n = new Node(); n.line = points; n.mat = makeMaterial(mat, registry); return place(n, 0, 0, 0, parent); },
       person: function (x, z, parent, o) {
-        o = o || {}; var k = o.h || 1, root2 = P.group(x, 0, z, parent); root2.rotation.y = o.yaw || 0;
-        var shirt = o.shirt || '#a8644c', pants = o.pants || '#3f4a5a', skin = o.skin || '#e0b08a';
-        var hips = P.group(0, .36 * k, 0, root2);
-        var legL = P.group(-.055 * k, 0, 0, hips), legR = P.group(.055 * k, 0, 0, hips);
-        P.box(.085 * k, .36 * k, .1 * k, pants, 0, -.18 * k, 0, legL); P.box(.085 * k, .36 * k, .1 * k, pants, 0, -.18 * k, 0, legR);
-        P.box(.09 * k, .05 * k, .14 * k, o.shoes || '#2b2624', 0, -.34 * k, .02 * k, legL); P.box(.09 * k, .05 * k, .14 * k, o.shoes || '#2b2624', 0, -.34 * k, .02 * k, legR);
+        o = o || {}; var k = o.h || 1.3, root2 = P.group(x, 0, z, parent); root2.rotation.y = o.yaw || 0;
+        var shirt = o.shirt || '#a8644c', pants = o.pants || '#3f4a5a', skin = o.skin || '#e0b08a', sleeve = o.sleeve || shade(shirt, .8), shoes = o.shoes || '#2b2624';
+        var hips = P.group(0, .36 * k, 0, root2), legs = [], knees = [];
+        [-1, 1].forEach(function (sd) {
+          var leg = P.group(sd * .055 * k, 0, 0, hips); P.box(.09 * k, .19 * k, .11 * k, pants, 0, -.095 * k, 0, leg);
+          var knee = P.group(0, -.18 * k, 0, leg); P.box(.08 * k, .17 * k, .1 * k, pants, 0, -.085 * k, 0, knee);
+          P.box(.09 * k, .05 * k, .15 * k, shoes, 0, -.165 * k, .025 * k, knee); legs.push(leg); knees.push(knee);
+        });
         var body = P.group(0, 0, 0, hips);
-        P.box(.24 * k, .3 * k, .15 * k, shirt, 0, .16 * k, 0, body);
-        var head = P.group(0, .31 * k, 0, body);
-        P.box(.07 * k, .05 * k, .07 * k, skin, 0, .025 * k, 0, head);
-        P.box(.15 * k, .15 * k, .15 * k, skin, 0, .12 * k, 0, head);
-        if (o.hair !== false) { P.box(.16 * k, .06 * k, .16 * k, o.hair || '#3b2a20', 0, .2 * k, -.005 * k, head); P.box(.16 * k, .1 * k, .05 * k, o.hair || '#3b2a20', 0, .14 * k, -.06 * k, head); }
-        if (o.hat) { P.cyl(.15 * k, .15 * k, .02 * k, o.hat, 0, .21 * k, 0, head, 10); P.cyl(.08 * k, .09 * k, .07 * k, o.hat, 0, .25 * k, 0, head, 8); }
-        var armL = P.group(-.155 * k, .28 * k, 0, body), armR = P.group(.155 * k, .28 * k, 0, body);
-        P.box(.065 * k, .27 * k, .07 * k, shirt, 0, -.13 * k, 0, armL); P.box(.065 * k, .27 * k, .07 * k, shirt, 0, -.13 * k, 0, armR);
-        var handL = P.group(0, -.28 * k, 0, armL), handR = P.group(0, -.28 * k, 0, armR);
-        P.box(.06 * k, .05 * k, .06 * k, skin, 0, 0, 0, handL); P.box(.06 * k, .05 * k, .06 * k, skin, 0, 0, 0, handR);
-        return { root: root2, hips: hips, body: body, head: head, armL: armL, armR: armR, legL: legL, legR: legR, handL: handL, handR: handR };
+        P.box(.25 * k, .31 * k, .15 * k, shirt, 0, .165 * k, 0, body);
+        var head = P.group(0, .32 * k, 0, body);
+        P.box(.07 * k, .04 * k, .07 * k, skin, 0, .02 * k, 0, head);
+        P.box(.18 * k, .17 * k, .17 * k, skin, 0, .125 * k, 0, head);
+        var hair = o.hair || '#3b2a20';
+        if (o.hair !== false) { P.box(.19 * k, .06 * k, .18 * k, hair, 0, .22 * k, -.01 * k, head); P.box(.19 * k, .12 * k, .05 * k, hair, 0, .15 * k, -.07 * k, head); }
+        if (o.hat) { P.cyl(.17 * k, .17 * k, .025 * k, o.hat, 0, .235 * k, 0, head, 10); P.cyl(.095 * k, .1 * k, .08 * k, o.hat, 0, .28 * k, 0, head, 8); }
+        var arms = [], elbows = [], hands = [];
+        [-1, 1].forEach(function (sd) {
+          var arm = P.group(sd * .165 * k, .29 * k, 0, body); P.box(.07 * k, .15 * k, .08 * k, sleeve, 0, -.07 * k, 0, arm);
+          var elbow = P.group(0, -.145 * k, 0, arm); P.box(.065 * k, .13 * k, .07 * k, o.bare ? skin : sleeve, 0, -.06 * k, 0, elbow);
+          var hand = P.group(0, -.14 * k, 0, elbow); P.box(.075 * k, .065 * k, .075 * k, skin, 0, 0, 0, hand);
+          arms.push(arm); elbows.push(elbow); hands.push(hand);
+        });
+        return { root: root2, hips: hips, body: body, head: head, armL: arms[0], armR: arms[1], elbowL: elbows[0], elbowR: elbows[1], handL: hands[0], handR: hands[1],
+          legL: legs[0], legR: legs[1], kneeL: knees[0], kneeR: knees[1], k: k };
+      },
+      /* a clear pose for an action; every joint is set, so a tick can call it and then add its own motion on top */
+      pose: function (p, name, s) {
+        s = s == null ? 1 : s; var J = POSES[name] || POSES.stand, k = p.k;
+        ['armL', 'armR', 'elbowL', 'elbowR', 'legL', 'legR', 'kneeL', 'kneeR', 'body', 'head'].forEach(function (j) { var v = J[j] || [0, 0, 0]; p[j].rotation.set(v[0] * s, v[1] * s, v[2] * s); });
+        p.hips.position.y = (J.hips == null ? .36 : J.hips) * k;
+        return p;
+      },
+      tree: function (x, z, parent, o) {
+        o = o || {}; var r = o.r || .7, h = o.h || r * 1.5, g = P.group(x, 0, z, parent), m = o.mat || 'leaf', seed = o.seed || (x * 7 + z * 13);
+        g.rotation.y = o.yaw || 0;
+        P.cyl(r * .11, r * .16, h, o.trunk || 'darkwood', 0, h / 2, 0, g, 7);
+        P.cyl(r * .05, r * .07, r * .6, o.trunk || 'darkwood', r * .25, h * .82, 0, g, 5).rotation.z = -.7;
+        var n = o.clusters || 11;
+        for (var i = 0; i < n; i++) {
+          var a = i * 2.39996 + seed, f = i / (n - 1), rr = r * (.42 + .22 * hash(i, seed | 0)), ring = r * .62 * Math.sin(Math.PI * (.25 + f * .6));
+          P.ball(rr, m, Math.cos(a) * ring, h + r * (.15 + f * .9), Math.sin(a) * ring, g, 7).scale.y = .82;
+        }
+        return g;
+      },
+      bush: function (x, z, parent, o) {
+        o = o || {}; var r = o.r || .35, g = P.group(x, 0, z, parent), m = o.mat || 'leaf', n = o.clusters || 5;
+        for (var i = 0; i < n; i++) { var a = i * 2.39996 + x, d = i ? r * .55 : 0; P.ball(r * (i ? .62 : .8), m, Math.cos(a) * d, r * (i ? .45 : .62), Math.sin(a) * d, g, 7).scale.y = .8; }
+        if (o.flowers) for (var j = 0; j < 7; j++) { var b = j * 2.1 + z; P.box(r * .14, r * .14, r * .14, o.flowers, Math.cos(b) * r * .62, r * (.75 + .3 * hash(j, 3)), Math.sin(b) * r * .62, g); }
+        return g;
       }
     };
     return P;
@@ -306,8 +355,8 @@ var Pixel = (function () {
 
     /* per-frame buffers */
     var depth = new Float32Array(N), tri = new Int32Array(N), wX = new Float32Array(N), wY = new Float32Array(N), wZ = new Float32Array(N), idx = new Int8Array(N), mid = new Int16Array(N);
-    var triN = [], triMat = [], triD = [], solids = [], lines = [], stats = { tris: 0, lines: 0, ms: 0, frames: 0, msSum: 0 };
-    function collect() { solids.length = 0; lines.length = 0; (function walk(n, pm) { if (!n.visible) return; compose(n, pm); if (n.geo) solids.push(n); if (n.line) lines.push(n); for (var i = 0; i < n.children.length; i++) walk(n.children[i], n.m); })(root, null); }
+    var triN = [], triMat = [], triD = [], triHot = [], triC = [], solids = [], lines = [], stats = { tris: 0, lines: 0, ms: 0, frames: 0, msSum: 0 };
+    function collect() { solids.length = 0; lines.length = 0; (function walk(n, pm, h) { if (!n.visible) return; compose(n, pm); if (n._hot != null) h = n._hot; n._h = h; if (n.geo) solids.push(n); if (n.line) lines.push(n); for (var i = 0; i < n.children.length; i++) walk(n.children[i], n.m, h); })(root, null, -1); }
 
     var vx = new Float64Array(4096), vy = new Float64Array(4096), vz = new Float64Array(4096);
     function rasterShadow(ax, ay, az2, bx, by, bz, cx, cy, cz) {
@@ -372,10 +421,13 @@ var Pixel = (function () {
 
     function renderAt(t) {
       var t0 = performance.now(), dur = spec.duration || 6;
-      if (spec.tick) spec.tick({ t: t, q: phase(t, dur), dt: 0, parts: parts, P: P });
+      ctx.dt = lastT == null ? 0 : clamp(t - lastT, 0, .1); lastT = t; ctx.t = t; ctx.q = phase(t, dur);
+      ctx.hover = hoverIdx >= 0 ? hot[hoverIdx] : null; ctx.active = activeIdx >= 0 ? hot[activeIdx] : null; ctx.read = '';
+      if (spec.tick) spec.tick(ctx);
+      if (opts.onRead) { var line = ctx.hover && ctx.hover.name ? ctx.hover.name : ctx.read || ''; if (line !== lastRead) { lastRead = line; opts.onRead(line); } }
       collect();
       depth.fill(-1e9); tri.fill(-1); shadow.fill(-1e9); hmap.fill(0);
-      triN.length = 0; triMat.length = 0; triD.length = 0;
+      triN.length = 0; triMat.length = 0; triD.length = 0; triHot.length = 0; triC.length = 0;
       var id = 0, s, k, n;
       for (s = 0; s < solids.length; s++) {
         var node = solids[s], g = node.geo, m = node.m, nv = g.v.length / 3;
@@ -392,7 +444,7 @@ var Pixel = (function () {
           if (nd > 0 || node.mat.flat) rasterShadow(vx[a], vy[a], vz[a], vx[b], vy[b], vz[b], vx[e], vy[e], vz[e]);
           if (ny < -.3) rasterTop(vx[a], vy[a], vz[a], vx[b], vy[b], vz[b], vx[e], vy[e], vz[e]);
           if (dot(C, nx, ny, nz) <= 0) continue;
-          triN.push(nx, ny, nz); triMat.push(node.mat.id); triD.push(Math.max(0, nd));
+          triN.push(nx, ny, nz); triMat.push(node.mat.id); triD.push(Math.max(0, nd)); triHot.push(node._h); triC.push(c[0], c[1], c[2]);
           rasterMain(id++, vx[a], vy[a], vz[a], vx[b], vy[b], vz[b], vx[e], vy[e], vz[e]);
         }
       }
@@ -400,7 +452,7 @@ var Pixel = (function () {
       /* lines: 1 px, depth tested, shaded as if they faced up */
       for (s = 0; s < lines.length; s++) {
         var ln = lines[s], pts = ln.line, lid = id++;
-        triN.push(0, 1, 0); triMat.push(ln.mat.id); triD.push(Math.max(0, L[1]));
+        triN.push(0, 1, 0); triMat.push(ln.mat.id); triD.push(Math.max(0, L[1])); triHot.push(ln._h); triC.push(0, 0, 0);
         for (n = 0; n < pts.length - 1; n++) {
           var p0 = ln.worldPoint(pts[n][0], pts[n][1], pts[n][2]), p1 = ln.worldPoint(pts[n + 1][0], pts[n + 1][1], pts[n + 1][2]);
           var sx0 = (dot(R, p0[0], p0[1], p0[2]) - OA) * S + CX, sy0 = (OB - dot(U, p0[0], p0[1], p0[2])) * S + CY, sx1 = (dot(R, p1[0], p1[1], p1[2]) - OA) * S + CX, sy1 = (OB - dot(U, p1[0], p1[1], p1[2])) * S + CY;
@@ -412,14 +464,15 @@ var Pixel = (function () {
           }
         }
       }
-      shade(t);
+      shade(ctx.q * TAU, Math.floor(ctx.q * dur * 3));
       g2.putImageData(img, 0, 0);
       stats.ms = performance.now() - t0; stats.msSum += stats.ms; stats.frames++;
       return stats.ms;
     }
 
     var mats = registry.list, outline = spec.outline !== false;
-    function shade(t) {
+    /* textures take the loop's angle (0..2 pi), not seconds, so water comes back to where it started; tick is the sparkle step */
+    function shade(t, tick) {
       var i, px, py;
       for (py = 0; py < H; py++) for (px = 0; px < W; px++) {
         i = py * W + px;
@@ -430,7 +483,10 @@ var Pixel = (function () {
           extra = gfade[i] * .45 - occl(x, z) * .32;
           if (m.blades && hash(px, py + 1) > .955 && !(hash(px, py) > .955)) extra += .22;
           else if (m.blades && hash(px, py) > .955) extra -= .1;
-        } else { m = mats[triMat[id]]; x = wX[i]; y = wY[i]; z = wZ[i]; nx = triN[id * 3]; ny = triN[id * 3 + 1]; nz = triN[id * 3 + 2]; nd = triD[id]; }
+        } else {
+          m = mats[triMat[id]]; x = wX[i]; y = wY[i]; z = wZ[i]; nx = triN[id * 3]; ny = triN[id * 3 + 1]; nz = triN[id * 3 + 2]; nd = triD[id];
+          if (m.round) { var rx = x - triC[id * 3], ry = y - triC[id * 3 + 1], rz = z - triC[id * 3 + 2], rl = Math.sqrt(rx * rx + ry * ry + rz * rz) || 1; nx = rx / rl; ny = ry / rl; nz = rz / rl; nd = Math.max(0, dot(L, nx, ny, nz)); }
+        }
         var l = AMB + (1 - AMB) * nd * (nd > 0 ? lit(x, y, z) : 0) + .08 * ny;
         if (m.glow) l = Math.max(l, m.glow);
         /* planar coordinates of the face, then along/across the grain */
@@ -441,7 +497,7 @@ var Pixel = (function () {
         tone = .08 + .84 * l + m.tex(m, x, y, z, along, across, t, px, py) + extra;
         var ramp = m.alt && m.stripe && (Math.floor(along / m.stripe) & 1) ? m.alt : m.ramp, nR = ramp.length;
         var f = tone * (nR - 1) + (b - .5) * m.dither, k = Math.floor(f + .5);
-        if (m.water && hash3(px, py, Math.floor(t * 3)) > .993 && tone > .7) k = nR - 1;
+        if (m.water && hash3(px, py, tick) > .993 && tone > .7) k = nR - 1;
         idx[i] = k < 0 ? 0 : k >= nR ? nR - 1 : k; mid[i] = m.id * 2 + (ramp === m.alt ? 1 : 0);
       }
       /* silhouettes: a solid pixel whose neighbour is far behind it, or the page, steps one shade darker */
@@ -453,9 +509,28 @@ var Pixel = (function () {
           var dz = depth[i], far = .18;
           if ((px > 0 && (mid[i - 1] < 0 || dz - depth[i - 1] > far)) || (px < W - 1 && (mid[i + 1] < 0 || dz - depth[i + 1] > far)) || (py > 0 && (mid[i - W] < 0 || dz - depth[i - W] > far)) || (py < H - 1 && (mid[i + W] < 0 || dz - depth[i + W] > far))) kk = Math.max(0, kk - 1);
         }
+        if (hoverIdx >= 0 && tri[i] >= 0 && triHot[tri[i]] === hoverIdx) kk = Math.min(rr.length - 1, kk + 1);
         out[i] = rr[kk];
       }
     }
+
+    /* ---------- the pointer: the hot group under a pixel lights one shade, a press answers ---------- */
+    var hot = parts.hot || [], hoverIdx = -1, activeIdx = -1, lastT = null, lastRead = null, ctx = { parts: parts, P: P, pointer: { x: 0, y: 0, inside: false }, hover: null, pressed: null, pressedAt: -1, active: null, read: '' };
+    hot.forEach(function (g, i) { g._hot = i; });
+    function pick(px, py) { if (px < 0 || py < 0 || px >= W || py >= H) return -1; var id = tri[py * W + px]; return id >= 0 ? triHot[id] : -1; }
+    function point(nx, ny, down) {
+      var px = Math.floor((nx + 1) / 2 * W), py = Math.floor((ny + 1) / 2 * H), h = pick(px, py);
+      ctx.pointer.x = nx; ctx.pointer.y = ny; ctx.pointer.inside = true;
+      var changed = h !== hoverIdx; hoverIdx = h;
+      if (down) { ctx.pressed = h >= 0 ? hot[h] : null; ctx.pressedAt = ctx.t; activeIdx = h >= 0 && h !== activeIdx ? h : -1; changed = true; }
+      if (changed && !running) renderAt(ctx.t || spec.still || 0);
+      return h >= 0 ? hot[h] : null;
+    }
+    function norm(e) { var r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 2 - 1, (e.clientY - r.top) / r.height * 2 - 1]; }
+    var onMove = function (e) { var q = norm(e); point(q[0], q[1], false); canvas.style.cursor = hoverIdx >= 0 ? 'pointer' : ''; };
+    var onDown = function (e) { var q = norm(e); point(q[0], q[1], true); };
+    var onLeave = function () { ctx.pointer.inside = false; if (hoverIdx >= 0) { hoverIdx = -1; if (!running) renderAt(ctx.t); } };
+    canvas.addEventListener('pointermove', onMove); canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointerleave', onLeave);
 
     /* ---------- the clock: absolute time, a frame cap, asleep offscreen or hidden, still under reduced motion ---------- */
     var raf = 0, running = false, start = 0, lastDraw = -1e9, cap = spec.fps == null ? 24 : spec.fps, visible = true, onscreen = true;
@@ -481,8 +556,9 @@ var Pixel = (function () {
       renderAt: renderAt, parts: parts, P: P,
       start: function () { opts.still = false; reduced = false; sync(); }, stop: function () { opts.still = true; sync(); },
       setCap: function (f) { cap = f; },
+      hoverAt: function (x, y) { return point(x, y, false); }, tap: function (x, y) { return point(x, y, true); }, ctx: ctx,
       stats: function () { return { tris: stats.tris, ms: stats.ms, avgMs: stats.msSum / Math.max(1, stats.frames), frames: stats.frames, width: W, height: H, running: running, cap: cap }; },
-      destroy: function () { running = false; cancelAnimationFrame(raf); if (io) io.disconnect(); document.removeEventListener('visibilitychange', onVis); if (mq && mq.removeEventListener) mq.removeEventListener('change', onMq); }
+      destroy: function () { running = false; cancelAnimationFrame(raf); if (io) io.disconnect(); document.removeEventListener('visibilitychange', onVis); if (mq && mq.removeEventListener) mq.removeEventListener('change', onMq); canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointerleave', onLeave); }
     };
   }
 
