@@ -18,6 +18,7 @@ jobs:
       - name: Install pinned build tools without lifecycle scripts
         run: |
           npm ci --ignore-scripts --prefix skills/diorama-worlds
+          npm ci --ignore-scripts --prefix skills/diorama-pixel
           npm ci --ignore-scripts --prefix apps/site
       - name: Install browser for real output checks
         working-directory: skills/diorama-worlds
@@ -28,6 +29,19 @@ jobs:
         run: |
           node scripts/release-check.mjs
           for source in skills/diorama/examples/*.js; do node skills/diorama/scripts/validate.mjs "$source"; done
+      - name: Check the pixel skill's scenes, built pages and real output
+        run: |
+          mkdir -p "$RUNNER_TEMP/pixel"
+          status=0
+          for source in skills/diorama-pixel/examples/*.js; do
+            name=$(basename "$source" .js)
+            echo "::group::$name"
+            node skills/diorama-pixel/scripts/build.mjs "$source" "$RUNNER_TEMP/pixel/pixel-$name.html" || status=1
+            node skills/diorama-pixel/scripts/validate.mjs "$source" "$RUNNER_TEMP/pixel/pixel-$name.html" || status=1
+            node skills/diorama-pixel/scripts/look.mjs "$source" "$RUNNER_TEMP/pixel/$name" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
       - name: Check clean skill installation and self-contained builds
         run: node scripts/install-smoke.mjs "$RUNNER_TEMP/install-smoke"
       - name: Check seven real worlds in all four finishes
@@ -53,5 +67,6 @@ jobs:
           path: |
             ${{ runner.temp }}/worlds-runtime
             ${{ runner.temp }}/worlds-site
+            ${{ runner.temp }}/pixel
             ${{ runner.temp }}/site.log
           retention-days: 7

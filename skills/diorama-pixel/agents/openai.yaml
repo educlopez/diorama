@@ -1,0 +1,3 @@
+interface:
+  display_name: "Diorama Pixel"
+  short_description: "Build a dithered pixel-art miniature with no dependency"

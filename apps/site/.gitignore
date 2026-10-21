@@ -7,3 +7,7 @@ next-env.d.ts
 
 # Generated Worlds; reviewed posters are versioned.
 public/worlds/*.html
+
+# Generated Pixel pages; reviewed posters are versioned.
+public/pixel/*.html
+lib/pixel.json

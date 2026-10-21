@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "node scripts/examples.mjs && node scripts/worlds.mjs",
-    "predev": "node scripts/examples.mjs && node scripts/worlds.mjs",
+    "prebuild": "node scripts/examples.mjs && node scripts/worlds.mjs && node scripts/pixel.mjs",
+    "predev": "node scripts/examples.mjs && node scripts/worlds.mjs && node scripts/pixel.mjs",
     "build": "next build",
     "dev": "next dev -p 3000",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next public/examples lib/figures.json"
+    "clean": "rm -rf .next public/examples lib/figures.json public/pixel/*.html lib/pixel.json"
   },
   "dependencies": {
     "next": "16.4.2",

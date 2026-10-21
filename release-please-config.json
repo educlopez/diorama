@@ -86,6 +86,21 @@
           "type": "json",
           "path": "skills/diorama-worlds/package-lock.json",
           "jsonpath": "$.packages[''].version"
+        },
+        {
+          "type": "json",
+          "path": "skills/diorama-pixel/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "skills/diorama-pixel/package-lock.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "skills/diorama-pixel/package-lock.json",
+          "jsonpath": "$.packages[''].version"
         }
       ]
     }

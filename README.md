@@ -1,6 +1,6 @@
 <h1 align="center">Diorama</h1>
 
-<p align="center"><b>Two agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Describe a place; get one self-contained offline HTML file.</p>
+<p align="center"><b>Three agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Describe a place; get one self-contained offline HTML file.</p>
 
 <p align="center">
   <a href="https://diorama.educalvolopez.com"><img src="https://img.shields.io/badge/site-diorama.educalvolopez.com-1b1b19?style=flat-square" alt="Site: diorama.educalvolopez.com"></a>
@@ -8,7 +8,7 @@
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent_Skills-compatible-1b1b19?style=flat-square" alt="Agent Skills compatible"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1b1b19?style=flat-square" alt="MIT license"></a>
   <a href="#requirements"><img src="https://img.shields.io/badge/node-%E2%89%A5%2020-1b1b19?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node 20 or later"></a>
-  <a href="#how-it-works"><img src="https://img.shields.io/badge/renders-SVG_%2B_Three.js-1b1b19?style=flat-square" alt="Separate SVG and Three.js renderers"></a>
+  <a href="#how-it-works"><img src="https://img.shields.io/badge/renders-SVG_%2B_Three.js_%2B_canvas-1b1b19?style=flat-square" alt="Separate SVG, Three.js and canvas renderers"></a>
 </p>
 
 <p align="center">
@@ -26,17 +26,17 @@
 
 ## Choose your skill
 
-| | Diorama SVG | Diorama Worlds |
-|---|---|---|
-| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story |
-| Renderer | Dependency-free SVG | Three.js / WebGL 2 |
-| Look | Six tunable themes | Miniature, pixel, halftone, blueprint |
-| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects |
-| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested |
-| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed |
-| Guide | [SVG guide](https://diorama.educalvolopez.com/docs) | [Worlds guide](https://diorama.educalvolopez.com/docs/worlds) |
+| | Diorama SVG | Diorama Worlds | Diorama Pixel |
+|---|---|---|---|
+| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards |
+| Renderer | Dependency-free SVG | Three.js / WebGL 2 | Dependency-free software rasterizer on a 2D canvas |
+| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures |
+| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment |
+| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page |
+| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) |
+| Guide | [SVG guide](https://diorama.educalvolopez.com/docs) | [Worlds guide](https://diorama.educalvolopez.com/docs/worlds) | [Pixel guide](https://diorama.educalvolopez.com/docs/pixel) |
 
-The file sizes use different measures; they are not a like-for-like benchmark. Install either skill or both. They do not share renderers or dependencies.
+The file sizes use different measures; they are not a like-for-like benchmark. Install one skill, two or all three. They do not share renderers or dependencies.
 
 <p align="center"><img src="apps/site/public/worlds/posters/flat-ground-1/florist.png" width="720" alt="Diorama Worlds: a florist and customer in an animated flower stall with flat irregular ground, no display platform."></p>
 
@@ -62,7 +62,17 @@ npx skills add educlopez/diorama --skill diorama-worlds -g
 /diorama-worlds a baker rolling dough beside a brick oven for our landing page. Flat irregular ground, no platform. Halftone finish.
 ```
 
-In agents without slash commands, ask “Use the diorama skill…” or “Use the diorama-worlds skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
+**Diorama Pixel** — dithered pixel-art miniatures, no dependency:
+
+```sh
+npx skills add educlopez/diorama --skill diorama-pixel -g
+```
+
+```text
+/diorama-pixel a tiny bakery front at dawn, the baker carrying a tray of loaves out to a stall, for our blog header
+```
+
+In agents without slash commands, ask “Use the diorama skill…”, “Use the diorama-worlds skill…” or “Use the diorama-pixel skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
 
 Each skill lives in its own folder under `skills/`. `npx skills add educlopez/diorama` without `--skill` lists them all and lets you pick; `npx skills add educlopez/diorama --list` prints them without installing.
 
@@ -242,6 +252,19 @@ npm test --prefix skills/diorama-worlds
 ```
 
 Built Worlds HTML bundles its renderer and needs no network at runtime, but is around 0.76 MB uncompressed, unlike the smaller SVG skill. The look command writes real desktop/mobile screenshots in all four finishes and a JSON report. Open the pictures: runtime checks cannot judge a convincing contact pose or artistic fidelity. The skill has its own dependencies, reference guide and checks under `skills/diorama-worlds/`. The existing website now has a dedicated `/worlds` playground: one live scene at a time, finish and playback controls, a gallery of real rendered posters, local setup instructions and renderer tradeoffs. The home, SVG gallery and SVG docs do not load the Worlds renderer. Site prebuild uses site-owned pinned build dependencies, so a clean site install does not require installing the skill’s own tools first.
+
+## Diorama Pixel
+
+A third skill, [`diorama-pixel`](skills/diorama-pixel/SKILL.md), makes pixel-art miniatures without three.js or WebGL. Its kernel (`kit/pixel.js`, about 45 KB, no dependency) is a small software rasterizer: it draws the scene's solids into a depth buffer at 320 x 240, renders a shadow map from the sun and a contact-shadow height map, shades every pixel with a procedural texture per material (planks, thatch, paving, stone, stippled grass, dithered water, round leaf clumps), quantizes it to that material's ramp of muted colours with an 8 x 8 Bayer matrix, and lets the browser enlarge the canvas with nearest-neighbour pixels. The ground is an irregular outline whose edge dissolves into the white page through the same dither. People are a small jointed rig with named poses; the pointer lights the hovered object, a tap answers, and a read-out says what is happening. A frame costs about 4 ms; the loop runs at 24 fps, sleeps offscreen and holds a still frame under reduced motion.
+
+```sh
+node skills/diorama-pixel/scripts/build.mjs skills/diorama-pixel/examples/pier.js pixel-pier.html
+node skills/diorama-pixel/scripts/validate.mjs skills/diorama-pixel/examples/pier.js pixel-pier.html
+npm ci --ignore-scripts --prefix skills/diorama-pixel
+node skills/diorama-pixel/scripts/look.mjs skills/diorama-pixel/examples/pier.js work/pier-look
+```
+
+Built pages are about 50 KB and make no network request. The look command (Playwright, a dev dependency of the skill only) writes the still, four loop moments, hover, press and mobile captures and checks motion, the loop seam, picking, reduced motion and frame cost. It is a different thing from the Worlds `pixel` finish, which renders the Worlds Three.js scene at low resolution: Pixel trades articulated contact poses for textured surfaces, a dissolving ground and a page fifteen times smaller. The site's `/pixel` page shows the three examples live.
 
 ## SVG limits
 
