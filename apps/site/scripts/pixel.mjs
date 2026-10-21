@@ -4,7 +4,7 @@
  * becomes public/pixel/<name>.html (the skill's own build: the kernel, the scene and
  * the page, nothing to load), and lib/pixel.json lists them with what the site shows.
  */
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assemble, nameOf } from "../../../skills/diorama-pixel/scripts/build.mjs";
@@ -17,6 +17,8 @@ const field = (src, key) => new RegExp(`\\b${key}:\\s*(["'\`])((?:\\\\.|(?!\\1).
 const num = (src, key) => Number(new RegExp(`\\b${key}:\\s*([0-9.]+)`).exec(src)?.[1] ?? 0);
 
 mkdirSync(OUT, { recursive: true });
+/* a renamed or removed example must not leave its old page behind */
+for (const f of readdirSync(OUT).filter((f) => f.endsWith(".html"))) rmSync(join(OUT, f));
 const scenes = [];
 for (const file of readdirSync(EXAMPLES).filter((f) => f.endsWith(".js"))) {
   const src = readFileSync(join(EXAMPLES, file), "utf8");

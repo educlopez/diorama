@@ -5,11 +5,11 @@ Diorama is one repository with independently selectable skills, each in its own 
 ## Before a release
 
 1. Keep the SVG renderer and existing figure API compatible. Test both skill paths, not just the website.
-2. Run `node scripts/release-check.mjs`, the YAML/frontmatter parser, SVG validation (`node skills/diorama/scripts/validate.mjs` on each of `skills/diorama/examples/*.js`), `npm test --prefix skills/diorama-worlds`, Pixel validation and look (`node skills/diorama-pixel/scripts/validate.mjs` and `look.mjs` on each of `skills/diorama-pixel/examples/*.js`), and the site production build.
+2. Run `node scripts/release-check.mjs`, the YAML/frontmatter parser, SVG validation (`node skills/diorama/scripts/validate.mjs` on each of `skills/diorama/examples/*.js`), `npm test --prefix skills/diorama-worlds`, Pixel validation and look (`npm ci --ignore-scripts --prefix skills/diorama-pixel` once, then `node skills/diorama-pixel/scripts/validate.mjs` and `look.mjs` on each of `skills/diorama-pixel/examples/*.js`), and the site production build.
 3. Run the production-site browser suite. Inspect actual desktop/mobile output, the home’s three commands, the three guides, all Worlds finishes, the live Pixel scenes, reduced motion, fallback and legacy routes. An assertion count does not establish art quality or physical-device performance.
 4. Install the candidate skill in an isolated project with the real skills CLI, then install its pinned dependencies and build/check an example from the installed copy. Do not overwrite a maintainer’s global skills to test packaging.
-5. Update `CHANGELOG.md`, `version.txt`, `.release-please-manifest.json`, both package files and both lockfile root versions consistently. `scripts/release-check.mjs` enforces agreement. Release-please’s extra files maintain these for later automated release PRs.
-6. When poster pixels change, use a new `WORLD_POSTER_REVISION` directory and real regenerated images. The site rejects local image query strings; do not weaken that policy for cache busting.
+5. Update `CHANGELOG.md`, `version.txt`, `.release-please-manifest.json`, the three package files (`apps/site`, `skills/diorama-worlds`, `skills/diorama-pixel`) and the version and root package version in each of their three lockfiles consistently. `scripts/release-check.mjs` enforces agreement. Release-please’s extra files maintain these for later automated release PRs.
+6. When poster pixels change, use a new `WORLD_POSTER_REVISION` (Worlds) or `PIXEL_POSTER_REVISION` (Pixel) directory and real regenerated images. The site rejects local image query strings; do not weaken that policy for cache busting.
 7. Never commit `node_modules`, generated standalone HTML, `.next`, local test artifacts, credentials or machine-specific output paths. Keep the MIT licenses with the installed Worlds skill and the bundled Three.js notice in generated HTML.
 
 ## Publish

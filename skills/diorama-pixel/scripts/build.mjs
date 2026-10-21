@@ -16,7 +16,12 @@ export function nameOf(scene) {
   const call = [...scene.matchAll(/\bPixel\.scene\s*\(\s*\{/g)].at(-1);
   return call ? /\bname:\s*["'`]([a-z][a-z0-9-]*)["'`]/.exec(scene.slice(call.index))?.[1] ?? null : null;
 }
-const titleOf = (scene) => /\btitle:\s*["'`]([^"'`]+)["'`]/.exec(scene)?.[1] ?? "Pixel diorama";
+/** The scene's title, read from its declaration like nameOf; a quote of another kind inside it ("The baker's door") is kept. */
+export function titleOf(scene) {
+  const call = [...scene.matchAll(/\bPixel\.scene\s*\(\s*\{/g)].at(-1);
+  const m = call ? /\btitle:\s*(["'`])((?:\\.|(?!\1).)*)\1/.exec(scene.slice(call.index)) : null;
+  return m ? m[2].replace(/\\(["'`\\])/g, "$1") : "Pixel diorama";
+}
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 export function assemble(scene) {

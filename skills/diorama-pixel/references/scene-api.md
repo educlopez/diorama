@@ -87,14 +87,17 @@ export function PixelScene({ src }: { src: string }) {
     const load = (url: string) => new Promise<void>((ok, fail) => {
       const s = document.createElement('script'); s.src = url; s.onload = () => ok(); s.onerror = fail; document.head.appendChild(s);
     });
+    /* the scripts load asynchronously: if the component unmounts first (or StrictMode mounts twice), never mount after cleanup */
+    let cancelled = false;
     let rt: { destroy(): void } | undefined;
     (async () => {
       const w = window as unknown as { Pixel?: any };
       if (!w.Pixel) await load('/pixel/pixel.js');
       await load(src);
-      rt = w.Pixel.mount(w.Pixel.scenes.at(-1), ref.current!);
+      if (cancelled || !ref.current) return;
+      rt = w.Pixel.mount(w.Pixel.scenes.at(-1), ref.current);
     })();
-    return () => rt?.destroy();
+    return () => { cancelled = true; rt?.destroy(); rt = undefined; };
   }, [src]);
   return <canvas ref={ref} style={{ width: '100%', imageRendering: 'pixelated' }} />;
 }
