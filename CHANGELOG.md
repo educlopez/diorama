@@ -7,7 +7,6 @@ All notable changes to Diorama are listed here. The versions follow [Semantic Ve
 
 ### Added
 
-* every skill lives in its own folder under skills/ ([8a12a92](https://github.com/educlopez/diorama/commit/8a12a9289888be171bad4d0e33f59a5dce3cc3c6))
 * every skill lives in its own folder under skills/ ([138b75b](https://github.com/educlopez/diorama/commit/138b75ba17cb745f19a3ce73b99aa366ba7f005b))
 
 
