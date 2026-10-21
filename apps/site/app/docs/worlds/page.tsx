@@ -16,7 +16,7 @@ export default function WorldsGuide() {
     <section className="doc-content" aria-label="Worlds guide">
       <div className="doc-section" id="worlds-install"><h2 className="doc-section-title">Install</h2>
         <CodeRow code={INSTALL_WORLDS} label="Copy Diorama Worlds install command" />
-        <p className="note">The path selects Worlds directly; the original SVG skill lives at the repository root. Add <code>-a claude-code</code> or <code>-a codex</code> to target one agent. Omit <code>-g</code> for a project-local install. The install CLI may require a newer Node version than the build tools; check <a href="https://github.com/vercel-labs/skills">its current requirements</a>.</p>
+        <p className="note"><code>--skill diorama-worlds</code> selects Worlds; the SVG skill is <code>--skill diorama</code>. Both live under <code>skills/</code> in the same repository. Add <code>-a claude-code</code> or <code>-a codex</code> to target one agent. Omit <code>-g</code> for a project-local install. The install CLI may require a newer Node version than the build tools; check <a href="https://github.com/vercel-labs/skills">its current requirements</a>.</p>
         <p className="note">Node.js 20+ runs the build/check scripts. Chrome or Chromium runs browser checks; WebGL 2 is required to display the finished scene. Your agent reads the installed skill and runs <code>npm ci --ignore-scripts --prefix &lt;skill-folder&gt;</code> once. No API keys, model downloads or CDN imports.</p>
       </div>
       <div className="doc-section" id="worlds-prompt"><h2 className="doc-section-title">Ask for a world</h2>

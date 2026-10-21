@@ -31,7 +31,7 @@ export default function Page() {
           </section>
         );
       })}
-      <p className="mt-12 text-center text-[13px] text-muted">Want to add one? Each example is a file in <a className="underline underline-offset-2" href={`${REPO}/tree/main/examples`}>examples/</a>; write it with the skill and open a pull request.</p>
+      <p className="mt-12 text-center text-[13px] text-muted">Want to add one? Each example is a file in <a className="underline underline-offset-2" href={`${REPO}/tree/main/skills/diorama/examples`}>examples/</a>; write it with the skill and open a pull request.</p>
       <Footer />
     </main>
   );

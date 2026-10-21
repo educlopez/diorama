@@ -63,7 +63,7 @@ try{
     check(`${route} does not load Worlds HTML`,!requests.some(u=>/\/worlds\/.*\.html/.test(u)),requests.filter(u=>/worlds/.test(u)));
     check(`${route} mobile navigation fits`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     if(route==='/'){
-      const expected={SVG:'npx skills add educlopez/diorama --skill diorama -g',Worlds:'npx skills add educlopez/diorama/skills/diorama-worlds -g'};
+      const expected={SVG:'npx skills add educlopez/diorama --skill diorama -g',Worlds:'npx skills add educlopez/diorama --skill diorama-worlds -g'};
       check('home presents both skill paths',await page.getByRole('heading',{name:'Diorama SVG',exact:true}).count()===1&&await page.getByRole('heading',{name:'Diorama Worlds',exact:true}).count()===1);
       for(const [name,command] of Object.entries(expected)){
         await page.getByRole('button',{name:`Copy Diorama ${name} install command`,exact:true}).click();
@@ -74,7 +74,7 @@ try{
       await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:join(output,'release-home-desktop.png'),fullPage:true});await page.screenshot({path:join(output,'release-home-hero.png')});await page.setViewportSize({width:390,height:844});
     }
     if(route==='/docs/worlds'){
-      check('Worlds guide includes definitive command and invocation',await page.locator('.code-row code').innerText()==='npx skills add educlopez/diorama/skills/diorama-worlds -g'&&(await page.locator('main').innerText()).includes('/diorama-worlds'));
+      check('Worlds guide includes definitive command and invocation',await page.locator('.code-row code').innerText()==='npx skills add educlopez/diorama --skill diorama-worlds -g'&&(await page.locator('main').innerText()).includes('/diorama-worlds'));
       await page.screenshot({path:join(output,'release-worlds-guide-mobile.png'),fullPage:true});
     }
     page.off('request',handler);

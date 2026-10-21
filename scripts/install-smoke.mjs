@@ -12,10 +12,10 @@ const run=(cmd,args,cwd=root)=>{const r=spawnSync(cmd,args,{cwd,env:{...process.
 run('git',['archive','--format=tar','HEAD','-o',join(scratch,'source.tar')]);run('tar',['-xf',join(scratch,'source.tar'),'-C',source]);
 for(const name of ['diorama','diorama-worlds']){
   const project=join(scratch,name);mkdirSync(project);
-  const path=name==='diorama'?source:join(source,'skills/diorama-worlds');
-  run('npx',['--yes','skills@1.7.4','add',path,'--skill',name,'-a','claude-code','-y','--copy'],project);
+  run('npx',['--yes','skills@1.7.4','add',source,'--skill',name,'-a','claude-code','-y','--copy'],project);
   const installed=join(project,'.claude/skills',name);assert.ok(existsSync(join(installed,'SKILL.md')));
   if(name==='diorama'){
+    assert.ok(!existsSync(join(installed,'apps')),'the SVG skill must not ship the site');assert.ok(existsSync(join(installed,'LICENSE')));
     run('node',[join(installed,'scripts/build.mjs'),join(installed,'examples/mailbox.js'),join(project,'mailbox.html')]);
     run('node',[join(installed,'scripts/validate.mjs'),join(project,'mailbox.html')]);
   }else{
