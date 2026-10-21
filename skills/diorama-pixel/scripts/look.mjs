@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Looks at a scene: `node look.mjs <scene.js> <outdir> [--press x,y]` builds the
+ * Looks at a scene: `node look.mjs <scene.js> <outdir> [--press x,y] [--throttle N]` builds the
  * page, opens it in headless Chromium with the network blocked and writes:
  *
  *   <name>-still.png      the still frame, enlarged as the page shows it
@@ -9,13 +9,19 @@
  *   <name>-press.png      half a second after a press on the last hot group
  *   <name>-mobile.png     the whole page at 390 px wide
  *
- * It prints a JSON report and a PASS/FAIL line per check (errors, offline,
- * fill, motion, hover, press, reduced motion, mobile overflow, frame cost),
- * and exits 1 on any FAIL. Playwright comes from this skill's devDependency
+ * It writes <name>-look.json (the full report) and prints one PASS/FAIL line per
+ * check (errors, offline, fill, motion, seam, picking, hover, press, reduced
+ * motion, mobile overflow, frame cost), and exits 1 on any FAIL.
+ *
+ * Frame cost is judged against the scene's own frame budget, 1000 / fps ms (41.7
+ * at the default 24 fps): a frame that does not fit its slot drops. Over 12 ms
+ * prints a SLOW note, not a failure: it depends on the machine (a CI runner or
+ * `--throttle 4` is several times slower than a laptop). PIXEL_LOOK_BUDGET_MS
+ * overrides the budget. Playwright comes from this skill's devDependency
  * (`npm ci --ignore-scripts`); the browser is CHROME_PATH or an installed
  * Chrome/Chromium. The page itself needs nothing.
  */
-import { mkdirSync, existsSync } from "node:fs";
+import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "./build.mjs";
@@ -42,11 +48,14 @@ try {
   const context = await browser.newContext({ viewport: { width: 1100, height: 900 }, deviceScaleFactor: 1 });
   await context.route(/^https?:/, (r) => { report.network.push(r.request().url()); return r.abort(); });
   const page = await context.newPage();
+  /* --throttle N slows the CPU N times through the DevTools protocol, to look the way a slow CI runner or phone would */
+  const throttle = Number(flags.throttle || process.env.PIXEL_LOOK_THROTTLE || 1);
+  if (throttle > 1) { const cdp = await context.newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: throttle }); report.throttle = throttle; }
   page.on("pageerror", (e) => report.errors.push(e.message));
   page.on("console", (m) => { if (m.type() === "error") report.errors.push(m.text()); });
   await page.goto(pathToFileURL(file).href + "?still");
   await page.waitForFunction(() => window.__pixel?.runtime);
-  const meta = await page.evaluate(() => ({ duration: window.__pixel.spec.duration || 6, still: window.__pixel.spec.still || 0, hint: window.__pixel.spec.hint || "" }));
+  const meta = await page.evaluate(() => ({ duration: window.__pixel.spec.duration || 6, still: window.__pixel.spec.still || 0, hint: window.__pixel.spec.hint || "", fps: window.__pixel.spec.fps == null ? 24 : window.__pixel.spec.fps }));
   const pixels = () => page.evaluate(() => { const c = document.getElementById("stage"); return Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data); });
   const diff = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; return n / (a.length / 4); };
   const shot = async (t, label) => {
@@ -109,7 +118,10 @@ try {
     ts.sort((a, b) => a - b);
     return { frames: n, medianMs: +ts[n >> 1].toFixed(2), p95Ms: +ts[Math.floor(n * .95)].toFixed(2), tris: rt.stats().tris, size: [rt.stats().width, rt.stats().height] };
   });
-  check("frame cost: median under 12 ms", report.render.medianMs < 12, report.render.medianMs);
+  const budget = Number(process.env.PIXEL_LOOK_BUDGET_MS) || 1000 / (meta.fps || 24);
+  report.render.budgetMs = +budget.toFixed(1);
+  check(`frame cost: median within the ${report.render.budgetMs} ms frame budget`, report.render.medianMs <= budget, report.render);
+  if (report.render.medianMs > 12) report.notes = [`SLOW median frame ${report.render.medianMs} ms (over 12 ms on this machine${report.throttle ? `, CPU throttled ${report.throttle}x` : ""})`];
   report.fps = await page.evaluate(async () => {
     const rt = window.__pixel.runtime; rt.start();
     await new Promise((ok) => setTimeout(ok, 300));
@@ -129,6 +141,9 @@ try {
 }
 check("no browser errors", report.errors.length === 0, report.errors);
 check("offline: no network request", report.network.length === 0, report.network);
-console.log(JSON.stringify(report, null, 2));
+writeFileSync(join(outdir, `${name}-look.json`), JSON.stringify(report, null, 2) + "\n");
+console.log(`${name}: ${report.bytes} bytes, median frame ${report.render?.medianMs} ms (p95 ${report.render?.p95Ms}), ${report.fps} fps${report.throttle ? `, CPU ${report.throttle}x slower` : ""}`);
+for (const n of report.notes || []) console.log(n);
 for (const c of report.checks) console.log(`${c.pass ? "PASS" : "FAIL"} ${c.label}${c.pass ? "" : ` (${JSON.stringify(c.detail)})`}`);
+console.log(`report: ${join(outdir, `${name}-look.json`)}`);
 if (report.checks.some((c) => !c.pass)) process.exitCode = 1;

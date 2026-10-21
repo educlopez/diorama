@@ -32,12 +32,16 @@ jobs:
       - name: Check the pixel skill's scenes, built pages and real output
         run: |
           mkdir -p "$RUNNER_TEMP/pixel"
+          status=0
           for source in skills/diorama-pixel/examples/*.js; do
             name=$(basename "$source" .js)
-            node skills/diorama-pixel/scripts/build.mjs "$source" "$RUNNER_TEMP/pixel/pixel-$name.html"
-            node skills/diorama-pixel/scripts/validate.mjs "$source" "$RUNNER_TEMP/pixel/pixel-$name.html"
-            node skills/diorama-pixel/scripts/look.mjs "$source" "$RUNNER_TEMP/pixel/$name" > "$RUNNER_TEMP/pixel/$name.json"
+            echo "::group::$name"
+            node skills/diorama-pixel/scripts/build.mjs "$source" "$RUNNER_TEMP/pixel/pixel-$name.html" || status=1
+            node skills/diorama-pixel/scripts/validate.mjs "$source" "$RUNNER_TEMP/pixel/pixel-$name.html" || status=1
+            node skills/diorama-pixel/scripts/look.mjs "$source" "$RUNNER_TEMP/pixel/$name" || status=1
+            echo "::endgroup::"
           done
+          exit $status
       - name: Check clean skill installation and self-contained builds
         run: node scripts/install-smoke.mjs "$RUNNER_TEMP/install-smoke"
       - name: Check seven real worlds in all four finishes
