@@ -14,7 +14,7 @@ Repository: ${REPO}
 ## Diorama SVG
 Install: ${INSTALL}
 Invoke: /diorama (or ask your agent to use the diorama skill)
-Skill: ${REPO}/blob/main/SKILL.md
+Skill: ${REPO}/blob/main/skills/diorama/SKILL.md
 Dependency-free SVG, no WebGL. ${FIGURES.length} examples. Six themes (${THEME_ROWS.map((t) => t.name).join(", ")}). Roughly 30–35 KB gzip per built file.
 
 ## Examples
@@ -27,7 +27,7 @@ Skill: ${REPO}/blob/main/skills/diorama-worlds/SKILL.md
 Node.js 20+ build tools; install pinned dependencies once. Fixed camera, flat irregular ground by default, four original showcase scenes.
 
 ## Pages
-- /figures: the examples, live, in every theme
+- /svg: the Diorama SVG examples, live, in every theme
 - /docs: SVG installation, prompts, themes, scripts and embedding
 - /docs/worlds: Worlds installation, invocation, setup, finishes, browser checks and embedding
 - /worlds: live miniature/pixel playground, four original scenes in miniature, pixel, halftone and blueprint finishes, installation and renderer tradeoffs

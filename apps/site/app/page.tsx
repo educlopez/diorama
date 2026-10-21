@@ -37,11 +37,11 @@ export default function Page() {
 
       <section className="col skill-pair" id="choose-skill" aria-label="Choose your Diorama skill">
         <article className="skill-path">
-          <a className="skill-path-art" href="/figures" aria-label="Explore Diorama SVG figures"><Image src="/tiles/town-home.png" alt="A small SVG town with streets, houses, a tram and a crane." fill priority sizes="(max-width: 700px) 100vw, 480px" /></a>
+          <a className="skill-path-art" href="/svg" aria-label="Explore Diorama SVG figures"><Image src="/tiles/town-home.png" alt="A small SVG town with streets, houses, a tram and a crane." fill priority sizes="(max-width: 700px) 100vw, 480px" /></a>
           <div className="skill-path-heading"><h2>Diorama <span>SVG</span></h2><span className="skill-facts">{FIGURES.length} figures · {THEMES.length} themes</span></div>
           <p>Small, interactive illustrations for interfaces, docs and empty states. Crisp SVG, pointer reactions, no WebGL.</p>
           <CodeRow code={INSTALL} label="Copy Diorama SVG install command" />
-          <div className="skill-path-links"><a href="/figures">Explore figures <Arrow /></a><a href="/docs#installation">SVG guide</a></div>
+          <div className="skill-path-links"><a href="/svg">Explore figures <Arrow /></a><a href="/docs#installation">SVG guide</a></div>
         </article>
         <article className="skill-path">
           <a className="skill-path-art" href="/worlds" aria-label="Explore Diorama Worlds"><Image src={`/worlds/posters/${WORLD_POSTER_REVISION}/florist.png`} alt="An adult florist works on a bouquet in a detailed miniature flower stall, with a waiting customer." fill priority sizes="(max-width: 700px) 100vw, 480px" /></a>
@@ -79,7 +79,7 @@ export default function Page() {
           {strip.map((fig, i) => <FigureCard key={fig.name} fig={fig} index={FIGURES.indexOf(fig) + 1} chips={false} lazy />)}
         </div>
         <div className="cta-row" style={{ marginTop: 28 }}>
-          <a className="btn btn--secondary" href="/figures">Open the gallery <Arrow /></a>
+          <a className="btn btn--secondary" href="/svg">Open the gallery <Arrow /></a>
         </div>
       </section>
 

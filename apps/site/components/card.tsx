@@ -17,7 +17,7 @@ export function FigureCard({ fig, index, chips = true, wide = false, full = fals
         <span className="fig-tags">
           <span className="tag">{fig.size}</span>
           <span className="tag">{fig.theme.base}</span>
-          <a className="tag" href={`${REPO}/blob/main/examples/${fig.name}.js`} title="Source on GitHub">{fig.lines} lines ↗</a>
+          <a className="tag" href={`${REPO}/blob/main/skills/diorama/examples/${fig.name}.js`} title="Source on GitHub">{fig.lines} lines ↗</a>
         </span>
       </div>
     </article>

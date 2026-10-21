@@ -4,17 +4,17 @@ import { Footer, Topbar } from "@/components/chrome";
 import { FIGURES } from "@/lib/figures";
 import { REPO } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Figures", description: "Every example figure the skill ships with, live, in every theme." };
+export const metadata: Metadata = { title: "SVG", description: "Every example figure the Diorama SVG skill ships with, live, in every theme." };
 
 /** The gallery: every example that ships with the skill, live, numbered, with its size, theme and chips. */
 export default function Page() {
   const sizes = ["hero", "card", "mini"] as const;
   return (
     <main id="main" className="app">
-      <Topbar active="figures" />
+      <Topbar active="svg" />
       <header className="header" style={{ paddingBottom: 48 }}>
         <p className="badge" style={{ marginTop: 24 }}><span>{FIGURES.length} figures</span><span className="badge-dim">· all made with the skill</span></p>
-        <h1 className="title">The gallery</h1>
+        <h1 className="title">Diorama SVG</h1>
         <p className="subtitle">Every example in the skill, live. Each is the format a new figure is written in: one file, a scene and its motion. Hover what moves, switch the theme, pause for the still frame, open the source.</p>
       </header>
       {sizes.map((size) => {

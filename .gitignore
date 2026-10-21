@@ -5,3 +5,6 @@ diorama-*.html
 
 # Default local visual-test artifacts.
 /work/
+
+# Agent worktrees
+.claude/worktrees/

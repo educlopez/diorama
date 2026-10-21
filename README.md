@@ -220,7 +220,7 @@ Everything below lives in `skills/diorama/`, the folder the skills CLI installs.
 
 ## Site
 
-`apps/site` is [diorama.educalvolopez.com](https://diorama.educalvolopez.com): the landing, the figures page and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
+`apps/site` is [diorama.educalvolopez.com](https://diorama.educalvolopez.com): the landing, the SVG and Worlds pages and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
 
 ```sh
 cd apps/site && npm install && npm run dev
