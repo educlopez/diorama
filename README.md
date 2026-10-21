@@ -254,4 +254,4 @@ Built Worlds HTML bundles its renderer and needs no network at runtime, but is a
 
 The flat isometric drawing owes a debt to [Anatomy](https://github.com/wheresryan22/anatomy) and [Colorfigures](https://april-zhu.com/colorfigures), two skills that fake 3D in SVG beautifully.
 
-MIT.
+MIT. Diorama Worlds generated HTML bundles three.js (MIT); see [`skills/diorama-worlds/THIRD_PARTY_NOTICES.txt`](skills/diorama-worlds/THIRD_PARTY_NOTICES.txt).
