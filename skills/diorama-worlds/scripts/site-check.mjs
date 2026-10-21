@@ -57,7 +57,7 @@ try{
   const controls=await page.locator('.world-toolbar button,.world-toolbar select').evaluateAll(es=>es.map(e=>({name:e.getAttribute('aria-label')??e.textContent,height:e.getBoundingClientRect().height})));
   check('new controls meet 44px touch height',controls.every(c=>c.height>=44),controls);
   await page.screenshot({path:join(output,'worlds-landing-mobile.png'),fullPage:true});
-  for(const route of ['/','/figures','/docs','/docs/worlds']){
+  for(const route of ['/','/svg','/docs','/docs/worlds']){
     const requests=[];const handler=r=>requests.push(r.url());page.on('request',handler);
     const response=await page.goto(base+route);check(`${route} still responds`,response.status()===200);
     check(`${route} does not load Worlds HTML`,!requests.some(u=>/\/worlds\/.*\.html/.test(u)),requests.filter(u=>/worlds/.test(u)));
