@@ -6,7 +6,7 @@ export const INSTALL_WORLDS = "npx skills add educlopez/diorama --skill diorama-
 export const INSTALL_ALL = [
   { label: "skills", code: INSTALL },
   { label: "claude-code", code: "npx skills add educlopez/diorama --skill diorama -g -a claude-code" },
-  { label: "git", code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama" },
+  { label: "git", code: "git clone https://github.com/educlopez/diorama.git ~/.diorama && mkdir -p ~/.claude/skills && ln -s ~/.diorama/skills/diorama ~/.claude/skills/diorama" },
 ];
 export const THEMES = ["toy", "soft", "mono", "line", "night", "print"] as const;
 export type Theme = (typeof THEMES)[number];

@@ -149,13 +149,13 @@ npx skills add educlopez/diorama --skill diorama -g -a claude-code
 With git:
 
 ```sh
-git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama
+git clone https://github.com/educlopez/diorama.git ~/.diorama && mkdir -p ~/.claude/skills && ln -s ~/.diorama/skills/diorama ~/.claude/skills/diorama
 ```
 
 Without git:
 
 ```sh
-mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/diorama/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/diorama
+mkdir -p ~/.claude/skills/diorama && curl -L https://github.com/educlopez/diorama/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C ~/.claude/skills/diorama diorama-main/skills/diorama
 ```
 
 ### Requirements

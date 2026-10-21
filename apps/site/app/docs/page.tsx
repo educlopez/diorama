@@ -106,7 +106,7 @@ export default function Page() {
         <Section id="installation">
           <CodeRows rows={[
             { code: INSTALL, note: "Selects only Diorama SVG. The CLI lets you choose target agents. Add -a claude-code to target Claude Code alone. Node.js 20 or later runs the scripts; Chrome or Chromium runs the look (Playwright's browser is found, or playwright-core is installed once)." },
-            { code: "git clone https://github.com/educlopez/diorama.git ~/.claude/skills/diorama", note: "The same, with git. Nothing is needed at runtime: a finished page draws itself as SVG and makes no network request." },
+            { code: "git clone https://github.com/educlopez/diorama.git ~/.diorama && mkdir -p ~/.claude/skills && ln -s ~/.diorama/skills/diorama ~/.claude/skills/diorama", note: "The same, with git: the clone stays in ~/.diorama, git pull there updates it. Nothing is needed at runtime: a finished page draws itself as SVG and makes no network request." },
           ]} />
         </Section>
 
