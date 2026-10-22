@@ -54,7 +54,7 @@ const page = (c) => {
   <div class="brand"><svg viewBox="0 0 38 48"><path fill="#0d0d0d" fill-rule="evenodd" d="${mark}"/></svg>Diorama</div>
   <div class="text"><h1>${c.title.map((t) => `<span>${t}</span>`).join("")}</h1>${many ? "" : `<p>${c.sub}</p>`}</div>
   <div class="scenes">${scenes}</div>
-  ${c.cmd ? `<code>${c.cmd}</code>` : `<code>${INSTALL}</code>`}
+  <code>${c.cmd ?? INSTALL} -g</code>
   <div class="url">dioramas.dev</div>
 </body></html>`;
 };
