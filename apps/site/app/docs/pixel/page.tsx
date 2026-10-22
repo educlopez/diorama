@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
 import { INSTALL_PIXEL, REPO } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Diorama Pixel guide", description: "Install and use Diorama Pixel: dithered pixel-art miniatures from a dependency-free canvas renderer. Setup, prompts, checks and embedding." };
+export const metadata: Metadata = pageMetadata({
+  title: "Diorama Pixel guide",
+  description: "Install and use Diorama Pixel: dithered pixel-art miniatures from a dependency-free canvas renderer. Setup, prompts, checks and embedding.",
+  path: "/docs/pixel",
+});
 const code = (value: string) => <div className="code-block"><pre><code>{value}</code></pre></div>;
 export default function PixelGuide() {
   return <main id="main" className="app">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import type { ReactNode } from "react";
 import { Footer, GitHub, Topbar } from "@/components/chrome";
 import { Frame } from "@/components/frame";
@@ -6,7 +7,11 @@ import { CodeRow, CodeRows } from "@/components/install";
 import { byName } from "@/lib/figures";
 import { INSTALL, REPO, SIZES, SKILL_FILES, THEME_FIELDS, THEME_ROWS } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Guides · Diorama SVG", description: "Choose a Diorama skill. Install SVG for lightweight interactive figures, Worlds for detailed miniature scenes, or Pixel for dithered pixel-art miniatures. SVG setup, themes and embedding." };
+export const metadata: Metadata = pageMetadata({
+  title: "Guides",
+  description: "Choose a Diorama skill. Install SVG for lightweight interactive figures, Worlds for detailed miniature scenes, or Pixel for dithered pixel-art miniatures. SVG setup, themes and embedding.",
+  path: "/docs",
+});
 
 const SECTIONS = [
   { id: "installation", title: "Installation" },

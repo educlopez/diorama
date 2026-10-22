@@ -4,8 +4,40 @@ import { CodeRow } from "@/components/install";
 import { FIGURES, byName } from "@/lib/figures";
 import Image from "next/image";
 import { WORLD_POSTER_REVISION } from "@/lib/worlds";
-import { INSTALL, INSTALL_PIXEL, INSTALL_WORLDS, THEMES } from "@/lib/site";
+import { AUTHOR, INSTALL, INSTALL_PIXEL, INSTALL_WORLDS, REPO, SITE, THEMES } from "@/lib/site";
 import { PIXEL, pixelPoster } from "@/lib/pixel";
+import { RELEASE_VIDEO } from "@/lib/seo";
+import pkg from "../package.json";
+
+/* What search engines read about the project: the skills as source code, and the release video. */
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareSourceCode",
+      name: "Diorama",
+      description: "Agent skills that build animated isometric illustrations for the web, each one self-contained HTML: SVG figures, 3D miniature worlds and dithered pixel-art miniatures.",
+      url: SITE,
+      codeRepository: REPO,
+      license: "https://opensource.org/licenses/MIT",
+      version: pkg.version,
+      programmingLanguage: ["JavaScript", "HTML", "SVG"],
+      author: { "@type": "Person", name: AUTHOR.name, url: AUTHOR.url },
+      image: `${SITE}/opengraph-image.png`,
+    },
+    {
+      "@type": "VideoObject",
+      name: "Diorama 1.3: one place, three ways",
+      description: "One flower stall drawn by the three Diorama skills, SVG, Worlds and Pixel, then real scenes from each.",
+      thumbnailUrl: SITE + RELEASE_VIDEO.poster,
+      contentUrl: SITE + RELEASE_VIDEO.url,
+      uploadDate: RELEASE_VIDEO.published,
+      duration: `PT${RELEASE_VIDEO.seconds}S`,
+      width: RELEASE_VIDEO.width,
+      height: RELEASE_VIDEO.height,
+    },
+  ],
+};
 
 const STRIP = ["island", "launchpad", "cafe", "server", "mailbox", "desk"];
 
@@ -25,6 +57,7 @@ export default function Page() {
   const strip = STRIP.map(byName);
   return (
     <main id="main" className="app">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <Topbar />
       <header className="header home-hero">
         <p className="badge"><span className="beta">Open source</span><span>Three skills for your coding agent</span></p>

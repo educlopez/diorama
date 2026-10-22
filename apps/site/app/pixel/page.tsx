@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
 import { SkillCompare } from "@/components/skill-compare";
@@ -7,11 +8,11 @@ import { INSTALL_PIXEL, REPO } from "@/lib/site";
 import "../worlds/worlds.css";
 import "./pixel.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Pixel · tiny places, pixel by pixel",
   description: "Dithered pixel-art miniatures built by your coding agent: a dependency-free canvas renderer, procedural textures and a ground that dissolves into the page. A third skill inside Diorama.",
-  alternates: { canonical: "/pixel" },
-};
+  path: "/pixel",
+});
 
 const kb = (bytes: number) => `${Math.round(bytes / 1024)} KB`;
 

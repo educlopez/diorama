@@ -1,15 +1,36 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { SITE } from "@/lib/site";
+import { AUTHOR, SITE } from "@/lib/site";
+import { RELEASE_VIDEO } from "@/lib/seo";
 import "./globals.css";
 
+const TITLE = "Diorama · small 3D worlds that move";
+const DESCRIPTION = "Three agent skills for animated isometric illustrations: lightweight SVG figures, detailed 3D miniature worlds and dithered pixel-art miniatures, each one self-contained HTML file your coding agent builds.";
+
+/* The defaults, and the home's own card: every other page passes its own through pageMetadata. */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: { default: "Diorama · small 3D worlds that move", template: "%s · Diorama" },
-  description: "Three agent skills for animated scenes: lightweight SVG illustrations, detailed 3D miniature worlds and dithered pixel-art miniatures. Six SVG themes, four Worlds finishes, one offline HTML file.",
-  icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: "/icon.svg" },
-  openGraph: { title: "Diorama · small 3D worlds that move", description: "SVG figures, detailed 3D worlds and pixel-art miniatures, built by your coding agent. Three skills, one self-contained HTML output.", type: "website", url: SITE },
+  title: { default: TITLE, template: "%s · Diorama" },
+  description: DESCRIPTION,
+  applicationName: "Diorama",
+  authors: [{ name: AUTHOR.name, url: AUTHOR.url }],
+  creator: AUTHOR.name,
+  keywords: ["Diorama", "agent skills", "Claude Code skill", "Codex", "isometric illustration", "SVG illustration", "Three.js", "pixel art", "empty state illustration", "animated illustration"],
+  alternates: { canonical: "/" },
+  icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }] },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+    siteName: "Diorama",
+    type: "website",
+    locale: "en_US",
+    videos: [{ url: SITE + RELEASE_VIDEO.url, secureUrl: SITE + RELEASE_VIDEO.url, type: "video/mp4", width: RELEASE_VIDEO.width, height: RELEASE_VIDEO.height }],
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, creator: "@educalvolpz" },
 };
+
+export const viewport: Viewport = { themeColor: "#fdfdfd" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
