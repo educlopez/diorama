@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
 import { WorldViewer } from "@/components/world-viewer";
@@ -6,11 +7,11 @@ import { SkillCompare } from "@/components/skill-compare";
 import { REPO, INSTALL_WORLDS } from "@/lib/site";
 import "./worlds.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Worlds · little places, full of life",
   description: "Narrative miniature worlds with articulated characters, textured ground and four live finishes. A separate skill inside Diorama.",
-  alternates: { canonical: "/worlds" },
-};
+  path: "/worlds",
+});
 
 export default function WorldsPage() {
   return <main id="main" className="app worlds-page">

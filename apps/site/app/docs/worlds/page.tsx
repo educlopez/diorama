@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
 import { INSTALL_WORLDS, REPO } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Diorama Worlds guide", description: "Install and use Diorama Worlds: build animated miniature scenes with articulated people and four live finishes. Setup, browser checks and embedding." };
+export const metadata: Metadata = pageMetadata({
+  title: "Diorama Worlds guide",
+  description: "Install and use Diorama Worlds: build animated miniature scenes with articulated people and four live finishes. Setup, browser checks and embedding.",
+  path: "/docs/worlds",
+});
 const code = (value: string) => <div className="code-block"><pre><code>{value}</code></pre></div>;
 export default function WorldsGuide() {
   return <main id="main" className="app">

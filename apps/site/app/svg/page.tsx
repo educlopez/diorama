@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { FigureCard } from "@/components/card";
 import { Footer, Topbar } from "@/components/chrome";
 import { FIGURES } from "@/lib/figures";
 import { REPO } from "@/lib/site";
 
-export const metadata: Metadata = { title: "SVG", description: "Every example figure the Diorama SVG skill ships with, live, in every theme." };
+export const metadata: Metadata = pageMetadata({
+  title: "SVG · small figures that answer the pointer",
+  description: "Every example figure the Diorama SVG skill ships with, live in six themes: heroes, cards and minis drawn in SVG, with no WebGL and no dependency.",
+  path: "/svg",
+});
 
 /** The gallery: every example that ships with the skill, live, numbered, with its size, theme and chips. */
 export default function Page() {
