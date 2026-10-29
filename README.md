@@ -1,6 +1,6 @@
 <h1 align="center">Diorama</h1>
 
-<p align="center"><b>Three agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Describe a place; get one self-contained offline HTML file.</p>
+<p align="center"><b>Four agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Diorama Wash paints a top-down watercolor pond. Describe a place; get one self-contained offline HTML file.</p>
 
 <p align="center">
   <a href="https://dioramas.dev"><img src="https://img.shields.io/badge/site-dioramas.dev-1b1b19?style=flat-square" alt="Site: dioramas.dev"></a>
@@ -26,17 +26,17 @@
 
 ## Choose your skill
 
-| | Diorama SVG | Diorama Worlds | Diorama Pixel |
-|---|---|---|---|
-| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards |
-| Renderer | Dependency-free SVG | Three.js / WebGL 2 | Dependency-free software rasterizer on a 2D canvas |
-| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures |
-| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment |
-| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page |
-| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) |
-| Guide | [SVG guide](https://dioramas.dev/docs) | [Worlds guide](https://dioramas.dev/docs/worlds) | [Pixel guide](https://dioramas.dev/docs/pixel) |
+| | Diorama SVG | Diorama Worlds | Diorama Pixel | Diorama Wash |
+|---|---|---|---|---|
+| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards | A top-down watercolor pond or lake |
+| Renderer | Dependency-free SVG | Three.js / WebGL 2 | Dependency-free software rasterizer on a 2D canvas | WebGL 2, no external images |
+| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures | Cream paper, cerulean to indigo, a bleeding shore |
+| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment | 3 scenes: a quiet pond, a lake with boats, creatures under the wash |
+| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page | Warm paper around an isolated sheet of water |
+| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) | One offline HTML, ~30 KB uncompressed |
+| Guide | [SVG guide](https://dioramas.dev/docs) | [Worlds guide](https://dioramas.dev/docs/worlds) | [Pixel guide](https://dioramas.dev/docs/pixel) | [Wash skill](skills/diorama-wash/SKILL.md) |
 
-The file sizes use different measures; they are not a like-for-like benchmark. Install one skill, two or all three. They do not share renderers or dependencies.
+The file sizes use different measures; they are not a like-for-like benchmark. Install one skill or several. They do not share renderers or dependencies.
 
 <p align="center"><img src="apps/site/public/worlds/posters/flat-ground-1/florist.png" width="720" alt="Diorama Worlds: a florist and customer in an animated flower stall with flat irregular ground, no display platform."></p>
 
@@ -72,7 +72,17 @@ npx skills add educlopez/diorama --skill diorama-pixel -g
 /diorama-pixel a tiny bakery front at dawn, the baker carrying a tray of loaves out to a stall, for our blog header
 ```
 
-In agents without slash commands, ask “Use the diorama skill…”, “Use the diorama-worlds skill…” or “Use the diorama-pixel skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
+**Diorama Wash** — a top-down watercolor pond, WebGL 2, no external images:
+
+```sh
+npx skills add educlopez/diorama --skill diorama-wash -g
+```
+
+```text
+/diorama-wash a quiet pond on warm paper, one rowboat crossing, for the top of a blog post
+```
+
+In agents without slash commands, ask “Use the diorama skill…”, “Use the diorama-worlds skill…”, “Use the diorama-pixel skill…” or “Use the diorama-wash skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
 
 Each skill lives in its own folder under `skills/`. `npx skills add educlopez/diorama` without `--skill` lists them all and lets you pick; `npx skills add educlopez/diorama --list` prints them without installing.
 
@@ -265,6 +275,19 @@ node skills/diorama-pixel/scripts/look.mjs skills/diorama-pixel/examples/pier.js
 ```
 
 Built pages are about 50 KB and make no network request. The look command (Playwright, a dev dependency of the skill only) writes the still, four loop moments, hover, press and mobile captures and checks motion, the loop seam, picking, reduced motion and frame cost. It is a different thing from the Worlds `pixel` finish, which renders the Worlds Three.js scene at low resolution: Pixel trades articulated contact poses for textured surfaces, a dissolving ground and a page fifteen times smaller. The site's `/pixel` page shows the three examples live.
+
+## Diorama Wash
+
+A fourth skill, [`diorama-wash`](skills/diorama-wash/SKILL.md), paints one sheet of water seen straight down on warm paper. The shore bleeds, the colour runs from cerulean to indigo, the darks granulate, and the paper grain is procedural. Motion is a function of time: the wash shifts, and rings and wakes are drawn into a render target that displaces the pigment. Boats with rowers, and creatures that rise out of the blue, are painted marks. A click on the water sends a ring. There is no external image and no bundled renderer beyond the page's own shaders. A built page is about 30 KB and needs WebGL 2.
+
+```sh
+node skills/diorama-wash/scripts/build.mjs skills/diorama-wash/examples/pond.js wash-pond.html
+node skills/diorama-wash/scripts/validate.mjs skills/diorama-wash/examples/pond.js wash-pond.html
+npm ci --ignore-scripts --prefix skills/diorama-wash
+node skills/diorama-wash/scripts/look.mjs skills/diorama-wash/examples/pond.js work/pond-look
+```
+
+The three examples are `pond` (one boat), `lake` (three boats, wakes, and a simple separation when they meet), and `creatures` (fish and a frog that surface beside a moored boat). `render.mjs` writes individual frames and a short clip. The same time `t`, drawn twice, is the same pixels.
 
 ## SVG limits
 

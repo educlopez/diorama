@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/*TITLE*/</title>
+<style>
+  :root { color-scheme: light; }
+  html, body { margin: 0; background: #f3ead6; color: #4a453c; font: 15px/1.45 ui-sans-serif, system-ui, sans-serif; }
+  main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px 16px 36px; box-sizing: border-box; }
+  canvas { display: block; width: min(960px, 100%); height: auto; background: #f3ead6; touch-action: manipulation; }
+  h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0; color: #2c2924; }
+  p { margin: 0; max-width: 62ch; text-align: center; text-wrap: balance; }
+  .soft { color: #7a7368; font-size: 13px; }
+  .read { min-height: 1.45em; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #5c564c; }
+  .embed main { min-height: 0; padding: 0; gap: 0; position: relative; }
+  .embed canvas { width: 100%; max-width: none; }
+  .embed h1, .embed #means, .embed #hint { display: none; }
+  .embed .read { position: absolute; left: 10px; bottom: 8px; text-align: left; background: rgba(243, 234, 214, 0.9); padding: 0 6px; }
+  .embed .read:empty { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <canvas id="stage" role="img"></canvas>
+  <h1 id="title"></h1>
+  <p id="means"></p>
+  <p id="hint" class="soft"></p>
+  <p id="read" class="read" aria-live="polite"></p>
+</main>
+<script>
+/*KERNEL*/
+</script>
+<script>
+/*SCENE*/
+</script>
+<script>
+(function () {
+  var spec = Wash.scenes[Wash.scenes.length - 1];
+  var canvas = document.getElementById("stage");
+  var q = new URLSearchParams(location.search);
+  var embed = q.has("embed");
+  if (embed) document.documentElement.className = "embed";
+  document.getElementById("title").textContent = spec.title || spec.name;
+  document.getElementById("means").textContent = spec.means || "";
+  document.getElementById("hint").textContent = spec.hint || "";
+  var read = document.getElementById("read");
+  canvas.setAttribute("aria-label", spec.means || spec.title || spec.name);
+  var still = q.has("still");
+  var reduced = q.has("reduced") ? true : undefined;
+  var t = q.has("t") ? Number(q.get("t")) : undefined;
+  var rt;
+  try {
+    rt = Wash.mount(spec, canvas, {
+      still: still || q.has("t"),
+      reduced: reduced,
+      t: t,
+      onRead: function (line) { read.textContent = line || ""; }
+    });
+  } catch (err) {
+    read.textContent = err && err.message ? err.message : "render failed";
+    throw err;
+  }
+  function fit() {
+    if (embed) return;
+    var avail = Math.min(document.documentElement.clientWidth - 32, canvas.width);
+    canvas.style.width = avail + "px";
+  }
+  fit();
+  addEventListener("resize", fit);
+  window.__wash = { spec: spec, runtime: rt };
+})();
+</script>
+</body>
+</html>

@@ -19,6 +19,7 @@ jobs:
         run: |
           npm ci --ignore-scripts --prefix skills/diorama-worlds
           npm ci --ignore-scripts --prefix skills/diorama-pixel
+          npm ci --ignore-scripts --prefix skills/diorama-wash
           npm ci --ignore-scripts --prefix apps/site
       - name: Install browser for real output checks
         working-directory: skills/diorama-worlds
@@ -44,6 +45,19 @@ jobs:
           exit $status
       - name: Check clean skill installation and self-contained builds
         run: node scripts/install-smoke.mjs "$RUNNER_TEMP/install-smoke"
+      - name: Check the wash skill's scenes and real output
+        run: |
+          mkdir -p "$RUNNER_TEMP/wash"
+          status=0
+          for source in skills/diorama-wash/examples/*.js; do
+            name=$(basename "$source" .js)
+            echo "::group::$name"
+            node skills/diorama-wash/scripts/build.mjs "$source" "$RUNNER_TEMP/wash/wash-$name.html" || status=1
+            node skills/diorama-wash/scripts/validate.mjs "$source" "$RUNNER_TEMP/wash/wash-$name.html" || status=1
+            node skills/diorama-wash/scripts/look.mjs "$source" "$RUNNER_TEMP/wash/$name" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
       - name: Check seven real worlds in all four finishes
         env:
           WORLDS_TEST_OUTPUT: ${{ runner.temp }}/worlds-runtime
@@ -68,5 +82,6 @@ jobs:
             ${{ runner.temp }}/worlds-runtime
             ${{ runner.temp }}/worlds-site
             ${{ runner.temp }}/pixel
+            ${{ runner.temp }}/wash
             ${{ runner.temp }}/site.log
           retention-days: 7

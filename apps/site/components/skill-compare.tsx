@@ -1,8 +1,8 @@
-/** The three skills side by side; used under the Worlds and Pixel pages. */
+/** SVG, Worlds and Pixel, side by side; used under the Worlds and Pixel pages. */
 export function SkillCompare({ id, current }: { id: string; current: "worlds" | "pixel" }) {
   return (
     <section className="col worlds-choice" aria-labelledby={id}>
-      <h2 id={id}>Three skills. One Diorama.</h2>
+      <h2 id={id}>Separate skills. One Diorama.</h2>
       <div className="worlds-comparison">
         <article>
           <h3>Diorama SVG</h3>

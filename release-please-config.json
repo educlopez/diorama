@@ -101,6 +101,21 @@
           "type": "json",
           "path": "skills/diorama-pixel/package-lock.json",
           "jsonpath": "$.packages[''].version"
+        },
+        {
+          "type": "json",
+          "path": "skills/diorama-wash/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "skills/diorama-wash/package-lock.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "skills/diorama-wash/package-lock.json",
+          "jsonpath": "$.packages[''].version"
         }
       ]
     }

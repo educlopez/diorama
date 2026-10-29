@@ -1,0 +1,5 @@
+This skill's pages are written from its own code. A built page bundles no
+third-party software, fonts, or images.
+
+Browser checks install playwright-core to drive Chrome or Chromium. That
+package stays a development dependency and is not copied into a built page.
