@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { build } from "./build.mjs";
 import { openBrowser } from "./browser.mjs";
 
-const scenes = ["pond", "lake", "creatures"];
+const scenes = ["pond", "landscape", "town", "portrait", "still", "poppy", "imprint"];
 
 async function withPage(scene, fn) {
   const dir = mkdtempSync(join(tmpdir(), "wash-"));

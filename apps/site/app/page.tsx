@@ -16,7 +16,7 @@ const JSON_LD = {
     {
       "@type": "SoftwareSourceCode",
       name: "Diorama",
-      description: "Agent skills that build animated illustrations for the web, each one self-contained HTML: SVG figures, 3D miniature worlds, dithered pixel-art miniatures, and a watercolor pond.",
+      description: "Agent skills that build animated illustrations for the web, each one self-contained HTML: SVG figures, 3D miniature worlds, dithered pixel-art miniatures, and watercolors of any subject.",
       url: SITE,
       codeRepository: REPO,
       license: "https://opensource.org/licenses/MIT",
@@ -62,7 +62,7 @@ export default function Page() {
       <header className="header home-hero">
         <p className="badge"><span className="beta">Open source</span><span>Four skills for your coding agent</span></p>
         <h1 className="title">Small worlds.<br /><span className="home-title-dim">Made to move.</span></h1>
-        <p className="subtitle">Lightweight SVG figures, detailed miniature worlds, dithered pixel art, or a watercolor pond. Describe a place; your agent builds an animated scene and hands you one self-contained HTML file.</p>
+        <p className="subtitle">Lightweight SVG figures, detailed miniature worlds, dithered pixel art, or a watercolor of any subject. Describe a picture; your agent builds an animated scene and hands you one self-contained HTML file.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="/worlds">Explore Worlds <Arrow /></a>
           <a className="btn btn--secondary" href="#choose-skill">Choose your skill</a>
@@ -94,8 +94,8 @@ export default function Page() {
       </section>
       <section className="section" aria-label="Diorama Wash">
         <div className="steps-head">
-          <h2 className="steps-title">Diorama Wash.<br /><span className="steps-title-dim">A pond on warm paper</span></h2>
-          <p className="steps-lede">A top-down watercolor sheet of water. The shore bleeds, boats leave wakes, and a frame is a function of time. WebGL 2, no external images.</p>
+          <h2 className="steps-title">Diorama Wash.<br /><span className="steps-title-dim">Any subject, in watercolor</span></h2>
+          <p className="steps-lede">Translucent washes on warm paper: bleeding edges, a wet rim, granulation, and bare paper left for the lights. Shapes or a picture in, a frame that is a function of time out. WebGL 2, no external images.</p>
         </div>
         <CodeRow code={INSTALL_WASH} label="Copy Diorama Wash install command" />
       </section>
@@ -156,12 +156,12 @@ export default function Page() {
         <h2 className="section-title" id="faq-title">FAQs</h2>
         <div className="faq-list">
           {[
-            ["Which skill should I choose?", "Diorama SVG makes lightweight interactive illustrations for UI, docs and empty states. Diorama Worlds makes detailed 3D miniature stories with articulated people and four finishes. Diorama Pixel makes dithered pixel-art miniatures with no dependency. Diorama Wash paints a top-down watercolor pond. Same repository; separate renderers and install commands."],
+            ["Which skill should I choose?", "Diorama SVG makes lightweight interactive illustrations for UI, docs and empty states. Diorama Worlds makes detailed 3D miniature stories with articulated people and four finishes. Diorama Pixel makes dithered pixel-art miniatures with no dependency. Diorama Wash paints any subject as a watercolor. Same repository; separate renderers and install commands."],
             ["Is it free?", "Yes. All four skills, their renderers and examples are MIT. Use them in personal or commercial projects. Your coding agent may have its own usage costs."],
             ["What do I need?", "An agent that reads skills and Node.js 20+ for the build/check scripts. Browser checks need Chrome or Chromium. Worlds also installs its pinned build dependencies once and needs WebGL 2 in the viewer; Pixel installs one dev dependency for its browser checks. The install CLI may require a newer Node release; see each guide."],
             ["Does a finished file need a network connection?", "No. SVG and Pixel include their small renderers; Worlds bundles Three.js and generated textures. SVG files are roughly 30–35 KB gzip, Pixel files about 55 KB uncompressed, Worlds files about 0.77 MB uncompressed. These are different size measures, not a like-for-like benchmark."],
             ["Does it work in React?", "Yes. Every renderer mounts into an element and releases its resources on cleanup. Use the corresponding guide: their APIs and dependencies are deliberately separate."],
-            ["Can I change the look?", "SVG has six tunable themes. Worlds has miniature, pixel, halftone and blueprint finishes sharing the same action and clock. Pixel takes its palette, ramps and textures from the scene. Wash is a watercolor pond: paper, shore and the cast come from the scene. All four honor reduced motion."],
+            ["Can I change the look?", "SVG has six tunable themes. Worlds has miniature, pixel, halftone and blueprint finishes sharing the same action and clock. Pixel takes its palette, ramps and textures from the scene. Wash takes its subject from the scene: shapes or a picture, painted as watercolor on paper. All four honor reduced motion."],
           ].map(([q, a]) => (
             <details key={q} className="faq">
               <summary>{q}</summary>

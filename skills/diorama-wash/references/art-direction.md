@@ -1,29 +1,35 @@
 # Art direction
 
-A wash is a top-down sheet of water on warm paper. The pond sits in the middle and the paper stays empty around it. Nothing in the frame is a model on a plinth, and nothing is drawn with perspective.
+The picture is a watercolor on one sheet. Judge a still against this list before handing it over. If a point fails, change the scene.
 
 ## Paper
 
-The ground is a warm cream, the colour of cold-pressed paper. Grain is procedural: a fine tooth, a slightly coarser speckle, and long fibers. It shows through thin pigment and gathers in the darks.
+Warm cream, a little darker in the tooth and lighter on the fibers. The grain is visible on the bare margin and through every wash, because the colour is laid over the paper rather than replacing it. Do not cover the sheet to the frame.
 
-## The pond
+## Glazes
 
-The shore is an irregular stain, not an ellipse with a stroke. Pigment bleeds past the mask, a thin darker line sits on the wet edge, and the interior runs from a pale cerulean shelf to indigo in the middle. Lay the colour in broad washes, then a tighter wash, then granulation: dark pigment breaks into specks where the paper tooth is low. A few dry-brush marks can sit on the shore. They are short, broken, and darker than the wash.
+A wash is translucent. Two of them overlap by multiplying, so a blue over a yellow goes greener and darker, and the paper still shows in the thin parts. Light, wide glazes go down first (a low `layer`). Smaller, heavier glazes go on top. `load` is how much pigment is in the water: around 0.3–0.5 for a first wash, higher only for a dark accent. A load near 1 with no overlap reads as flat paint.
 
-Earth-green stains belong on the margin, in patches, not as a hedge around the whole pond. A lily is a flat green disc with a notch, only when the scene asks for one.
+## Edge
 
-## Water that moves
+The boundary blooms outward and is irregular. `bleed` is that bloom, in world units (the sheet runs from -1 to 1). A broad wash wants something near 0.05–0.08. Inside the bloom, a thin darker line is the wet rim: leave `wet` high on washes. A shape whose edge is a clean geometric stroke is not done.
 
-The surface is the same 2D sheet. Motion is a shift of the wash coordinates plus a height field drawn into a render target and read back as a displacement. Rings and wakes are pale and dark strokes in the pigment. They are not foam, spray, or a mesh.
+## Inside the wash
 
-A wake belongs behind a boat that is moving. A creature that breaks the surface leaves a ring. A click on the water leaves a ring whose age is `t - tClick`. All of those are samples of the scene at earlier values of `t`, so a frame does not depend on the frames drawn before it.
+Density is not even. Pigment pools in places and thins in others. In the darker passages it granulates: specks of pigment in the tooth of the paper. `gran` does that. Keep it low on a pale sky and high on a dark roof, a deep pool, or hair.
 
-## What floats, what is under
+## Reserves
 
-Boats, rowers and creatures are painted marks: a hull with a wet edge, a torso and head, two oars that swing from `phase`. A soft shadow sits under a mark that is on the surface. Under the wash, the same mark is softer and pulled toward blue, and it still has a silhouette. When it surfaces, the local colour comes back and the ring starts.
+Some of the paper is never painted: a highlight on fruit, a cloud, the light on a cheek, the margin around the subject. Leave a gap, or lift pigment back toward the paper with `Wash.lift`. A painted white disc is not a reserve.
 
-Keep the cast small. One boat is a pond. Three boats are a lake. Two fish and a frog are enough life under the water.
+## Strokes and ink
 
-## Still frame
+A brush stroke has a direction. Use `Wash.stroke` along a curve, not a row of dots. Ink is a thin, broken, dark line of uneven width (`Wash.ink`), used for a roof, a jaw, a stem, or a reed. A few lines. A contour around every shape turns the picture back into a drawing.
 
-`still` is the second a reduced-motion viewer and a thumbnail see. Put the boat where the oars read, or a creature where it has just broken the surface. Do not leave everyone in the middle of the pond on top of each other unless that overlap is the point of the frame.
+## Subject
+
+The subject should be obvious at the size of the page: three roofs, a face, a poppy, a boat on a pond. Palette changes with the subject. Do not reuse the same blue-green sheet for every scene.
+
+## Motion
+
+One clear motion is enough: a boat, a cloud, smoke, a stem, a figure. It is a function of `t` and it returns to the start at `duration`. A click drops one extra wet stain. That stain is extra state; the declared marks are not.

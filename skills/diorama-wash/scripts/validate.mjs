@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 export const kernelSource = () => readFileSync(here("../kit/wash.js"), "utf8").replace(/\r\n/g, "\n").trim();
-const LINES = 220;
-const PAGE_BYTES = 220 * 1024;
+const LINES = 360;
+const PAGE_BYTES = 280 * 1024;
 
 export function partsOf(text) {
   const k = text.indexOf("var Wash = (function () {");
@@ -40,8 +40,7 @@ export function validate(text) {
     : !title ? "no title"
     : !means ? "no means"
     : means.length > 140 ? `means is ${means.length} characters`
-    : !/\bbuild\s*(\(|:)/.test(decl) ? "no build()"
-    : !/\btick\s*(\(|:)/.test(decl) ? "no tick()"
+    : !/\bpaint\s*(\(|:)/.test(decl) ? "no paint()"
     : !(duration > 0) ? "no positive duration"
     : !(still >= 0 && still < duration) ? `still ${still} is outside the ${duration}s loop`
     : "";
@@ -57,7 +56,7 @@ export function validate(text) {
   const lines = scene.split("\n").length;
   const bytes = Buffer.byteLength(text);
   check(6, "size", lines <= LINES && (!page || bytes <= PAGE_BYTES), lines > LINES ? `${lines} lines, limit ${LINES}` : `${bytes} bytes, limit ${PAGE_BYTES}`);
-  check(7, "actors", /\bactors\s*:/.test(strip), "build() should return actors");
+  check(7, "marks", /\bmarks\s*:/.test(strip) || /\bWash\.plate\s*\(/.test(strip), "paint() should return marks, or prepare() a plate");
   check(8, "hint", !!hint && /\bclick\b/i.test(hint), "hint should say what a click does");
   return out;
 }

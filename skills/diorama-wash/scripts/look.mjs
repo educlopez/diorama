@@ -70,19 +70,20 @@ try {
     const h = c.height;
     const buf = new Uint8Array(w * h * 4);
     gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
-    let blue = 0;
     let paper = 0;
+    let pigment = 0;
     for (let i = 0; i < buf.length; i += 16) {
       const r = buf[i];
       const g = buf[i + 1];
       const b = buf[i + 2];
-      if (b > r + 8 && b > 90) blue++;
-      if (r > 210 && g > 190 && b > 160 && b < 230) paper++;
+      const warm = r > 188 && g > 168 && b > 140 && r + 8 >= g && g + 12 >= b && (r - b) < 80;
+      if (warm) paper++;
+      if (r + g + b < 560) pigment++;
     }
     const n = buf.length / 16;
-    return { blue: blue / n, paper: paper / n };
+    return { paper: paper / n, pigment: pigment / n };
   }, meta.still);
-  check("fill: pond and paper both show", sample.blue > 0.08 && sample.blue < 0.62 && sample.paper > 0.08, sample);
+  check("fill: pigment and paper both show", sample.pigment > 0.06 && sample.paper > 0.04, sample);
   const frames = [];
   for (const [k, f] of [["a", 0], ["b", 0.25], ["c", 0.5], ["d", 0.75]]) {
     await shot(meta.duration * f, `t${k}`);

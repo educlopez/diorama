@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { basename, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -28,20 +28,20 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(pathToFileURL(file).href + "?still");
   await page.waitForFunction(() => window.__wash?.runtime);
-  await page.evaluate(() => {
-    const canvas = document.getElementById("stage");
-    canvas.style.width = canvas.width + "px";
-    canvas.style.height = canvas.height + "px";
-  });
   if (errors.length) throw new Error(errors.join("\n"));
-  const meta = await page.evaluate(() => ({ duration: window.__wash.spec.duration, still: window.__wash.spec.still || 0, width: window.__wash.spec.width || 960, height: window.__wash.spec.height || 960 }));
+  const meta = await page.evaluate(() => ({ duration: window.__wash.spec.duration, still: window.__wash.spec.still || 0, width: window.__wash.spec.width || 900, height: window.__wash.spec.height || 900 }));
+  const save = async (t, path) => {
+    const url = await page.evaluate((x) => {
+      window.__wash.runtime.renderAt(x);
+      return document.getElementById("stage").toDataURL("image/png");
+    }, t);
+    writeFileSync(path, Buffer.from(url.split(",")[1], "base64"));
+    console.log(path);
+  };
   const times = (flags.frames ? flags.frames.split(",") : [0, meta.still, meta.duration * 0.5]).map(Number);
   for (const t of times) {
-    await page.evaluate((x) => window.__wash.runtime.renderAt(x), t);
     const label = String(t).replace(".", "p");
-    const path = join(outdir, `${name}-t${label}.png`);
-    await page.locator("#stage").screenshot({ path });
-    console.log(path);
+    await save(t, join(outdir, `${name}-t${label}.png`));
   }
   const same = await page.evaluate((t) => window.__wash.runtime.same(t), meta.still);
   console.log(JSON.stringify({ determinism: same, renderer: await page.evaluate(() => window.__wash.runtime.glInfo()) }));
@@ -54,9 +54,7 @@ try {
     mkdirSync(dir, { recursive: true });
     for (let i = 0; i < n; i++) {
       const t = (i / fps) % meta.duration;
-      await page.evaluate((x) => window.__wash.runtime.renderAt(x), t);
-      const path = join(dir, `frame-${String(i).padStart(3, "0")}.png`);
-      await page.locator("#stage").screenshot({ path });
+      await save(t, join(dir, `frame-${String(i).padStart(3, "0")}.png`));
     }
     const mp4 = join(outdir, `${name}.mp4`);
     await new Promise((ok, fail) => {

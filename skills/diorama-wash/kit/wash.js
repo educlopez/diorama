@@ -1,666 +1,593 @@
 var Wash = (function () {
   var scenes = [];
-  var TAU = Math.PI * 2;
+  var MAX = 40;
+  var STRIDE = 8;
+
+  function num(v, d) { return v == null ? d : v; }
+
+  function mark(kind, o) {
+    o = o || {};
+    return {
+      kind: kind,
+      color: o.color || [0.35, 0.32, 0.28],
+      load: num(o.load, kind === 4 ? 0.82 : kind === 5 ? 0.62 : 0.5),
+      bleed: num(o.bleed, kind === 4 ? 0.012 : kind === 5 ? 0.03 : 0.052),
+      wet: num(o.wet, kind === 4 ? 0.22 : 0.9),
+      gran: num(o.gran, kind === 4 ? 0.28 : 0.62),
+      hold: num(o.hold, kind === 5 ? 0 : 0.18),
+      seed: num(o.seed, 1),
+      layer: num(o.layer, kind === 4 ? 6 : kind === 5 ? 4 : 1),
+      at: o.at || [0, 0],
+      radius: o.radius || [0.2, 0.15],
+      turn: num(o.turn, 0),
+      width: num(o.width, kind === 4 ? 0.0065 : 0.032),
+      points: o.points || null
+    };
+  }
 
   function scene(spec) {
     scenes.push(spec);
     return spec;
   }
 
-  function compile(gl, type, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      var log = gl.getShaderInfoLog(shader);
-      gl.deleteShader(shader);
-      throw new Error(log);
+  function encDist(sd) {
+    var t = (sd + 0.22) / 0.64;
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    return Math.round(t * 255);
+  }
+
+  function chamfer(mask, n) {
+    var g = new Float32Array(n * n);
+    var i, x, y, best;
+    for (i = 0; i < g.length; i++) g[i] = mask[i] ? 1e4 : 0;
+    for (y = 0; y < n; y++) {
+      for (x = 0; x < n; x++) {
+        i = y * n + x;
+        best = g[i];
+        if (x > 0) best = Math.min(best, g[i - 1] + 1);
+        if (y > 0) best = Math.min(best, g[i - n] + 1);
+        if (x > 0 && y > 0) best = Math.min(best, g[i - n - 1] + 1.414);
+        if (x + 1 < n && y > 0) best = Math.min(best, g[i - n + 1] + 1.414);
+        g[i] = best;
+      }
     }
-    return shader;
+    for (y = n - 1; y >= 0; y--) {
+      for (x = n - 1; x >= 0; x--) {
+        i = y * n + x;
+        best = g[i];
+        if (x + 1 < n) best = Math.min(best, g[i + 1] + 1);
+        if (y + 1 < n) best = Math.min(best, g[i + n] + 1);
+        if (x + 1 < n && y + 1 < n) best = Math.min(best, g[i + n + 1] + 1.414);
+        if (x > 0 && y + 1 < n) best = Math.min(best, g[i + n - 1] + 1.414);
+        g[i] = best;
+      }
+    }
+    return g;
   }
 
-  function program(gl, vs, fs) {
-    var p = gl.createProgram();
-    gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs));
-    gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs));
-    gl.bindAttribLocation(p, 0, "aPos");
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
-    return p;
+  function plate(rgba, w, h, opts) {
+    opts = opts || {};
+    var n = opts.size || 96;
+    var want = Math.max(1, Math.min(8, opts.colors || 6));
+    var pix = new Float32Array(n * n * 3);
+    var paper = new Uint8Array(n * n);
+    var y, x, sy, sx, acc, cnt, si, sr, sg, sb, lum, k, i;
+    for (y = 0; y < n; y++) {
+      var y0 = Math.floor(y * h / n);
+      var y1 = Math.max(y0 + 1, Math.floor((y + 1) * h / n));
+      for (x = 0; x < n; x++) {
+        var x0 = Math.floor(x * w / n);
+        var x1 = Math.max(x0 + 1, Math.floor((x + 1) * w / n));
+        acc = [0, 0, 0];
+        cnt = 0;
+        for (sy = y0; sy < y1 && sy < h; sy++) {
+          for (sx = x0; sx < x1 && sx < w; sx++) {
+            si = (sy * w + sx) * 4;
+            if (rgba[si + 3] < 128) continue;
+            acc[0] += rgba[si];
+            acc[1] += rgba[si + 1];
+            acc[2] += rgba[si + 2];
+            cnt++;
+          }
+        }
+        i = y * n + x;
+        if (!cnt) { paper[i] = 1; continue; }
+        sr = acc[0] / cnt / 255;
+        sg = acc[1] / cnt / 255;
+        sb = acc[2] / cnt / 255;
+        lum = sr * 0.3 + sg * 0.5 + sb * 0.2;
+        if (lum > 0.94 && Math.max(sr, sg, sb) - Math.min(sr, sg, sb) < 0.06) {
+          paper[i] = 1;
+          continue;
+        }
+        pix[i * 3] = sr;
+        pix[i * 3 + 1] = sg;
+        pix[i * 3 + 2] = sb;
+      }
+    }
+    var ids = [];
+    for (i = 0; i < n * n; i++) if (!paper[i]) ids.push(i);
+    var empty = { size: n, count: 0, pigment: new Float32Array(24), load: new Float32Array(8), gran: new Float32Array(8), field: new Uint8Array(n * n * 4), fieldB: new Uint8Array(n * n * 4) };
+    if (!ids.length) return empty;
+    ids.sort(function (a, b) {
+      var la = pix[a * 3] * 0.3 + pix[a * 3 + 1] * 0.5 + pix[a * 3 + 2] * 0.2;
+      var lb = pix[b * 3] * 0.3 + pix[b * 3 + 1] * 0.5 + pix[b * 3 + 2] * 0.2;
+      return la - lb;
+    });
+    var kUse = Math.min(want, ids.length);
+    var cent = [];
+    for (k = 0; k < kUse; k++) {
+      var id = ids[Math.floor((k + 0.5) * ids.length / kUse)];
+      cent.push([pix[id * 3], pix[id * 3 + 1], pix[id * 3 + 2]]);
+    }
+    var assign = new Int16Array(n * n);
+    var iter, sum, seen, best, bd, dr, dg, db, d2;
+    for (iter = 0; iter < 8; iter++) {
+      for (i = 0; i < n * n; i++) {
+        if (paper[i]) { assign[i] = -1; continue; }
+        best = 0;
+        bd = 1e9;
+        for (k = 0; k < kUse; k++) {
+          dr = pix[i * 3] - cent[k][0];
+          dg = pix[i * 3 + 1] - cent[k][1];
+          db = pix[i * 3 + 2] - cent[k][2];
+          d2 = dr * dr + dg * dg + db * db;
+          if (d2 < bd) { bd = d2; best = k; }
+        }
+        assign[i] = best;
+      }
+      sum = [];
+      seen = [];
+      for (k = 0; k < kUse; k++) { sum.push([0, 0, 0]); seen.push(0); }
+      for (i = 0; i < n * n; i++) {
+        if (assign[i] < 0) continue;
+        k = assign[i];
+        sum[k][0] += pix[i * 3];
+        sum[k][1] += pix[i * 3 + 1];
+        sum[k][2] += pix[i * 3 + 2];
+        seen[k]++;
+      }
+      for (k = 0; k < kUse; k++) {
+        if (!seen[k]) continue;
+        cent[k][0] = sum[k][0] / seen[k];
+        cent[k][1] = sum[k][1] / seen[k];
+        cent[k][2] = sum[k][2] / seen[k];
+      }
+    }
+    var order = [];
+    for (k = 0; k < kUse; k++) {
+      var live = 0;
+      for (i = 0; i < assign.length; i++) if (assign[i] === k) live++;
+      if (live < n * n * 0.004) continue;
+      lum = cent[k][0] * 0.3 + cent[k][1] * 0.5 + cent[k][2] * 0.2;
+      order.push({ k: k, lum: lum });
+    }
+    order.sort(function (a, b) { return b.lum - a.lum; });
+    var count = Math.min(8, order.length);
+    var pigment = new Float32Array(24);
+    var load = new Float32Array(8);
+    var gran = new Float32Array(8);
+    var map = new Int16Array(n * n);
+    map.fill(-1);
+    for (k = 0; k < count; k++) {
+      var srcK = order[k];
+      pigment[k * 3] = cent[srcK.k][0];
+      pigment[k * 3 + 1] = cent[srcK.k][1];
+      pigment[k * 3 + 2] = cent[srcK.k][2];
+      load[k] = 0.36 + (1 - srcK.lum) * 0.52;
+      gran[k] = 0.2 + (1 - srcK.lum) * 0.65;
+      for (i = 0; i < assign.length; i++) if (assign[i] === srcK.k) map[i] = k;
+    }
+    var field = new Uint8Array(n * n * 4);
+    var fieldB = new Uint8Array(n * n * 4);
+    var scale = 2 / n;
+    for (k = 0; k < count; k++) {
+      var inside = new Uint8Array(n * n);
+      for (i = 0; i < n * n; i++) inside[i] = map[i] === k ? 1 : 0;
+      var outside = new Uint8Array(n * n);
+      for (i = 0; i < n * n; i++) outside[i] = inside[i] ? 0 : 1;
+      var distIn = chamfer(inside, n);
+      var distOut = chamfer(outside, n);
+      var channel = k % 4;
+      var dest = k < 4 ? field : fieldB;
+      for (i = 0; i < n * n; i++) {
+        var sd = (map[i] === k ? distIn[i] : -distOut[i]) * scale;
+        var sx = i % n;
+        var sy = Math.floor(i / n);
+        var dy = n - 1 - sy;
+        var di = dy * n + sx;
+        dest[di * 4 + channel] = encDist(sd);
+      }
+    }
+    return { size: n, count: count, pigment: pigment, load: load, gran: gran, field: field, fieldB: fieldB };
   }
 
-  var quadVs = [
+  function pack(marks) {
+    var data = new Float32Array(MAX * STRIDE * 4);
+    var list = (marks || []).slice().sort(function (a, b) { return a.layer - b.layer || a.kind - b.kind; });
+    var n = Math.min(list.length, MAX);
+    var i, p, m, o, pts, at, rad, q;
+    for (i = 0; i < n; i++) {
+      m = list[i];
+      o = i * STRIDE * 4;
+      pts = m.points || [];
+      data[o] = m.kind;
+      data[o + 1] = pts.length;
+      data[o + 2] = m.seed;
+      data[o + 3] = m.turn || 0;
+      data[o + 4] = m.color[0];
+      data[o + 5] = m.color[1];
+      data[o + 6] = m.color[2];
+      data[o + 7] = m.load;
+      data[o + 8] = m.bleed;
+      data[o + 9] = m.wet;
+      data[o + 10] = m.gran;
+      data[o + 11] = m.hold;
+      at = m.at || [0, 0];
+      rad = m.radius || [0.2, 0.2];
+      data[o + 12] = at[0];
+      data[o + 13] = at[1];
+      data[o + 14] = (m.kind === 1 || m.kind === 5) ? rad[0] : m.width;
+      data[o + 15] = (m.kind === 1 || m.kind === 5) ? rad[1] : 0;
+      for (p = 0; p < 8; p++) {
+        q = pts[p] || [0, 0];
+        data[o + 16 + p * 2] = q[0];
+        data[o + 17 + p * 2] = q[1];
+      }
+    }
+    return { data: data, count: n, dropped: Math.max(0, list.length - MAX) };
+  }
+
+  var vert = [
     "#version 300 es",
-    "layout(location=0) in vec2 aPos;",
-    "out vec2 vUv;",
     "void main() {",
-    "  vUv = aPos * 0.5 + 0.5;",
-    "  gl_Position = vec4(aPos, 0.0, 1.0);",
+    "  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));",
+    "  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);",
     "}"
   ].join("\n");
 
-  var spriteVs = [
+  var frag = [
     "#version 300 es",
-    "layout(location=0) in vec2 aPos;",
-    "uniform vec2 uCenter;",
-    "uniform vec2 uHalf;",
-    "uniform float uRot;",
-    "out vec2 vLocal;",
-    "void main() {",
-    "  vec2 p = aPos * uHalf;",
-    "  float c = cos(uRot), s = sin(uRot);",
-    "  p = vec2(c * p.x - s * p.y, s * p.x + c * p.y);",
-    "  vLocal = aPos;",
-    "  gl_Position = vec4(uCenter + p, 0.0, 1.0);",
-    "}"
-  ].join("\n");
-
-  var noiseGlsl = [
-    "float hash(vec2 p) {",
-    "  vec3 p3 = fract(vec3(p.xyx) * 0.1031);",
-    "  p3 += dot(p3, p3.yzx + 33.33);",
-    "  return fract((p3.x + p3.y) * p3.z);",
-    "}",
+    "precision highp float;",
+    "uniform vec2 uRes;",
+    "uniform vec3 uPaper;",
+    "uniform vec4 uBloom;",
+    "uniform vec3 uStain;",
+    "uniform float uTime;",
+    "uniform float uDuration;",
+    "uniform int uCount;",
+    "uniform sampler2D uMarks;",
+    "uniform int uPlateCount;",
+    "uniform sampler2D uFieldA;",
+    "uniform sampler2D uFieldB;",
+    "uniform vec3 uPigment[8];",
+    "uniform float uLoad[8];",
+    "uniform float uGran[8];",
+    "out vec4 oColor;",
+    "float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }",
     "float noise(vec2 p) {",
     "  vec2 i = floor(p);",
     "  vec2 f = fract(p);",
+    "  f = f * f * (3.0 - 2.0 * f);",
     "  float a = hash(i);",
     "  float b = hash(i + vec2(1.0, 0.0));",
     "  float c = hash(i + vec2(0.0, 1.0));",
     "  float d = hash(i + vec2(1.0, 1.0));",
-    "  vec2 u = f * f * (3.0 - 2.0 * f);",
-    "  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);",
+    "  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);",
     "}",
     "float fbm(vec2 p) {",
-    "  float v = 0.0;",
-    "  float a = 0.5;",
-    "  for (int i = 0; i < 5; i++) {",
-    "    v += a * noise(p);",
-    "    p = p * 2.02 + vec2(1.7, 9.2);",
-    "    a *= 0.5;",
-    "  }",
+    "  float v = 0.0; float a = 0.5;",
+    "  for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }",
     "  return v;",
-    "}"
-  ].join("\n");
-
-  var waveFs = [
-    "#version 300 es",
-    "precision highp float;",
-    "in vec2 vUv;",
-    "out vec4 o;",
-    "uniform sampler2D uImp;",
-    "uniform float uCount;",
-    "uniform float uWakes;",
-    "uniform float uTime;",
-    "uniform float uDuration;",
-    "float ring(vec2 world, int i) {",
-    "  vec4 imp = texelFetch(uImp, ivec2(i, 0), 0);",
-    "  float amp = imp.w;",
-    "  if (amp < 0.004) return 0.0;",
-    "  vec2 pos = imp.xy * 2.0 - 1.0;",
-    "  float age = imp.z * 3.0;",
-    "  float d = length(world - pos);",
-    "  float radius = age * 0.52;",
-    "  float band = exp(-pow((d - radius) / 0.05, 2.0)) * exp(-age * 0.42);",
-    "  float rip = sin(d * 64.0 - age * 8.0) * exp(-pow((d - radius) / 0.09, 2.0)) * exp(-age * 0.55);",
-    "  float wake = float(i) < uWakes ? (band * 0.55 + rip * 0.7) : (band * 1.15 + rip * 0.35);",
-    "  return wake * amp;",
     "}",
-    "float field(vec2 uv) {",
-    "  vec2 world = uv * 2.0 - 1.0;",
-    "  float phase = fract(uTime / uDuration) * 6.28318530718;",
-    "  float h = sin(world.x * 16.0 + phase) * sin(world.y * 14.0 - phase * 0.5) * 0.03;",
-    "  h += sin(world.x * 28.0 - phase * 2.0 + world.y * 11.0) * 0.016;",
-    "  for (int i = 0; i < 64; i++) {",
-    "    if (float(i) + 0.5 > uCount) break;",
-    "    h += ring(world, i);",
+    "vec2 spin(vec2 p, float a) { float c = cos(a), s = sin(a); return vec2(c * p.x - s * p.y, s * p.x + c * p.y); }",
+    "vec4 tap(int index) { return texelFetch(uMarks, ivec2(index, 0), 0); }",
+    "vec2 ppt(int mark, int i) { vec4 v = tap(mark * 8 + 4 + (i >> 1)); return ((i & 1) == 0) ? v.xy : v.zw; }",
+    "float sdDisc(vec2 p, vec2 c, vec2 r, float turn) {",
+    "  vec2 q = spin(p - c, -turn);",
+    "  q.x /= max(r.x, 1e-4); q.y /= max(r.y, 1e-4);",
+    "  return (length(q) - 1.0) * min(r.x, r.y);",
+    "}",
+    "float sdPoly(vec2 p, int mark, int n) {",
+    "  vec2 a = ppt(mark, 0);",
+    "  float d = 1e9; float s = 1.0;",
+    "  for (int i = 0; i < 8; i++) {",
+    "    if (i >= n) break;",
+    "    int j = (i + 1 >= n) ? 0 : i + 1;",
+    "    vec2 b = ppt(mark, j);",
+    "    vec2 e = b - a; vec2 wv = p - a;",
+    "    vec2 g = wv - e * clamp(dot(wv, e) / max(dot(e, e), 1e-6), 0.0, 1.0);",
+    "    d = min(d, dot(g, g));",
+    "    if ((p.y >= a.y && p.y < b.y && e.x * wv.y > e.y * wv.x) || (p.y < a.y && p.y >= b.y && e.x * wv.y <= e.y * wv.x)) s = -s;",
+    "    a = b;",
     "  }",
-    "  return clamp(h, -1.0, 1.0);",
+    "  return s * sqrt(d);",
+    "}",
+    "float sdStroke(vec2 p, int mark, int n, float width) {",
+    "  float d = 1e9;",
+    "  for (int i = 0; i < 7; i++) {",
+    "    if (i + 1 >= n) break;",
+    "    vec2 a = ppt(mark, i); vec2 b = ppt(mark, i + 1); vec2 e = b - a;",
+    "    float t = clamp(dot(p - a, e) / max(dot(e, e), 1e-6), 0.0, 1.0);",
+    "    d = min(d, length(p - (a + e * t)));",
+    "  }",
+    "  return d - width;",
+    "}",
+    "vec3 glaze(vec3 col, vec3 base, vec3 pigment, float sd, float load, float bleed, float wet, float gran, float hold, float seed, float kind, float bristle, float n1, float n2, float n3, float grit, float fine) {",
+    "  if (load < 0.001) return col;",
+    "  float local = fract(n1 * 0.62 + n2 * 0.28 + seed * 0.173);",
+    "  float s = sd + (local - 0.5) * bleed * 2.4 + (n3 - 0.5) * bleed * 1.1 + (fine - 0.5) * bleed * 0.35;",
+    "  if (kind > 4.5 && kind < 5.5) {",
+    "    float lift = (1.0 - smoothstep(-0.002, bleed, s)) * load * (0.72 + 0.28 * n2);",
+    "    return mix(col, base, clamp(lift, 0.0, 0.9));",
+    "  }",
+    "  float cov = 1.0 - smoothstep(-bleed * 0.35, bleed * 1.15, s);",
+    "  if (cov < 0.004) return col;",
+    "  float rim = exp(-pow(s / max(bleed * 0.38, 0.0032), 2.0));",
+    "  rim *= smoothstep(bleed * 1.2, -bleed * 0.05, s);",
+    "  float body = 0.38 + 0.62 * (n2 * 0.5 + n3 * 0.5);",
+    "  float pool = smoothstep(0.6, 0.9, n3 + fract(seed) * 0.12);",
+    "  float pits = smoothstep(0.74, 0.96, grit);",
+    "  float fleck = smoothstep(0.93, 0.995, n1 * 0.25 + fine * 0.75);",
+    "  float opt = cov * load * body;",
+    "  opt += rim * load * wet * 1.15;",
+    "  opt += pool * cov * load * 0.36;",
+    "  opt *= 1.0 + pits * gran * smoothstep(0.25, 0.7, opt) * 0.7;",
+    "  opt *= 1.0 - fleck * hold * 0.55;",
+    "  if (kind > 2.5 && kind < 3.5) opt *= mix(0.78, 1.0, bristle);",
+    "  if (kind > 3.5 && kind < 4.5) {",
+    "    float gap = smoothstep(0.05, 0.2, fract(n2 * 1.8 + fine * 1.4 + seed * 0.23));",
+    "    opt *= mix(0.08, 1.0, gap);",
+    "    opt = pow(max(opt, 0.0), 0.65);",
+    "  }",
+    "  opt = clamp(opt, 0.0, 2.8);",
+    "  vec3 sigma = (vec3(1.0) - clamp(pigment, 0.0, 1.0)) * opt * 2.15;",
+    "  sigma += vec3(pits * gran * load * 0.28);",
+    "  return col * exp(-sigma);",
     "}",
     "void main() {",
-    "  float e = 1.6 / 384.0;",
-    "  float h = field(vUv);",
-    "  float hx = field(vUv + vec2(e, 0.0));",
-    "  float hy = field(vUv + vec2(0.0, e));",
-    "  o = vec4(clamp(h * 0.5 + 0.5, 0.0, 1.0), clamp((hx - h) * 6.0 * 0.5 + 0.5, 0.0, 1.0), clamp((hy - h) * 6.0 * 0.5 + 0.5, 0.0, 1.0), 1.0);",
+    "  vec2 w = (gl_FragCoord.xy / uRes) * 2.0 - 1.0;",
+    "  float ang = fract(uTime / max(uDuration, 0.001)) * 6.28318530718;",
+    "  vec2 drift = vec2(sin(ang), cos(ang)) * 0.012;",
+    "  vec2 pw = w + drift;",
+    "  float n1 = fbm(pw * 2.3);",
+    "  float n2 = fbm(pw * vec2(5.2, 4.4) + 4.1);",
+    "  float n3 = fbm(pw * 1.55 + 8.4);",
+    "  float grit = fbm(w * vec2(62.0, 74.0));",
+    "  float fine = noise(w * 280.0);",
+    "  float fiber = fbm(w * vec2(220.0, 36.0));",
+    "  float tooth = fbm(w * vec2(90.0, 110.0) + 2.2);",
+    "  float wx = fbm(pw * 1.2 + 2.2);",
+    "  float wy = fbm(pw * 1.2 + 7.4);",
+    "  vec2 p = w + (vec2(wx, wy) - 0.5) * 0.065;",
+    "  vec3 base = uPaper;",
+    "  base *= 0.93 + 0.08 * fiber;",
+    "  base *= 0.95 + 0.06 * tooth;",
+    "  base += (fine - 0.5) * 0.018 * vec3(1.0, 0.94, 0.82);",
+    "  base = clamp(base, 0.0, 1.0);",
+    "  vec3 col = base;",
+    "  if (uPlateCount > 0) {",
+    "    vec2 tuv = clamp(w * 0.5 + 0.5 + (vec2(n1, n2) - 0.5) * 0.02, 0.0, 1.0);",
+    "    vec4 da = texture(uFieldA, tuv);",
+    "    vec4 db = texture(uFieldB, tuv);",
+    "    float ds0 = da.r, ds1 = da.g, ds2 = da.b, ds3 = da.a;",
+    "    float ds4 = db.r, ds5 = db.g, ds6 = db.b, ds7 = db.a;",
+    "    for (int i = 0; i < 8; i++) {",
+    "      if (i >= uPlateCount) break;",
+    "      float enc = i == 0 ? ds0 : i == 1 ? ds1 : i == 2 ? ds2 : i == 3 ? ds3 : i == 4 ? ds4 : i == 5 ? ds5 : i == 6 ? ds6 : ds7;",
+      "      float sd = -(enc * 0.64 - 0.22);",
+    "      col = glaze(col, base, uPigment[i], sd, uLoad[i], 0.046, 0.95, uGran[i], 0.14, float(i) * 1.7 + 0.6, 2.0, 1.0, n1, n2, n3, grit, fine);",
+    "    }",
+    "  }",
+    "  for (int m = 0; m < 40; m++) {",
+    "    if (m >= uCount) break;",
+    "    vec4 a = tap(m * 8);",
+    "    vec4 b = tap(m * 8 + 1);",
+    "    vec4 c = tap(m * 8 + 2);",
+    "    vec4 d = tap(m * 8 + 3);",
+    "    float kind = a.x;",
+    "    int npts = int(a.y + 0.5);",
+    "    float seed = a.z;",
+    "    float turn = a.w;",
+    "    float sd = 4.0;",
+    "    float bristle = 1.0;",
+    "    if (kind > 0.5 && kind < 1.5) sd = sdDisc(p, d.xy, d.zw, turn);",
+    "    else if (kind > 4.5 && kind < 5.5) sd = sdDisc(p, d.xy, max(d.zw, vec2(1e-3)), turn);",
+    "    else if (kind > 1.5 && kind < 2.5 && npts >= 3) sd = sdPoly(p, m, npts);",
+    "    else if (kind > 2.5 && kind < 4.5 && npts >= 2) {",
+    "      float width = d.x * (0.82 + 0.28 * fract(n1 * 1.3 + seed * 0.31));",
+    "      sd = sdStroke(p, m, npts, width);",
+    "      vec2 e = ppt(m, 1) - ppt(m, 0);",
+    "      float el = length(e);",
+    "      vec2 tn = el > 1e-4 ? e / el : vec2(1.0, 0.0);",
+    "      bristle = 0.55 + 0.45 * noise(vec2(dot(p, tn) * 14.0, seed));",
+    "    } else continue;",
+    "    col = glaze(col, base, b.xyz, sd, b.w, c.x, c.y, c.z, c.w, seed, kind, bristle, n1, n2, n3, grit, fine);",
+    "  }",
+    "  if (uBloom.w > 0.001 && uBloom.z > 0.0) {",
+    "    float sd = length(w - uBloom.xy) - uBloom.z;",
+    "    col = glaze(col, base, uStain, sd, uBloom.w, 0.075, 1.05, 0.4, 0.05, 4.2, 1.0, 1.0, n1, n2, n3, grit, fine);",
+    "  }",
+    "  col *= 0.97 + 0.04 * tooth;",
+    "  col += (fiber - 0.5) * 0.012;",
+    "  oColor = vec4(clamp(col, 0.0, 1.0), 1.0);",
     "}"
   ].join("\n");
-
-  var beautyFs = [
-    "#version 300 es",
-    "precision highp float;",
-    "in vec2 vUv;",
-    "out vec4 o;",
-    "uniform sampler2D uWave;",
-    "uniform vec2 uPond;",
-    "uniform float uSeed;",
-    "uniform float uVeg;",
-    "uniform float uLilies;",
-    "uniform float uReeds;",
-    "uniform float uTime;",
-    "uniform float uDuration;",
-    noiseGlsl,
-    "float pondD(vec2 world) {",
-    "  vec2 p = world / uPond;",
-    "  float n = fbm(p * 2.15 + uSeed) - 0.5;",
-    "  float n2 = fbm(p * 4.8 + uSeed * 2.7) - 0.5;",
-    "  return length(p) - 1.0 + n * 0.36 + n2 * 0.12;",
-    "}",
-    "float lily(vec2 world, vec2 c, float r, float slitAng) {",
-    "  vec2 q = world - c;",
-    "  float d = length(q) - r;",
-    "  float ang = atan(q.y, q.x);",
-    "  float slit = smoothstep(0.18, 0.02, abs(ang - slitAng)) * smoothstep(r, r * 0.15, length(q));",
-    "  float pad = smoothstep(0.02, -0.025, d);",
-    "  return pad * (1.0 - slit);",
-    "}",
-    "void main() {",
-    "  vec3 wave = texture(uWave, vUv).rgb;",
-    "  float h = wave.r * 2.0 - 1.0;",
-    "  vec2 g = (wave.gb * 2.0 - 1.0) / 6.0;",
-    "  vec2 world = vUv * 2.0 - 1.0;",
-    "  float phase = fract(uTime / uDuration) * 6.28318530718;",
-    "  vec2 drift = vec2(sin(phase), cos(phase * 2.0));",
-    "  vec2 flow = vec2(fbm(world * 2.6 + drift * 0.45), fbm(world * 2.6 + drift.yx * 0.45)) - 0.5;",
-    "  float d = pondD(world + g * 0.02);",
-    "  vec2 wuv = vUv + g * 0.22 + flow * 0.045;",
-    "  float grain = noise(vUv * vec2(540.0, 680.0));",
-    "  float grain2 = noise(vUv * vec2(220.0, 260.0) + 4.0);",
-    "  float fiber = noise(vec2(vUv.x * 28.0, vUv.y * 920.0));",
-    "  vec3 paper = vec3(0.957, 0.922, 0.839);",
-    "  paper *= 0.93 + 0.09 * grain + 0.04 * grain2 + 0.035 * fiber;",
-    "  paper += (noise(vUv * 90.0) - 0.5) * 0.015;",
-    "  float ang = atan(world.y, world.x);",
-    "  float gaps = smoothstep(0.28, 0.62, noise(vec2(ang * 1.7 + uSeed, d * 3.0 + uSeed)));",
-    "  float shore = exp(-pow((d + 0.01) / 0.18, 2.0));",
-    "  float clumps = fbm(world * 5.2 + uSeed * 1.7);",
-    "  float vegA = smoothstep(0.38, 0.66, clumps) * shore * (0.42 + 0.58 * gaps);",
-    "  vegA += smoothstep(0.55, 0.8, fbm(world * 7.2 + uSeed)) * smoothstep(0.2, -0.02, abs(d)) * (0.35 + 0.65 * gaps);",
-    "  vegA *= uVeg;",
-    "  float vegN = fbm(world * 14.0 + 3.0);",
-    "  vec3 veg = mix(vec3(0.30, 0.35, 0.16), vec3(0.48, 0.46, 0.22), vegN);",
-    "  veg = mix(veg, vec3(0.36, 0.32, 0.16), smoothstep(0.62, 0.9, noise(world * 40.0)));",
-    "  float waterA = smoothstep(0.09, -0.055, d);",
-    "  float depth = smoothstep(0.06, -0.62, d);",
-    "  float wash = fbm(wuv * 3.1 + uSeed);",
-    "  float wash2 = fbm(wuv * 7.4 + uSeed * 2.0);",
-    "  float wash3 = fbm(wuv * 1.4 - uSeed);",
-    "  vec3 shallow = vec3(0.49, 0.70, 0.75);",
-    "  vec3 cerulean = vec3(0.27, 0.52, 0.66);",
-    "  vec3 indigo = vec3(0.13, 0.20, 0.40);",
-    "  vec3 water = mix(shallow, cerulean, smoothstep(0.0, 0.55, depth));",
-    "  water = mix(water, indigo, smoothstep(0.28, 0.95, depth) * (0.55 + wash3 * 0.25));",
-    "  water = mix(water, indigo, (wash - 0.42) * 0.34);",
-    "  water = mix(water, shallow, smoothstep(0.58, 0.9, wash2) * (1.0 - depth) * 0.28);",
-    "  float ripple = smoothstep(0.03, 0.12, abs(h));",
-    "  water = mix(water, vec3(0.58, 0.76, 0.82), ripple * 0.72);",
-    "  water = mix(water, indigo, smoothstep(0.12, 0.28, abs(h)) * 0.28);",
-    "  float shelf = smoothstep(0.04, -0.16, d) * smoothstep(-0.42, -0.05, d);",
-    "  water = mix(water, water * vec3(0.78, 0.86, 0.72) + vec3(0.06, 0.07, 0.03), shelf * 0.55);",
-    "  float lilyA = 0.0;",
-    "  lilyA += lily(world, vec2(-0.16, 0.12), 0.055, 0.5);",
-    "  lilyA += lily(world, vec2(0.18, -0.16), 0.042, -1.2);",
-    "  lilyA += lily(world, vec2(-0.02, -0.2), 0.034, 2.1);",
-    "  lilyA *= uLilies * waterA;",
-    "  vec3 lilyCol = mix(vec3(0.32, 0.42, 0.18), vec3(0.52, 0.56, 0.24), noise(world * 50.0));",
-    "  vec3 col = paper;",
-    "  col = mix(col, veg, clamp(vegA, 0.0, 1.0) * (1.0 - waterA * 0.12));",
-    "  col = mix(col, water, waterA);",
-    "  col = mix(col, lilyCol, lilyA * 0.9);",
-    "  float rim = exp(-abs(d) * 34.0) * smoothstep(0.12, 0.0, abs(d));",
-    "  vec3 wet = vec3(0.07, 0.12, 0.22);",
-    "  col = mix(col, wet, rim * 0.82);",
-    "  float bleed = smoothstep(0.14, 0.0, d) * smoothstep(-0.08, 0.02, d);",
-    "  col = mix(col, mix(cerulean, paper, 0.45), bleed * 0.35);",
-    "  float along = ang * 2.4 + fbm(world * 3.0 + uSeed) * 5.0;",
-    "  float dash = smoothstep(0.16, 0.0, abs(fract(along) - 0.5) - 0.28);",
-    "  float band = exp(-pow((d - 0.012) / 0.028, 2.0));",
-    "  float skip = step(0.58, noise(vec2(floor(along * 2.0), uSeed * 6.0)));",
-    "  float dry = dash * band * skip * uReeds * (0.35 + 0.65 * (1.0 - waterA));",
-    "  col = mix(col, vec3(0.16, 0.20, 0.11), dry * 0.72);",
-    "  float dark = clamp(1.0 - dot(col, vec3(0.30, 0.45, 0.25)), 0.0, 1.0);",
-    "  float valley = smoothstep(0.42, 0.86, 1.0 - grain);",
-    "  float specks = smoothstep(0.72, 0.92, noise(vUv * vec2(860.0, 940.0)));",
-    "  col *= 1.0 - valley * dark * 0.42;",
-    "  col = mix(col, col * vec3(0.62, 0.70, 0.84), specks * dark * valley);",
-    "  col = clamp(col, 0.0, 1.0);",
-    "  o = vec4(col, 1.0);",
-    "}"
-  ].join("\n");
-
-  var spriteFs = [
-    "#version 300 es",
-    "precision highp float;",
-    "in vec2 vLocal;",
-    "out vec4 o;",
-    "uniform float uKind;",
-    "uniform float uPhase;",
-    "uniform float uSub;",
-    "uniform float uAlpha;",
-    "uniform vec3 uTint;",
-    "float hash(vec2 p) {",
-    "  vec3 p3 = fract(vec3(p.xyx) * 0.1031);",
-    "  p3 += dot(p3, p3.yzx + 33.33);",
-    "  return fract((p3.x + p3.y) * p3.z);",
-    "}",
-    "vec2 rot(vec2 p, float a) {",
-    "  float c = cos(a), s = sin(a);",
-    "  return vec2(c * p.x - s * p.y, s * p.x + c * p.y);",
-    "}",
-    "float sdCircle(vec2 p, float r) { return length(p) - r; }",
-    "float sdEllipse(vec2 p, vec2 r) {",
-    "  p /= r;",
-    "  return (length(p) - 1.0) * min(r.x, r.y);",
-    "}",
-    "float capsule(vec2 p, vec2 a, vec2 b, float r) {",
-    "  vec2 pa = p - a, ba = b - a;",
-    "  float h = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-5), 0.0, 1.0);",
-    "  return length(pa - ba * h) - r;",
-    "}",
-    "vec4 shade(vec2 p) {",
-    "  if (uKind < 0.5) {",
-    "    float a = exp(-dot(p, p) * 1.7) * 0.34 * uAlpha;",
-    "    return vec4(vec3(0.24, 0.17, 0.11) * a, a);",
-    "  }",
-    "  float fill = 0.0;",
-    "  vec3 col = uTint;",
-    "  if (uKind < 1.5) {",
-    "    float u = clamp(p.x * 0.55 + 0.5, 0.0, 1.0);",
-    "    float w = 0.30 * sin(u * 3.14159);",
-    "    w *= 1.0 - 0.62 * smoothstep(0.42, 0.96, p.x);",
-    "    w = max(w, 0.03);",
-    "    float sd = max(abs(p.y) - w, max(p.x - 0.86, -p.x - 0.78));",
-    "    sd += (hash(p * 28.0) - 0.5) * 0.02;",
-    "    fill = smoothstep(0.035, -0.02, sd);",
-    "    float rim = exp(-abs(sd) * 26.0);",
-    "    float deck = smoothstep(0.04, -0.06, max(abs(p.y) - w * 0.48, abs(p.x + 0.05) - 0.28));",
-    "    col = mix(uTint * 0.78, uTint * vec3(1.28, 1.14, 0.96), deck);",
-    "    col = mix(col, uTint * 0.38, rim * fill);",
-    "    col *= 1.0 - smoothstep(0.55, 0.95, hash(p * 70.0)) * 0.22;",
-    "    float ang = sin(uPhase) * 0.75;",
-    "    vec2 lp = rot(p - vec2(-0.05, 0.05), ang);",
-    "    float oar = min(capsule(lp, vec2(0.0, 0.02), vec2(0.0, 0.78), 0.035), capsule(lp - vec2(0.0, 0.68), vec2(0.0, 0.0), vec2(0.04, 0.16), 0.07));",
-    "    vec2 rp = rot(vec2(p.x + 0.05, -p.y - 0.05), ang);",
-    "    float oar2 = min(capsule(rp, vec2(0.0, 0.02), vec2(0.0, 0.78), 0.035), capsule(rp - vec2(0.0, 0.68), vec2(0.0, 0.0), vec2(0.04, 0.16), 0.07));",
-    "    float oarA = smoothstep(0.025, -0.01, min(oar, oar2));",
-    "    col = mix(col, vec3(0.29, 0.18, 0.11), oarA);",
-    "    fill = max(fill, oarA);",
-    "    float torso = sdEllipse(p - vec2(-0.02, 0.0), vec2(0.16, 0.11));",
-    "    float head = sdCircle(p - vec2(0.16, 0.0), 0.07);",
-    "    float bodyA = smoothstep(0.02, -0.012, min(torso, head));",
-    "    vec3 body = mix(vec3(0.64, 0.28, 0.22), vec3(0.78, 0.56, 0.40), smoothstep(0.01, -0.02, head));",
-    "    col = mix(col, body, bodyA);",
-    "    fill = max(fill, bodyA);",
-    "  } else if (uKind < 2.5) {",
-    "    float wag = sin(uPhase) * 0.55;",
-    "    float body = sdEllipse(p - vec2(0.06, 0.0), vec2(0.44, 0.28));",
-    "    float tail = sdEllipse(rot(p - vec2(-0.4, 0.0), wag), vec2(0.26, 0.09));",
-    "    float fin = sdEllipse(rot(p - vec2(0.02, 0.14), 0.5), vec2(0.14, 0.045));",
-    "    float sd = min(body, min(tail, fin));",
-    "    sd += (hash(p * 40.0) - 0.5) * 0.015;",
-    "    fill = smoothstep(0.03, -0.018, sd);",
-    "    col = mix(uTint * 0.75, uTint * 1.15, smoothstep(0.1, -0.2, body));",
-    "    col = mix(col, uTint * 0.4, exp(-abs(sd) * 22.0) * fill);",
-    "    float eye = sdCircle(p - vec2(0.32, 0.05), 0.03);",
-    "    col = mix(col, vec3(0.1, 0.1, 0.1), smoothstep(0.01, -0.01, eye));",
-    "  } else {",
-    "    float kick = sin(uPhase) * 0.7;",
-    "    float body = sdEllipse(p - vec2(-0.02, 0.0), vec2(0.28, 0.22));",
-    "    float head = sdEllipse(p - vec2(0.22, 0.0), vec2(0.18, 0.15));",
-    "    vec2 leg = rot(p - vec2(-0.08, 0.1), 1.0 + kick);",
-    "    float legs = capsule(leg, vec2(0.0, 0.0), vec2(-0.34, 0.16), 0.045);",
-    "    vec2 leg2 = rot(vec2(p.x, -p.y) - vec2(-0.08, 0.1), 1.0 + kick);",
-    "    float legs2 = capsule(leg2, vec2(0.0, 0.0), vec2(-0.34, 0.16), 0.045);",
-    "    float sd = min(min(body, head), min(legs, legs2));",
-    "    fill = smoothstep(0.03, -0.016, sd);",
-    "    col = mix(uTint * 0.8, uTint * vec3(1.15, 1.2, 0.9), smoothstep(0.05, -0.15, head));",
-    "    col = mix(col, uTint * 0.42, exp(-abs(sd) * 20.0) * fill);",
-    "    float eye = min(sdCircle(p - vec2(0.28, 0.07), 0.028), sdCircle(p - vec2(0.28, -0.07), 0.028));",
-    "    col = mix(col, vec3(0.08, 0.1, 0.08), smoothstep(0.012, -0.008, eye));",
-    "  }",
-    "  float a = fill * uAlpha;",
-    "  return vec4(col * a, a);",
-    "}",
-    "void main() {",
-    "  vec4 c = shade(vLocal);",
-    "  if (uKind > 0.5 && uSub > 0.02) {",
-    "    vec2 e = vec2(0.045, 0.03) * uSub;",
-    "    vec4 b = shade(vLocal + vec2(e.x, 0.0)) + shade(vLocal - vec2(e.x, 0.0));",
-    "    b += shade(vLocal + vec2(0.0, e.y)) + shade(vLocal - vec2(0.0, e.y));",
-    "    c = (c + b) / 5.0;",
-    "    float a = c.a * mix(1.0, 0.78, uSub);",
-    "    vec3 rgb = c.rgb / max(c.a, 0.001);",
-    "    rgb = mix(rgb, vec3(0.25, 0.42, 0.62), uSub * 0.78);",
-    "    c = vec4(rgb * a, a);",
-    "  }",
-    "  o = c;",
-    "}"
-  ].join("\n");
-
-  function clone(template) {
-    return {
-      kind: template.kind || "boat",
-      r: template.r == null ? 0.08 : template.r,
-      tint: template.tint || [0.48, 0.3, 0.18],
-      x: 0,
-      y: 0,
-      heading: 0,
-      speed: 0,
-      phase: 0,
-      sub: 0,
-      splash: 0
-    };
-  }
-
-  function separate(list) {
-    var n, i, j, a, b, dx, dy, d2, min, d, push, nx, ny;
-    for (n = 0; n < 6; n++) {
-      for (i = 0; i < list.length; i++) {
-        for (j = i + 1; j < list.length; j++) {
-          a = list[i];
-          b = list[j];
-          dx = b.x - a.x;
-          dy = b.y - a.y;
-          d2 = dx * dx + dy * dy;
-          min = (a.r || 0) + (b.r || 0);
-          if (min <= 0 || d2 >= min * min) continue;
-          d = Math.sqrt(d2) || 0.0001;
-          push = (min - d) * 0.5;
-          nx = dx / d;
-          ny = dy / d;
-          a.x -= nx * push;
-          a.y -= ny * push;
-          b.x += nx * push;
-          b.y += ny * push;
-        }
-      }
-    }
-  }
 
   function mount(spec, canvas, opts) {
     opts = opts || {};
-    var width = spec.width || 960;
-    var height = spec.height || 960;
-    var duration = spec.duration || 12;
-    var pond = {
-      rx: 0.48,
-      ry: 0.4,
-      seed: 1,
-      veg: 1,
-      lilies: 0,
-      reeds: 1
-    };
-    var key;
-    for (key in spec.pond || {}) pond[key] = spec.pond[key];
-    canvas.width = width;
-    canvas.height = height;
-    var gl = canvas.getContext("webgl2", {
-      alpha: false,
-      antialias: false,
-      depth: false,
-      stencil: false,
-      premultipliedAlpha: true,
-      preserveDrawingBuffer: true
-    });
-    if (!gl) throw new Error("WebGL 2 is not available");
-    var quad = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    var waveProg = program(gl, quadVs, waveFs);
-    var beautyProg = program(gl, quadVs, beautyFs);
-    var spriteProg = program(gl, spriteVs, spriteFs);
-    var wave = 384;
-    var waveTex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, waveTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, wave, wave, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    var fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, waveTex, 0);
-    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error("wave target is incomplete");
-    var impTex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, impTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    var impData = new Uint8Array(64 * 4);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 64, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, impData);
-    var built = spec.build ? spec.build() : { actors: [] };
-    var templates = (built.actors || []).map(function (a) { return clone(a); });
+    if (!spec.paint) throw new Error("scene has no paint()");
+    var gl = canvas.getContext("webgl2", { alpha: false, antialias: false, preserveDrawingBuffer: true });
+    if (!gl) throw new Error("WebGL 2 is required");
+    var W = spec.width || 900;
+    var H = spec.height || 900;
+    canvas.width = W;
+    canvas.height = H;
+    function compile(type, src) {
+      var sh = gl.createShader(type);
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh) || "shader");
+      return sh;
+    }
+    var prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, vert));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, frag));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) || "link");
+    gl.useProgram(prog);
+    var vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    function loc(name) { return gl.getUniformLocation(prog, name); }
+    function bindNearest(unit, width, height, internal, type, src) {
+      var tex = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, type === gl.FLOAT ? gl.NEAREST : gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, type === gl.FLOAT ? gl.NEAREST : gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internal, width, height, 0, gl.RGBA, type, src);
+      return tex;
+    }
+    var markTex = bindNearest(0, MAX * STRIDE, 1, gl.RGBA32F, gl.FLOAT, null);
+    bindNearest(1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+    bindNearest(2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+    gl.uniform1i(loc("uMarks"), 0);
+    gl.uniform1i(loc("uFieldA"), 1);
+    gl.uniform1i(loc("uFieldB"), 2);
+    gl.uniform2f(loc("uRes"), W, H);
+    gl.uniform1f(loc("uDuration"), spec.duration || 1);
+    var paper = spec.paper || [0.945, 0.9, 0.8];
+    gl.uniform3fv(loc("uPaper"), new Float32Array(paper));
+    gl.uniform3fv(loc("uStain"), new Float32Array(spec.stain || [0.33, 0.4, 0.5]));
+    var prepared = spec.prepare ? spec.prepare() : null;
+    var plated = prepared && prepared.plate;
+    if (plated && plated.count) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, plated.size, plated.size, 0, gl.RGBA, gl.UNSIGNED_BYTE, plated.field);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, plated.size, plated.size, 0, gl.RGBA, gl.UNSIGNED_BYTE, plated.fieldB);
+      gl.uniform1i(loc("uPlateCount"), plated.count);
+      gl.uniform3fv(loc("uPigment"), plated.pigment);
+      gl.uniform1fv(loc("uLoad"), plated.load);
+      gl.uniform1fv(loc("uGran"), plated.gran);
+    } else {
+      gl.uniform1i(loc("uPlateCount"), 0);
+      gl.uniform3fv(loc("uPigment"), new Float32Array(24));
+      gl.uniform1fv(loc("uLoad"), new Float32Array(8));
+      gl.uniform1fv(loc("uGran"), new Float32Array(8));
+    }
     var pokes = [];
-    var scripted = spec.ripples || [];
-    var read = "";
-    var running = false;
-    var raf = 0;
-    var origin = 0;
-    var sizes = { boat: [0.2, 0.125], fish: [0.16, 0.08], frog: [0.145, 0.13] };
-    var kinds = { shadow: 0, boat: 1, fish: 2, frog: 3 };
-
-    function pose(t, publish) {
-      var actors = templates.map(clone);
-      var ctx = { t: t, q: t / duration, actors: actors, read: "" };
-      spec.tick(ctx);
-      if (spec.collide) separate(actors);
-      if (publish) read = ctx.read || "";
-      return actors;
-    }
-
-    function impulses(t) {
-      var wakes = [];
-      var rings = [];
-      var steps = 8;
-      var dt = 0.16;
-      var i, k, age, actors, a, s;
-      for (i = 0; i < steps; i++) {
-        age = i * dt;
-        actors = pose(t - age, false);
-        for (k = 0; k < actors.length; k++) {
-          a = actors[k];
-          if (a.kind === "boat" && a.speed > 0.02) {
-            wakes.push({ x: a.x, y: a.y, age: age, amp: Math.max(0.35, Math.min(1, a.speed * 7.0)) });
-          }
-          if (a.splash > 0.08) {
-            rings.push({ x: a.x, y: a.y, age: age, amp: Math.max(0, Math.min(1, a.splash)) });
-          }
-        }
+    var lastT = opts.t != null ? opts.t : (spec.still || 0);
+    var hold = !!(opts.still || opts.t != null);
+    var reduced = opts.reduced;
+    if (reduced == null && window.matchMedia) reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function bloomFor(t) {
+      var best = null;
+      var i, age;
+      for (i = 0; i < pokes.length; i++) {
+        age = t - pokes[i].t0;
+        if (age < 0 || age > 2.5) continue;
+        best = { p: pokes[i], age: age };
       }
-      function addRing(list) {
-        for (s = 0; s < list.length; s++) {
-          age = t - list[s].t;
-          if (age >= 0 && age < 2.8) rings.push({ x: list[s].x, y: list[s].y, age: age, amp: 1 });
-        }
-      }
-      addRing(scripted);
-      addRing(pokes);
-      wakes = wakes.slice(0, 40);
-      rings = rings.slice(0, 24);
-      return { wakes: wakes, rings: rings, all: wakes.concat(rings) };
+      if (!best) return [0, 0, 0, 0];
+      var k = best.age / 2.5;
+      return [best.p.x, best.p.y, 0.02 + k * 0.18, 0.9 * (1 - k)];
     }
-
-    function upload(list) {
-      impData.fill(0);
-      var i, p, o;
-      for (i = 0; i < list.length && i < 64; i++) {
-        p = list[i];
-        o = i * 4;
-        impData[o] = Math.max(0, Math.min(255, Math.round((p.x * 0.5 + 0.5) * 255)));
-        impData[o + 1] = Math.max(0, Math.min(255, Math.round((p.y * 0.5 + 0.5) * 255)));
-        impData[o + 2] = Math.max(0, Math.min(255, Math.round((p.age / 3) * 255)));
-        impData[o + 3] = Math.max(0, Math.min(255, Math.round(p.amp * 255)));
-      }
-      gl.bindTexture(gl.TEXTURE_2D, impTex);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 64, 1, gl.RGBA, gl.UNSIGNED_BYTE, impData);
-    }
-
-    function drawQuad() {
-      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-      gl.enableVertexAttribArray(0);
-      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
-
-    function drawSprite(kind, x, y, hx, hy, rot, tint, phase, sub, alpha) {
-      gl.useProgram(spriteProg);
-      gl.uniform2f(gl.getUniformLocation(spriteProg, "uCenter"), x, y);
-      gl.uniform2f(gl.getUniformLocation(spriteProg, "uHalf"), hx, hy);
-      gl.uniform1f(gl.getUniformLocation(spriteProg, "uRot"), rot);
-      gl.uniform1f(gl.getUniformLocation(spriteProg, "uKind"), kind);
-      gl.uniform1f(gl.getUniformLocation(spriteProg, "uPhase"), phase || 0);
-      gl.uniform1f(gl.getUniformLocation(spriteProg, "uSub"), sub || 0);
-      gl.uniform1f(gl.getUniformLocation(spriteProg, "uAlpha"), alpha);
-      gl.uniform3fv(gl.getUniformLocation(spriteProg, "uTint"), tint);
-      drawQuad();
-    }
-
-    function renderAt(t) {
-      var pack = impulses(t);
-      var actors = pose(t, true);
-      upload(pack.all);
-      gl.disable(gl.BLEND);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.viewport(0, 0, wave, wave);
-      gl.useProgram(waveProg);
+    function draw(t) {
+      var ctx = { t: t, q: spec.duration ? t / spec.duration : 0, read: "" };
+      var painted = spec.paint(ctx) || {};
+      var packed = pack(painted.marks || []);
+      if (packed.dropped) throw new Error("too many marks");
+      gl.useProgram(prog);
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, impTex);
-      gl.uniform1i(gl.getUniformLocation(waveProg, "uImp"), 0);
-      gl.uniform1f(gl.getUniformLocation(waveProg, "uCount"), pack.all.length);
-      gl.uniform1f(gl.getUniformLocation(waveProg, "uWakes"), pack.wakes.length);
-      gl.uniform1f(gl.getUniformLocation(waveProg, "uTime"), t);
-      gl.uniform1f(gl.getUniformLocation(waveProg, "uDuration"), duration);
-      drawQuad();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.viewport(0, 0, width, height);
-      gl.useProgram(beautyProg);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, waveTex);
-      gl.uniform1i(gl.getUniformLocation(beautyProg, "uWave"), 0);
-      gl.uniform2f(gl.getUniformLocation(beautyProg, "uPond"), pond.rx, pond.ry);
-      gl.uniform1f(gl.getUniformLocation(beautyProg, "uSeed"), pond.seed);
-      gl.uniform1f(gl.getUniformLocation(beautyProg, "uVeg"), pond.veg);
-      gl.uniform1f(gl.getUniformLocation(beautyProg, "uLilies"), pond.lilies);
-      gl.uniform1f(gl.getUniformLocation(beautyProg, "uReeds"), pond.reeds);
-      gl.uniform1f(gl.getUniformLocation(beautyProg, "uTime"), t);
-      gl.uniform1f(gl.getUniformLocation(beautyProg, "uDuration"), duration);
-      drawQuad();
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      var order = actors.slice().sort(function (a, b) { return (b.sub - a.sub) || (a.y - b.y); });
-      var i, a, size, kind, shadowA;
-      for (i = 0; i < order.length; i++) {
-        a = order[i];
-        size = sizes[a.kind] || sizes.boat;
-        kind = kinds[a.kind] == null ? 1 : kinds[a.kind];
-        shadowA = (1 - Math.max(0, Math.min(1, a.sub))) * 0.85 + 0.05;
-        drawSprite(0, a.x + 0.02, a.y - 0.03, size[0] * 1.35, size[1] * 1.2, 0, a.tint, 0, 0, shadowA);
-        drawSprite(kind, a.x, a.y, size[0], size[1], a.heading || 0, a.tint, a.phase || 0, a.sub || 0, 1);
-      }
-      if (opts.onRead) opts.onRead(read);
-      return t;
+      gl.bindTexture(gl.TEXTURE_2D, markTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, MAX * STRIDE, 1, 0, gl.RGBA, gl.FLOAT, packed.data);
+      gl.uniform1i(loc("uCount"), packed.count);
+      gl.uniform1f(loc("uTime"), t);
+      var bloom = bloomFor(t);
+      gl.uniform4f(loc("uBloom"), bloom[0], bloom[1], bloom[2], bloom[3]);
+      gl.viewport(0, 0, W, H);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      lastT = t;
+      if (opts.onRead) opts.onRead(painted.read || ctx.read || "");
     }
-
     function pixels() {
-      var buf = new Uint8Array(width * height * 4);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+      var buf = new Uint8Array(W * H * 4);
+      gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
       return buf;
     }
-
-    function checksum(buf) {
+    function hashOf(buf) {
       var h = 2166136261;
       var i;
-      for (i = 0; i < buf.length; i += 16) {
-        h ^= buf[i] + buf[i + 1] * 3 + buf[i + 2] * 7;
+      for (i = 0; i < buf.length; i += 4) {
+        h ^= buf[i];
+        h = Math.imul(h, 16777619);
+        h ^= buf[i + 1];
+        h = Math.imul(h, 16777619);
+        h ^= buf[i + 2];
         h = Math.imul(h, 16777619);
       }
       return h >>> 0;
     }
-
     function same(t) {
-      renderAt(t);
+      draw(t);
       var a = pixels();
-      renderAt(t);
+      draw(t);
       var b = pixels();
-      var i, n = 0;
-      for (i = 0; i < a.length; i++) if (a[i] !== b[i]) n++;
-      return { identical: n === 0, mismatches: n, hash: checksum(a), bytes: a.length };
+      var n = 0;
+      var i;
+      for (i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++;
+      return { identical: n === 0, mismatches: n, hash: hashOf(a), bytes: a.length };
     }
-
-    function inPond(x, y) {
-      var nx = x / pond.rx;
-      var ny = y / pond.ry;
-      return nx * nx + ny * ny < 1.05;
-    }
-
     function poke(x, y, t) {
-      if (!inPond(x, y)) return false;
-      pokes.push({ x: x, y: y, t: t });
-      if (pokes.length > 8) pokes.shift();
+      if (x < -1.05 || x > 1.05 || y < -1.05 || y > 1.05) return false;
+      pokes.push({ x: x, y: y, t0: t });
       return true;
     }
-
+    var running = true;
+    var origin = null;
     function loop(now) {
       if (!running) return;
-      if (!origin) origin = now;
-      renderAt(((now - origin) / 1000) % duration);
-      raf = requestAnimationFrame(loop);
+      if (origin == null) origin = now;
+      var t = ((now - origin) / 1000) % (spec.duration || 1);
+      draw(t);
+      if (running) requestAnimationFrame(loop);
     }
-
-    function start() {
-      if (running) return;
-      running = true;
-      origin = 0;
-      raf = requestAnimationFrame(loop);
-    }
-
-    function stop() {
-      running = false;
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-    }
-
-    var reduced = opts.reduced != null ? opts.reduced : (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
-    var hold = opts.still || reduced;
-    renderAt(opts.t != null ? opts.t : (hold ? (spec.still || 0) : 0));
-    if (!hold) start();
     document.addEventListener("visibilitychange", function () {
-      if (document.hidden) stop();
-      else if (!hold) start();
+      if (hold || reduced) return;
+      if (document.hidden) running = false;
+      else { running = true; origin = null; requestAnimationFrame(loop); }
     });
-
-    canvas.addEventListener("pointerdown", function (ev) {
-      var rect = canvas.getBoundingClientRect();
-      var x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
-      var y = 1 - ((ev.clientY - rect.top) / rect.height) * 2;
-      var clock = 0;
-      if (running && origin) clock = ((performance.now() - origin) / 1000) % duration;
-      else clock = opts.t != null ? opts.t : (spec.still || 0);
-      if (poke(x, y, clock)) renderAt(clock);
+    canvas.addEventListener("pointerdown", function (e) {
+      var r = canvas.getBoundingClientRect();
+      var x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      var y = (1 - (e.clientY - r.top) / r.height) * 2 - 1;
+      if (poke(x, y, lastT)) draw(lastT);
     });
-
+    if (hold || reduced) draw(opts.t != null ? opts.t : (spec.still || 0));
+    else requestAnimationFrame(loop);
     return {
-      renderAt: renderAt,
-      pixels: pixels,
+      renderAt: function (t) { draw(t); },
       same: same,
       poke: poke,
       clearPokes: function () { pokes.length = 0; },
-      inPond: inPond,
-      start: start,
-      stop: stop,
-      pose: function (t) { return pose(t, false); },
-      glInfo: function () {
-        var dbg = gl.getExtension("WEBGL_debug_renderer_info");
-        return {
-          webgl: true,
-          renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
-        };
-      },
-      read: function () { return read; }
+      pixels: function () { return pixels(); },
+      glInfo: function () { return { webgl: true, renderer: gl.getParameter(gl.RENDERER) || "" }; }
     };
   }
 
-  return { scene: scene, scenes: scenes, mount: mount };
+  return {
+    scenes: scenes,
+    scene: scene,
+    disc: function (o) { return mark(1, o); },
+    poly: function (o) { return mark(2, o); },
+    stroke: function (o) { return mark(3, o); },
+    ink: function (o) { return mark(4, o); },
+    lift: function (o) { return mark(5, o); },
+    plate: plate,
+    mount: mount
+  };
 })();

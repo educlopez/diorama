@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "validate": "node scripts/validate.mjs examples/pond.js examples/lake.js examples/creatures.js",
+    "validate": "node scripts/validate.mjs examples/pond.js examples/landscape.js examples/town.js examples/portrait.js examples/still.js examples/poppy.js examples/imprint.js",
     "look": "node scripts/look.mjs",
     "render": "node scripts/render.mjs",
-    "test": "node scripts/validate.mjs examples/pond.js examples/lake.js examples/creatures.js && node --test scripts/runtime.test.mjs"
+    "test": "node scripts/validate.mjs examples/pond.js examples/landscape.js examples/town.js examples/portrait.js examples/still.js examples/poppy.js examples/imprint.js && node --test scripts/runtime.test.mjs"
   },
   "devDependencies": {
     "playwright-core": "1.64.1"

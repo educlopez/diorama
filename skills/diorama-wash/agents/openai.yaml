@@ -1,3 +1,3 @@
 interface:
   display_name: "Diorama Wash"
-  short_description: "Paint a top-down watercolor pond that moves from time t"
+  short_description: "Paint any subject as a watercolor, from shapes or a picture, as a function of time t"

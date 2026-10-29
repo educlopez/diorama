@@ -52,7 +52,7 @@ export function Footer() {
       <div className="footer-top">
         <div className="footer-brand">
           <a className="footer-brand-logo" href="/"><Mark size={18} /><span className="brand-word"><span>Diorama</span></span></a>
-          <p className="footer-tagline">Four skills for small animated worlds: SVG figures, detailed 3D scenes, pixel-art miniatures, and a watercolor pond. One offline HTML file. MIT.</p>
+          <p className="footer-tagline">Four skills for small animated worlds: SVG figures, detailed 3D scenes, pixel-art miniatures, and watercolors. One offline HTML file. MIT.</p>
         </div>
         <div className="footer-cols">
           <div className="footer-col">

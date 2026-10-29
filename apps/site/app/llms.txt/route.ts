@@ -8,7 +8,7 @@ export const dynamic = "force-static";
 export function GET() {
   const text = `# Diorama
 
-> Four coding-agent skills for animated scenes: Diorama SVG for lightweight interactive figures, Diorama Worlds for detailed narrative miniatures, Diorama Pixel for dithered pixel-art miniatures, and Diorama Wash for a top-down watercolor pond. Each delivers one self-contained offline HTML file. Separate renderers, setup and installation commands.
+> Four coding-agent skills for animated scenes: Diorama SVG for lightweight interactive figures, Diorama Worlds for detailed narrative miniatures, Diorama Pixel for dithered pixel-art miniatures, and Diorama Wash for watercolors of any subject. Each delivers one self-contained offline HTML file. Separate renderers, setup and installation commands.
 
 Repository: ${REPO}
 
@@ -34,12 +34,16 @@ Skill: ${REPO}/blob/main/skills/diorama-pixel/SKILL.md
 ${PIXEL.map((s) => `- ${s.name}: ${s.means}`).join("\n")}
 
 ## Diorama Wash
-A fourth skill in the same repository: skills/diorama-wash/SKILL.md. A top-down watercolor pond on warm paper. Cerulean to indigo washes, a bleeding shore, earth-green stains, paper grain and granulation are procedural. The water moves by shifting the wash with time and by drawing rings and wakes into a displacement map. Boats with rowers and creatures that surface are painted marks. A frame is a function of time t. About 30 KB per offline HTML. Needs WebGL 2. Install: ${INSTALL_WASH}
+A fourth skill in the same repository: skills/diorama-wash/SKILL.md. Any subject as a watercolor on warm paper. Washes are translucent and multiply, edges bleed and darken, darks granulate, and some paper stays bare. The subject is shapes, or a picture drawn in code and split into regions that use the same washes. A frame is a function of time t. About 30 KB per offline HTML. Needs WebGL 2. Install: ${INSTALL_WASH}
 Invoke: /diorama-wash (or ask your agent to use the diorama-wash skill)
 Skill: ${REPO}/blob/main/skills/diorama-wash/SKILL.md
-- pond: one rowboat on a small pond
-- lake: three boats, wakes, and separation where they meet
-- creatures: fish and a frog that rise through the wash, beside a moored boat
+- pond: one boat on a small pond
+- landscape: a field, hills, and a drifting cloud
+- town: three houses, smoke, and a passer-by
+- portrait: a sitter in warm glazes
+- still: a bowl, an apple, and a lemon
+- poppy: one flower and a bud
+- imprint: a picture drawn in code, painted as washes
 
 ## Pages
 - /svg: the Diorama SVG examples, live, in every theme

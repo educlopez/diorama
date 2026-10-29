@@ -1,6 +1,6 @@
 <h1 align="center">Diorama</h1>
 
-<p align="center"><b>Four agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Diorama Wash paints a top-down watercolor pond. Describe a place; get one self-contained offline HTML file.</p>
+<p align="center"><b>Four agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Diorama Wash paints any subject as a watercolor. Describe a place; get one self-contained offline HTML file.</p>
 
 <p align="center">
   <a href="https://dioramas.dev"><img src="https://img.shields.io/badge/site-dioramas.dev-1b1b19?style=flat-square" alt="Site: dioramas.dev"></a>
@@ -28,11 +28,11 @@
 
 | | Diorama SVG | Diorama Worlds | Diorama Pixel | Diorama Wash |
 |---|---|---|---|---|
-| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards | A top-down watercolor pond or lake |
+| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards | A watercolor of any subject |
 | Renderer | Dependency-free SVG | Three.js / WebGL 2 | Dependency-free software rasterizer on a 2D canvas | WebGL 2, no external images |
-| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures | Cream paper, cerulean to indigo, a bleeding shore |
-| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment | 3 scenes: a quiet pond, a lake with boats, creatures under the wash |
-| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page | Warm paper around an isolated sheet of water |
+| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures | Cream paper, translucent glazes, wet edges, granulation |
+| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment | 7 scenes: a pond, a field, three roofs, a sitter, a still life, a poppy, a picture turned into washes |
+| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page | Warm paper, with unpainted reserves |
 | Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) | One offline HTML, ~30 KB uncompressed |
 | Guide | [SVG guide](https://dioramas.dev/docs) | [Worlds guide](https://dioramas.dev/docs/worlds) | [Pixel guide](https://dioramas.dev/docs/pixel) | [Wash skill](skills/diorama-wash/SKILL.md) |
 
@@ -72,14 +72,14 @@ npx skills add educlopez/diorama --skill diorama-pixel -g
 /diorama-pixel a tiny bakery front at dawn, the baker carrying a tray of loaves out to a stall, for our blog header
 ```
 
-**Diorama Wash** — a top-down watercolor pond, WebGL 2, no external images:
+**Diorama Wash** — a watercolor of any subject, WebGL 2, no external images:
 
 ```sh
 npx skills add educlopez/diorama --skill diorama-wash -g
 ```
 
 ```text
-/diorama-wash a quiet pond on warm paper, one rowboat crossing, for the top of a blog post
+/diorama-wash a loose watercolor of a poppy on warm paper, for the top of a blog post
 ```
 
 In agents without slash commands, ask “Use the diorama skill…”, “Use the diorama-worlds skill…”, “Use the diorama-pixel skill…” or “Use the diorama-wash skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
@@ -278,7 +278,7 @@ Built pages are about 50 KB and make no network request. The look command (Playw
 
 ## Diorama Wash
 
-A fourth skill, [`diorama-wash`](skills/diorama-wash/SKILL.md), paints one sheet of water seen straight down on warm paper. The shore bleeds, the colour runs from cerulean to indigo, the darks granulate, and the paper grain is procedural. Motion is a function of time: the wash shifts, and rings and wakes are drawn into a render target that displaces the pigment. Boats with rowers, and creatures that rise out of the blue, are painted marks. A click on the water sends a ring. There is no external image and no bundled renderer beyond the page's own shaders. A built page is about 30 KB and needs WebGL 2.
+A fourth skill, [`diorama-wash`](skills/diorama-wash/SKILL.md), paints any subject as a watercolor on warm paper. Washes are translucent and multiply, so overlaps mix and the sheet shows through. Edges bleed and darken, the darks granulate, and some paper is left bare. The subject is shapes (discs, polygons, strokes, ink) or a picture drawn in code, split into regions and painted with the same washes. A frame is a function of time. A click drops a wet stain. There is no external image. A built page is about 30 KB and needs WebGL 2.
 
 ```sh
 node skills/diorama-wash/scripts/build.mjs skills/diorama-wash/examples/pond.js wash-pond.html
@@ -287,7 +287,7 @@ npm ci --ignore-scripts --prefix skills/diorama-wash
 node skills/diorama-wash/scripts/look.mjs skills/diorama-wash/examples/pond.js work/pond-look
 ```
 
-The three examples are `pond` (one boat), `lake` (three boats, wakes, and a simple separation when they meet), and `creatures` (fish and a frog that surface beside a moored boat). `render.mjs` writes individual frames and a short clip. The same time `t`, drawn twice, is the same pixels.
+The examples are `pond` (one boat), `landscape` (a field and hills), `town` (three roofs), `portrait` (a sitter), `still` (a bowl and fruit), `poppy` (a flower), and `imprint` (a picture drawn in code, then painted as washes). `render.mjs` writes individual frames and a short clip. The same time `t`, drawn twice, is the same pixels.
 
 ## SVG limits
 
