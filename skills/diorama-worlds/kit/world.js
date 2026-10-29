@@ -37,6 +37,61 @@ export function sample(t, frames) {
   while (frames[index + 1].t < t) index++;
   return blend(frames[index].value, frames[index + 1].value, smooth((t - frames[index].t) / (frames[index + 1].t - frames[index].t)));
 }
+const MARKS = ['opening', 'routine', 'interruption', 'consequence'];
+const trailMemo = new WeakMap();
+function turn(a, b, f) {
+  const delta = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+  return a + delta * f;
+}
+export function trail(u, points, options = {}) {
+  if (!Number.isFinite(u) || !Array.isArray(points) || points.length < 2) throw new Error('A trail needs a finite amount and at least two points.');
+  const curve = options.curve === true;
+  let memo = trailMemo.get(points);
+  if (!memo || memo.curve !== curve) {
+    const raw = points.map(point => {
+      if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) throw new Error('Trail points need finite x and z.');
+      return [point[0], point[1]];
+    });
+    const unique = raw[0][0] === raw.at(-1)[0] && raw[0][1] === raw.at(-1)[1] ? raw.slice(0, -1) : raw;
+    if (unique.length < 2) throw new Error('A trail needs two distinct points.');
+    const samples = [];
+    if (!curve) for (const point of unique) samples.push(point);
+    else {
+      const count = unique.length;
+      for (let i = 0; i < count; i++) {
+        const p0 = unique[(i - 1 + count) % count], p1 = unique[i], p2 = unique[(i + 1) % count], p3 = unique[(i + 2) % count];
+        for (let step = 0; step < 10; step++) {
+          const t = step / 10, t2 = t * t, t3 = t2 * t;
+          samples.push([
+            .5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+            .5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+          ]);
+        }
+      }
+    }
+    const heads = samples.map((point, index) => {
+      const prev = samples[(index - 1 + samples.length) % samples.length], next = samples[(index + 1) % samples.length];
+      return Math.atan2(next[0] - prev[0], next[1] - prev[1]);
+    });
+    const segs = [];
+    let total = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const next = (i + 1) % samples.length, a = samples[i], b = samples[next];
+      const dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz);
+      if (len < 1e-8) continue;
+      segs.push({ ax: a[0], az: a[1], dx, dz, len, start: total, head: heads[i], next: heads[next] });
+      total += len;
+    }
+    if (!(total > 0)) throw new Error('A trail needs length.');
+    memo = { curve, segs, total };
+    trailMemo.set(points, memo);
+  }
+  const dist = ((u % 1) + 1) % 1 * memo.total;
+  let seg = memo.segs.at(-1);
+  for (const item of memo.segs) if (dist <= item.start + item.len) { seg = item; break; }
+  const f = seg.len > 0 ? Math.max(0, Math.min(1, (dist - seg.start) / seg.len)) : 0;
+  return { x: seg.ax + seg.dx * f, z: seg.az + seg.dz * f, heading: turn(seg.head, seg.next, f) };
+}
 // Absolute elapsed time: skipped frames never turn action into slow motion.
 export function clockTime(anchor, elapsedMilliseconds, duration, speed = 1) {
   return phase(anchor + Math.max(0, elapsedMilliseconds) / 1000 * speed, duration) * duration;
@@ -54,6 +109,7 @@ export function defineWorld(definition) {
   if (definition.bounds && (definition.bounds.length !== 2 || definition.bounds.some(v => v.length !== 3 || v.some(n => !Number.isFinite(n))) || definition.bounds[0].some((n, i) => n >= definition.bounds[1][i]))) throw new Error('Bounds must contain finite increasing min/max XYZ corners.');
   if (definition.contactTimes && (!Array.isArray(definition.contactTimes) || definition.contactTimes.some(t => !Number.isFinite(t) || t < 0 || t >= definition.duration) || typeof definition.contacts !== 'function')) throw new Error('Contact times need a contact inspector and must lie inside the loop.');
   if (definition.acts && (ACTS.some(name => !(definition.acts[name] > 0) || !Number.isFinite(definition.acts[name])) || Math.abs(ACTS.reduce((sum, name) => sum + definition.acts[name], 0) - definition.duration) > 1e-6)) throw new Error('Act spans must be positive, finite and add up to the duration.');
+  if (definition.marks && (MARKS.some(name => !Number.isFinite(definition.marks[name]) || definition.marks[name] < 0 || definition.marks[name] >= definition.duration) || new Set(MARKS.map(name => definition.marks[name])).size !== MARKS.length)) throw new Error('Beat marks must be distinct finite times inside the loop.');
   if (definition.pixelInk !== undefined && typeof definition.pixelInk !== 'boolean') throw new Error('pixelInk must be a boolean.');
   return definition;
 }
@@ -158,6 +214,13 @@ export function toolkit(parent) {
     }
     return grass;
   }
+  function plinth(width, depth, height = .5, side = '#6a4a34', cap = '#d7b57a') {
+    if (![width, depth, height].every(n => n > 0 && Number.isFinite(n))) throw new Error('A plinth needs positive finite width, depth and height.');
+    const block = group(0, 0, 0);
+    box(width, height, depth, side, 0, -height / 2, 0, block);
+    box(width - .08, .05, depth - .08, cap, 0, -.02, 0, block);
+    return block;
+  }
   function grass(width, depth, count = 1400, seed = 7) {
     const rng = seeded(seed), geo = geometry('blade', () => new THREE.PlaneGeometry(1, 1));
     const mat = new THREE.MeshStandardMaterial({ color: '#8b9b4d', side: THREE.DoubleSide, roughness: 1 }); materials.set(`grass:${materials.size}`, mat);
@@ -218,8 +281,12 @@ export function toolkit(parent) {
     for(const foot of [leftFoot,rightFoot]){const shoe=mesh(shoeGeo,shoes,0,0,.05,foot);shoe.scale.set(.155,.09,.1325);}
     return {root,body,chest,head,face,leftArm,rightArm,leftForearm,rightForearm,leftHand,rightHand,leftLeg,rightLeg,leftShin,rightShin,leftFoot,rightFoot};
   }
-  function toy(x, z, shirt = '#456185', pants = '#2c2824', scale = .9, skin = '#c78f66', shoes = '#1f1c19') {
+  function toy(x, z, shirt = '#456185', pants = '#2c2824', scale = .9, skin = '#c78f66', shoes = '#1f1c19', bulk = 1) {
+    if (!Number.isFinite(bulk) || bulk <= 0) throw new Error('Toy bulk must be a positive finite number.');
     const actor = person(x, z, shirt, pants, scale, skin, shoes);
+    const thicken = mesh => { if (mesh?.isMesh) { mesh.scale.x *= bulk; mesh.scale.z *= bulk; } };
+    thicken(actor.chest.children[0]);
+    for (const joint of [actor.leftArm, actor.rightArm, actor.leftForearm, actor.rightForearm, actor.leftLeg, actor.rightLeg, actor.leftShin, actor.rightShin]) thicken(joint.children[0]);
     const pin = '#bda86b';
     const bead = (joint, radius) => ball(radius, pin, 0, 0, 0, joint);
     bead(actor.leftArm, .07); bead(actor.rightArm, .07);
@@ -264,6 +331,68 @@ export function toolkit(parent) {
     }
     actor.root.updateMatrixWorld(true);
   }
+  function stride(actor, { phase: amount = 0, reach = .16, lift = .07, rush = 0 } = {}) {
+    if (![amount, reach, lift, rush].every(Number.isFinite)) throw new Error('Stride needs finite phase, reach, lift and rush.');
+    const theta = amount * Math.PI * 2;
+    const bob = Math.abs(Math.sin(theta)) * (.028 + rush * .012);
+    actor.body.rotation.set(0, 0, 0);
+    actor.body.position.y = .95 - (.058 + rush * .018) + bob;
+    actor.chest.rotation.set(.05 + rush * .32, 0, Math.sin(theta) * (.055 + rush * .02));
+    const swing = .55 + rush * .4;
+    actor.leftArm.rotation.set(Math.cos(theta) * swing, 0, .12);
+    actor.rightArm.rotation.set(-Math.cos(theta) * swing, 0, -.12);
+    actor.leftForearm.rotation.set(-.28 - rush * .18, 0, 0);
+    actor.rightForearm.rotation.set(-.28 - rush * .18, 0, 0);
+    const c = cacheFor(actor);
+    for (const side of [-1, 1]) {
+      const along = (side < 0 ? Math.cos(theta) : -Math.cos(theta)) * reach;
+      const up = Math.max(0, (side < 0 ? Math.sin(theta) : -Math.sin(theta)) * lift);
+      actor.root.updateMatrixWorld(true);
+      c.v.set(side * .13, .09 + up, along);
+      actor.root.localToWorld(c.v);
+      solve(actor, side < 0 ? actor.leftLeg : actor.rightLeg, side < 0 ? actor.leftShin : actor.rightShin, actor.body, c.v.toArray(), .43, .43, [0, 0, 1]);
+      const shin = side < 0 ? actor.leftShin : actor.rightShin, foot = side < 0 ? actor.leftFoot : actor.rightFoot;
+      shin.getWorldQuaternion(c.inv); c.inv.invert(); actor.root.getWorldQuaternion(c.footQ); foot.quaternion.copy(c.inv).multiply(c.footQ);
+    }
+    actor.root.updateMatrixWorld(true);
+  }
+  function paddle(actor, { phase: amount = 0 } = {}) {
+    if (!Number.isFinite(amount)) throw new Error('Paddle needs a finite phase.');
+    const theta = amount * Math.PI * 2, kick = Math.sin(theta * 2);
+    actor.body.position.y = .95;
+    actor.body.rotation.set(1.08, Math.sin(theta) * .05, 0);
+    actor.chest.rotation.set(.15, 0, Math.sin(theta) * .08);
+    actor.leftArm.rotation.set(Math.cos(theta) * 1.2, 0, .5);
+    actor.rightArm.rotation.set(Math.cos(theta + Math.PI) * 1.2, 0, -.5);
+    actor.leftForearm.rotation.set(-.45, 0, 0);
+    actor.rightForearm.rotation.set(-.45, 0, 0);
+    actor.leftLeg.rotation.set(.35, 0, .08);
+    actor.rightLeg.rotation.set(.35, 0, -.08);
+    actor.leftShin.rotation.set(.35 + Math.max(0, kick) * .85, 0, 0);
+    actor.rightShin.rotation.set(.35 + Math.max(0, -kick) * .85, 0, 0);
+    actor.leftFoot.rotation.set(.2, 0, 0);
+    actor.rightFoot.rotation.set(.2, 0, 0);
+  }
+  function cue(actor, name, amount = 0) {
+    if (!Number.isFinite(amount)) throw new Error('A cue needs a finite amount.');
+    const sway = Math.sin(amount * Math.PI * 2);
+    if (name === 'wave') {
+      actor.rightArm.rotation.set(-2.35, 0, .4);
+      actor.rightForearm.rotation.set(-.35, 0, .85 * sway);
+      actor.leftArm.rotation.set(.25, 0, -.2);
+      actor.leftForearm.rotation.set(-.35, 0, 0);
+    } else if (name === 'sweep') {
+      actor.rightArm.rotation.set(.7, .15, sway * .55);
+      actor.rightForearm.rotation.set(.25, 0, 0);
+      actor.leftArm.rotation.set(.35, 0, .25);
+      actor.leftForearm.rotation.set(-.2, 0, 0);
+    } else if (name === 'carry') {
+      actor.leftArm.rotation.set(-1.2, .2, .4);
+      actor.rightArm.rotation.set(-1.2, -.2, -.4);
+      actor.leftForearm.rotation.set(-1.05, 0, 0);
+      actor.rightForearm.rotation.set(-1.05, 0, 0);
+    } else throw new Error('Unknown cue.');
+  }
   const batches = [];
   function batch() {
     const pools = new Map();
@@ -297,7 +426,7 @@ export function toolkit(parent) {
     for (const t of textures) t.dispose();
     parent.traverse(o => { if (o.isInstancedMesh) o.dispose(); });
   }
-  return { THREE, own, reach, plant, aim, toy, act, blend, settle, sample, surface, group, box, ball, cylinder, line, ring, terrain, grass, tree, bench, person, random, phase, smooth, batch, updateBatches, dispose };
+  return { THREE, own, reach, plant, aim, toy, act, blend, settle, sample, trail, stride, paddle, cue, surface, group, box, ball, cylinder, line, ring, terrain, grass, tree, bench, person, plinth, random, phase, smooth, batch, updateBatches, dispose };
 }
 
 const vertexShader = `varying vec2 uv0; void main(){uv0=uv;gl_Position=vec4(position.xy,0.,1.);}`;

@@ -19,6 +19,18 @@ function occupancy(buffer) {
   return { fraction: count / (png.width * png.height), bounds: [minX,minY,maxX,maxY], width: png.width, height: png.height };
 }
 const matrixDelta = (a,b) => Math.max(...a.map((n,i)=>Math.abs(n-b[i])));
+function pixelGap(a, b) {
+  if (a.width !== b.width || a.height !== b.height) return 1;
+  let changed = 0, seen = 0;
+  for (let i = 0; i < a.data.length; i += 4) {
+    const inkA = Math.min(a.data[i], a.data[i + 1], a.data[i + 2]) < 248;
+    const inkB = Math.min(b.data[i], b.data[i + 1], b.data[i + 2]) < 248;
+    if (!inkA && !inkB) continue;
+    seen++;
+    if (Math.abs(a.data[i] - b.data[i]) + Math.abs(a.data[i + 1] - b.data[i + 1]) + Math.abs(a.data[i + 2] - b.data[i + 2]) > 36) changed++;
+  }
+  return seen ? changed / seen : 0;
+}
 export async function inspectWorld(input, outputDirectory) {
   const name = basename(input, '.js'); outputDirectory = resolve(outputDirectory);
   await mkdir(outputDirectory,{recursive:true});
@@ -47,6 +59,19 @@ export async function inspectWorld(input, outputDirectory) {
     check('seek is independent of frame history',matrixDelta(still,again)<1e-9,matrixDelta(still,again));
     const start = await seek(0), end = await seek(metadata.duration-1e-6);
     check('loop transform seam',matrixDelta(start,end)<.001,{maxDelta:matrixDelta(start,end),epsilonSeconds:1e-6});
+    const marks = await page.evaluate(() => window.__world.definition.marks ?? null);
+    if (marks) {
+      const names = ['opening', 'routine', 'interruption', 'consequence'];
+      const shots = {};
+      for (const name of names) {
+        await seek(marks[name]);
+        shots[name] = PNG.sync.read(await page.locator('#stage').screenshot());
+      }
+      for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) {
+        const gap = pixelGap(shots[names[i]], shots[names[j]]);
+        check(`beats ${names[i]} and ${names[j]} differ`, gap > .04, gap);
+      }
+    }
     const quarter=await seek(metadata.duration*.25), half=await seek(metadata.duration*.5);
     const contactTimes=await page.evaluate(()=>window.__world.definition.contactTimes??[]);
     for(const contactTime of contactTimes){

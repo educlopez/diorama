@@ -2,7 +2,7 @@
 
 ## Shared composition
 
-A cut piece of a place, seen from above at a fixed diagonal. Default to a flat ground cutout with a broken, irregular fringe dissolving into white space. Do not add a thick soil wall, border or display plinth. A raised base is opt-in only when the user explicitly requests it. Use a strong silhouette, a few recognisable supporting objects and enough fine material detail to signal scale. Background remains white; camera does not orbit or lean toward the mouse. Leave breathing room around the tallest prop and the extreme motion.
+A cut piece of a place, seen from above at a fixed diagonal. Default to a flat ground cutout with a broken, irregular fringe dissolving into white space. Do not add a soil wall. A thick display block is `plinth`, and only when the scene asks for one: its side has to read, and its colors are not the ground. Use a strong silhouette, foreground, middle and background, and enough small props that the place is not a figure on an empty pad. Background remains white; camera does not orbit or lean toward the mouse. Leave breathing room around the tallest prop and the extreme motion.
 
 A character needs a body, shoulders, elbows, hips and knees. Pose shoulders and elbows for the task. Feet stay on the ground unless jumping, throwing weight or stepping. Use skin and clothes with enough value separation to remain legible at mobile scale. Long thin poles and unreadable scoreboard text are not substitutes for character detail.
 
@@ -30,7 +30,7 @@ Dithering belongs in tonal transitions; too much noise on flat faces destroys ma
 - Is the new output genuinely close enough to the user's references? If not, identify the visible gap rather than calling it finished.
 
 ## Acted loops
-Write the three spans down before choosing props. The routine should be recognizable on its own. The interruption should change one readable thing: a bell, a loose object, a signal. The consequence is the figure's answer, held long enough to name, then eased back so the first and last poses match. A permanent outcome cannot survive the loop. Put the still on that held answer, not on the first frame and not in the settle. Keep feet planted. If a hand leaves a tool, the contact list leaves that tool too, and picks up the new target only while the palm is there.
+Write the three spans down before choosing props. The routine should be recognizable on its own, and its marked frame must not repeat the opening: another pose, another place on the route, another prop state. The interruption should change one readable thing: a bell, a loose object, a tipped creel. The consequence is the figure's answer, held long enough to name, then eased back so the first and last poses match. A permanent outcome cannot survive the loop. Put the still on that held answer, not on the first frame and not in the settle. Plant the feet of anyone who is not walking, running or swimming. Walkers use `stride` on a `trail`. A swimmer uses `paddle` and stays off the planted contacts. If a hand leaves a tool, the contact list leaves that tool too, and picks up the new target only while the palm is there.
 
 Toy pins are small brass spheres on the existing joints. They do not add fingers, a jaw or a separate wrist axis. At 390px the pins may merge into the limb; the silhouette of the task has to carry the story without them.
 
