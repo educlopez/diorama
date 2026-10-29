@@ -14,7 +14,7 @@ Use grass mottling, board seams, pavement wear and clustered leaves sparingly. B
 
 ## Pixel
 
-Begin with the same composition. Pixelated output is not automatically pixel art. Make silhouettes more readable, keep small props at least a few logical pixels wide and preserve color groups. The kernel uses a 3 CSS px logical pixel on desktop and 2 CSS px below 600px stage width and ordered Bayer dithering with channel quantization, not a curated 16-color palette. Say so when that distinction matters. Do not claim voxel geometry.
+Begin with the same composition. Pixelated output is not automatically pixel art. Make silhouettes more readable, keep small props at least a few logical pixels wide and preserve color groups. The kernel uses a 3 CSS px logical pixel on desktop and 2 CSS px below 600px stage width and ordered Bayer dithering with channel quantization, not a curated 16-color palette. Say so when that distinction matters. `pixelInk` is the opt-in exception: eight fixed colors, the same Bayer dither, and a depth contour. It is still a pixel finish on the 3D scene, not voxel geometry and not a hand-authored sprite. Do not claim voxel geometry.
 
 Dithering belongs in tonal transitions; too much noise on flat faces destroys material readability. Avoid antialiasing that smears the pixel grid. The current prototype uses a CSS nearest-neighbour enlargement; noninteger container dimensions can produce slightly uneven pixel widths. A production upgrade could quantize stage dimensions to integer logical pixels.
 
@@ -28,6 +28,11 @@ Dithering belongs in tonal transitions; too much noise on flat faces destroys ma
 - Can the pixel silhouette still be read at 390px? Are important objects reduced to isolated flickering pixels?
 - At 0, the event moment and just before the loop seam, does the composition still work?
 - Is the new output genuinely close enough to the user's references? If not, identify the visible gap rather than calling it finished.
+
+## Acted loops
+Write the three spans down before choosing props. The routine should be recognizable on its own. The interruption should change one readable thing: a bell, a loose object, a signal. The consequence is the figure's answer, held long enough to name, then eased back so the first and last poses match. A permanent outcome cannot survive the loop. Put the still on that held answer, not on the first frame and not in the settle. Keep feet planted. If a hand leaves a tool, the contact list leaves that tool too, and picks up the new target only while the palm is there.
+
+Toy pins are small brass spheres on the existing joints. They do not add fingers, a jaw or a separate wrist axis. At 390px the pins may merge into the limb; the silhouette of the task has to carry the story without them.
 
 ## Tempo
 Use short, legible event durations rather than spreading every movement across the whole loop. The basketball example has a 4.2-second cycle, a .6-second set and .8-second shot; its predecessor’s 8-second cycle and 2.24-second flight looked like slow motion. A render-rate cap is not a simulation-rate cap: never drop elapsed time to make frames look smoother. Optional speed controls supplement, not replace, a convincing 1× default.

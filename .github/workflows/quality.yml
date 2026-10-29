@@ -44,7 +44,7 @@ jobs:
           exit $status
       - name: Check clean skill installation and self-contained builds
         run: node scripts/install-smoke.mjs "$RUNNER_TEMP/install-smoke"
-      - name: Check seven real worlds in all four finishes
+      - name: Check world scenes in all four finishes
         env:
           WORLDS_TEST_OUTPUT: ${{ runner.temp }}/worlds-runtime
         run: npm test --prefix skills/diorama-worlds

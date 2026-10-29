@@ -1,6 +1,6 @@
 ---
 name: diorama-worlds
-description: 'Build narrative miniature worlds with a fixed orthographic camera, textured terrain, articulated people and coordinated looping actions. Use for detailed low-poly 3D dioramas or pixel-finish animated vignettes: sports grounds, street performers, gardens or other small places with a story. Four finishes, miniature, pixel, halftone and blueprint, use the same Three.js scene. This is a separate skill from the diorama SVG illustrations; prefer the diorama skill for lightweight UI illustrations, line art and empty states, and diorama-pixel for dependency-free dithered pixel-art miniatures.'
+description: 'Build narrative miniature worlds with a fixed orthographic camera, textured terrain, articulated people and coordinated looping actions. Use for detailed low-poly 3D dioramas or pixel-finish animated vignettes: sports grounds, street performers, gardens or other small places with a story. Also use it for a short acted scene: one routine, one interruption and one consequence on a single deterministic clock, with jointed toy-scale figures. Four finishes, miniature, pixel, halftone and blueprint, use the same Three.js scene. Pixel can optionally snap to a fixed eight-color palette with ordered dither and a depth contour. This is a separate skill from the diorama SVG illustrations; prefer the diorama skill for lightweight UI illustrations, line art and empty states, and diorama-pixel for dependency-free dithered pixel-art miniatures.'
 license: MIT
 ---
 
@@ -25,7 +25,21 @@ Identify the place, its use on the web, one main action and the telling still fr
 
 Keep the camera fixed. White negative space isolates the scene. Ground is a flat, irregular cutout fading into that space, not a thick platform. Never impose a soil wall or display plinth; use an extruded base only when explicitly requested. Prefer one action that has anticipation, contact and recovery over ten independent idle wiggles. Surround it with secondary life that does not compete with the story. A sports ball must go to the actor's hand, bat or hoop, not merely pass nearby.
 
-Read [references/art-direction.md](references/art-direction.md) for composition and finish-specific decisions. Read [references/scene-api.md](references/scene-api.md) before building.
+Read [references/art-direction.md](references/art-direction.md) for composition and finish-specific decisions. Read [references/scene-api.md](references/scene-api.md) before building. Read [references/scene-types.md](references/scene-types.md) before promising a place: it lists which kit pieces each kind of scene can use, and which behaviors the kit does not provide.
+
+## Acted scenes
+
+Use an acted scene when the user wants a short story with a visible change of plan, not a sport, a single repeated craft stroke, or unrelated idle motion. The story is three spans that add up to `duration`:
+
+- **routine:** the place doing its ordinary job
+- **interruption:** one event that breaks that job
+- **consequence:** what the figures do about it
+
+Set `acts` to those three positive spans. `W.act(t, acts)` returns the active span and a normalized `u`. Pose every joint, prop and root from `t` only. `W.toy` is the shared adult rig at toy scale, with visible pins on the shoulders, elbows, wrists, hips and knees. `W.person` stays the adult-scale default. Call `W.plant` and `W.reach` every frame for every figure you move; skipping a frame leaves the previous pose in the joints. `W.aim` sets a joint's euler angles outright. `W.sample` reads a keyframe track. `W.blend` and `W.settle` are pure. There is no gait helper: moving a planted root slides both feet.
+
+The clock loops. The consequence has to be back on the routine's opening pose before `duration`, or the seam pops. `W.settle(u)` is the blend back during the last fraction of the consequence. Put `still` on the readable consequence, after the interruption has landed and before the settle erases it. Declare `contactTimes` for the grips that should meet in the routine, and for the consequence only while the hand is actually on the new target.
+
+`pixelInk: true` keeps the pixel finish's low-resolution grid and turns on the fixed eight-color snap, Bayer dither and depth contour. It does not add a fifth finish, and it does not recolor miniature, halftone or blueprint. `?ink=0` forces it off and `?ink` forces it on. The palette is not chosen per scene. Dense grass and thin wires pick up contour specks; keep the acting silhouette large enough to survive the grid.
 
 ## Build a world
 
@@ -44,6 +58,9 @@ Write `<subject>.js` as an ES module importing `defineWorld` from `@diorama/worl
 - `examples/cricket.js`: a broad ground, articulated players and a coordinated ball cycle.
 - `examples/basketball.js`: a smaller vignette, a shot, a net and a return pass.
 - `examples/street-juggler.js`: a fresh transfer-test result; a three-ball cascade whose catch/release positions are checked against its palms. This uses custom endpoint-driven arms, not a different renderer.
+- `examples/latch-shop.js`: an acted workshop. Filing is the routine, the bell is the interruption, the cord is the consequence.
+- `examples/orange-stall.js`: an acted market. One orange is a `sample` track; a second toy leans in, then the vendor brings the orange back.
+- `examples/signal-platform.js`: an acted platform. Stamping is the routine, the signal arm drops, and a hand flag answers it.
 
 Prefer original subjects that transfer the visual language, not another copy of the user’s reference scene. Use the shared adult `W.person`, `W.plant` and `W.reach` helpers for people; do not replace them with oversized-head box figures.
 

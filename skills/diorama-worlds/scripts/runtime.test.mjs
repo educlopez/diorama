@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { phase, smooth, seeded, defineWorld, clockTime, toolkit } from '../kit/world.js';
+import { phase, smooth, seeded, defineWorld, clockTime, toolkit, act, blend, settle, sample } from '../kit/world.js';
 import { inspectWorld } from './look-world.mjs';
 import { build } from 'esbuild';
 import * as THREE from 'three';
@@ -24,8 +24,31 @@ test('procedural detail is deterministic',()=>{
   assert.deepEqual(aa,bb);assert.notEqual(aa[0],c());assert.ok(aa.every(n=>n>=0&&n<1));
 });
 test('definition rejects broken animation and framing contracts',()=>{
-  for(const overrides of [{duration:0},{duration:Infinity},{still:8},{still:-1},{name:'Wrong Name'},{tick:null},{description:null},{contactTimes:[NaN]},{contactTimes:[1]},{bounds:[[0,0,0],[0,1,1]]},{bounds:[[0,0,0],[2,NaN,2]]}]) assert.throws(()=>defineWorld({...valid(),...overrides}));
+  for(const overrides of [{duration:0},{duration:Infinity},{still:8},{still:-1},{name:'Wrong Name'},{tick:null},{description:null},{contactTimes:[NaN]},{contactTimes:[1]},{bounds:[[0,0,0],[0,1,1]]},{bounds:[[0,0,0],[2,NaN,2]]},{acts:{routine:1,interruption:1,consequence:1}},{acts:{routine:0,interruption:1,consequence:1}},{pixelInk:'yes'}]) assert.throws(()=>defineWorld({...valid(),...overrides}));
   assert.equal(defineWorld(valid()).name,'test-world');
+  assert.equal(defineWorld({...valid(),duration:3,still:1,acts:{routine:1,interruption:1,consequence:1},pixelInk:true}).pixelInk,true);
+});
+test('acted time is a pure function of t',()=>{
+  const acts={routine:2,interruption:1,consequence:1};
+  assert.equal(act(0,acts).name,'routine');
+  assert.equal(act(1.999,acts).name,'routine');
+  assert.equal(act(2,acts).name,'interruption');
+  assert.equal(act(3,acts).name,'consequence');
+  assert.equal(act(4,acts).name,'routine');
+  assert.equal(act(-1,acts).name,'consequence');
+  assert.ok(Math.abs(act(2.5,acts).u-.5)<1e-12);
+  assert.deepEqual(act(1,acts),act(1,acts));
+  assert.equal(settle(0),0);assert.equal(settle(.7),0);assert.equal(settle(1),1);
+  assert.deepEqual(blend([0,2],[10,4],.5),[5,3]);
+  assert.throws(()=>blend([0],[0,1],.2));
+  const frames=[{t:0,value:[0,0]},{t:1,value:[0,2]},{t:2,value:[0,0]}];
+  assert.deepEqual(sample(0,frames),[0,0]);
+  assert.deepEqual(sample(2,frames),[0,0]);
+  assert.deepEqual(sample(-1,frames),[0,0]);
+  assert.ok(sample(1,frames)[1]>1.9);
+  assert.notEqual(sample(0,frames),frames[0].value);
+  assert.throws(()=>sample(0,[{t:1,value:0},{t:1,value:1}]));
+  assert.throws(()=>act(NaN,acts));
 });
 test('ground defaults to a flat broken cutout; raised slab requires explicit opt-in',()=>{
   const previous=globalThis.document;
@@ -62,7 +85,58 @@ test('adult proportion and planted-foot rig work through bends and turns',()=>{
   }
   W.dispose();
 });
+test('toy pins keep the planted rig solvable at a smaller scale',()=>{
+  const stage=new THREE.Group(),W=toolkit(stage),actor=W.toy(.2,0,'#456185','#2c2824',.9);
+  assert.throws(()=>W.aim(actor,{head:[0,1]}));
+  W.aim(actor,{head:[.2,-.1,0]});
+  assert.equal(actor.head.rotation.x,.2);
+  for(const [crouch,lean,twist] of [[0,0,0],[.04,.1,.1]]){
+    W.plant(actor,{crouch,lean,twist});stage.updateMatrixWorld(true);
+    for(const side of [-1,1]){
+      const foot=side<0?actor.leftFoot:actor.rightFoot;
+      const ankle=foot.getWorldPosition(new THREE.Vector3());
+      const support=actor.root.localToWorld(new THREE.Vector3(side*.13,.09,0));
+      assert.ok(ankle.distanceTo(support)<.00002);
+      const target=[.2+side*.08,1.05,.24];
+      const first=W.reach(actor,side,target),second=W.reach(actor,side,target);
+      assert.deepEqual(first,second);
+      assert.ok(first.every(Number.isFinite));
+    }
+  }
+  W.dispose();
+});
 const examples=fileURLToPath(new URL('../examples/',import.meta.url));
+for(const name of ['latch-shop','orange-stall','signal-platform']) test(`${name}: acted poses depend only on t`,async()=>{
+  const previous=globalThis.document;
+  globalThis.document={createElement(){return {width:0,height:0,getContext(){return {fillStyle:'',fillRect(){}};}};}};
+  try{
+    const result=await build({entryPoints:[join(examples,`${name}.js`)],bundle:true,write:false,format:'esm',platform:'node',alias:{'@diorama/worlds':fileURLToPath(new URL('../kit/world.js',import.meta.url))}});
+    const {default:def}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
+    const stage=new THREE.Group(),W=toolkit(stage),parts=def.build(W);
+    const pose=()=>{stage.updateMatrixWorld(true);const values=[];stage.traverse(o=>values.push(...o.matrixWorld.elements));return values;};
+    const delta=(a,b)=>Math.max(...a.map((n,i)=>Math.abs(n-b[i])));
+    def.tick({t:0,parts,W});const open=pose();
+    def.tick({t:0,parts,W});assert.equal(delta(open,pose()),0);
+    def.tick({t:def.duration-1e-6,parts,W});assert.ok(delta(open,pose())<1e-6);
+    def.tick({t:def.still,parts,W});assert.ok(delta(open,pose())>.03);
+    for(const t of def.contactTimes){
+      def.tick({t,parts,W});
+      const contacts=def.contacts({t,parts,W});
+      assert.ok(contacts.length>0);
+      for(const pair of contacts) assert.ok(Math.hypot(...pair.a.map((v,i)=>v-pair.b[i]))<.025,`${name} ${pair.label} at ${t}`);
+    }
+    let previousHand=null;
+    for(let i=0;i<=200;i++){
+      const t=def.duration*i/200;
+      def.tick({t,parts,W});stage.updateMatrixWorld(true);
+      const actor=parts.maker??parts.vendor??parts.clerk;
+      const hand=actor.rightHand.getWorldPosition(new THREE.Vector3()).toArray();
+      if(previousHand) assert.ok(Math.hypot(...hand.map((v,index)=>v-previousHand[index]))<.08,`${name} hand jump at ${t}`);
+      previousHand=hand;
+    }
+    W.dispose();
+  }finally{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+});
 test('fresh subject: juggling balls meet each catching/releasing palm',async()=>{
   const result=await build({entryPoints:[join(examples,'street-juggler.js')],bundle:true,write:false,format:'esm',platform:'node',alias:{'@diorama/worlds':fileURLToPath(new URL('../kit/world.js',import.meta.url))}});
   const {hand,ballPose}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
@@ -76,7 +150,7 @@ test('fresh subject: juggling balls meet each catching/releasing palm',async()=>
   }
   for(let i=0;i<3;i++)assert.ok(near(ballPose(i),ballPose(i+3)));
 });
-for(const name of ['cricket','basketball','street-juggler','florist','pottery-studio','bakery','observatory']) test(`${name}: actual offline browser output`,{timeout:120000},async()=>{
+for(const name of ['cricket','basketball','street-juggler','florist','pottery-studio','bakery','observatory','latch-shop','orange-stall','signal-platform']) test(`${name}: actual offline browser output`,{timeout:120000},async()=>{
   const output=resolve(process.env.WORLDS_TEST_OUTPUT??'work/worlds-tests',name);
   const report=await inspectWorld(join(examples,`${name}.js`),output);
   assert.ok(report.passed,JSON.stringify(report.checks.filter(c=>!c.pass),null,2));

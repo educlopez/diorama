@@ -3,6 +3,40 @@ import * as THREE from 'three';
 export const FINISHES = Object.freeze(['miniature', 'pixel', 'halftone', 'blueprint']);
 export const phase = (t, period) => ((t % period) + period) % period / period;
 export const smooth = x => (x = Math.max(0, Math.min(1, x))) * x * (3 - 2 * x);
+const ACTS = ['routine', 'interruption', 'consequence'];
+export function blend(from, to, u) {
+  if (typeof from === 'number' && typeof to === 'number') return from + (to - from) * u;
+  if (!Array.isArray(from) || !Array.isArray(to) || from.length !== to.length) throw new Error('Blend needs two numbers or two equal-length arrays.');
+  return from.map((value, index) => blend(value, to[index], u));
+}
+export function settle(u, tail = .22) {
+  if (!Number.isFinite(u) || !(tail > 0) || tail >= 1) throw new Error('Settle needs a finite amount and a tail fraction between 0 and 1.');
+  const start = 1 - tail;
+  return u <= start ? 0 : smooth((u - start) / tail);
+}
+export function act(t, acts) {
+  if (!Number.isFinite(t) || !acts || ACTS.some(name => !(acts[name] > 0) || !Number.isFinite(acts[name]))) throw new Error('Acts need a finite time and positive finite routine, interruption and consequence spans.');
+  const total = ACTS.reduce((sum, name) => sum + acts[name], 0);
+  let local = ((t % total) + total) % total;
+  for (let index = 0; index < ACTS.length; index++) {
+    const span = acts[ACTS[index]];
+    if (local < span || index === ACTS.length - 1) {
+      const clamped = Math.min(local, span);
+      const edge = Math.min(.16, span * .25);
+      return { name: ACTS[index], index, local: clamped, span, u: span > 0 ? clamped / span : 0, enter: edge > 0 ? smooth(Math.min(1, clamped / edge)) : 1, total };
+    }
+    local -= span;
+  }
+}
+export function sample(t, frames) {
+  if (!Number.isFinite(t) || !Array.isArray(frames) || frames.length < 2) throw new Error('A track needs a finite time and at least two frames.');
+  for (let i = 0; i < frames.length; i++) if (!Number.isFinite(frames[i]?.t) || (i > 0 && frames[i].t <= frames[i - 1].t)) throw new Error('Track frames need strictly increasing times.');
+  if (t <= frames[0].t) return blend(frames[0].value, frames[0].value, 0);
+  if (t >= frames.at(-1).t) return blend(frames.at(-1).value, frames.at(-1).value, 0);
+  let index = 0;
+  while (frames[index + 1].t < t) index++;
+  return blend(frames[index].value, frames[index + 1].value, smooth((t - frames[index].t) / (frames[index + 1].t - frames[index].t)));
+}
 // Absolute elapsed time: skipped frames never turn action into slow motion.
 export function clockTime(anchor, elapsedMilliseconds, duration, speed = 1) {
   return phase(anchor + Math.max(0, elapsedMilliseconds) / 1000 * speed, duration) * duration;
@@ -19,6 +53,8 @@ export function defineWorld(definition) {
   if (typeof definition.title !== 'string' || typeof definition.description !== 'string') throw new Error('World needs a title and description.');
   if (definition.bounds && (definition.bounds.length !== 2 || definition.bounds.some(v => v.length !== 3 || v.some(n => !Number.isFinite(n))) || definition.bounds[0].some((n, i) => n >= definition.bounds[1][i]))) throw new Error('Bounds must contain finite increasing min/max XYZ corners.');
   if (definition.contactTimes && (!Array.isArray(definition.contactTimes) || definition.contactTimes.some(t => !Number.isFinite(t) || t < 0 || t >= definition.duration) || typeof definition.contacts !== 'function')) throw new Error('Contact times need a contact inspector and must lie inside the loop.');
+  if (definition.acts && (ACTS.some(name => !(definition.acts[name] > 0) || !Number.isFinite(definition.acts[name])) || Math.abs(ACTS.reduce((sum, name) => sum + definition.acts[name], 0) - definition.duration) > 1e-6)) throw new Error('Act spans must be positive, finite and add up to the duration.');
+  if (definition.pixelInk !== undefined && typeof definition.pixelInk !== 'boolean') throw new Error('pixelInk must be a boolean.');
   return definition;
 }
 
@@ -149,7 +185,7 @@ export function toolkit(parent) {
     for (let i = 0; i < 2; i++) box(1.85, .13, .06, '#ab794d', 0, .78 + i * .18, -.27, g);
     return g;
   }
-  function person(x, z, shirt = '#e8e2cc', pants = '#283a43', scale = 1, skin = '#c89670') {
+  function person(x, z, shirt = '#e8e2cc', pants = '#283a43', scale = 1, skin = '#c89670', shoes = '#ded9c9') {
     const root = group(x, 0, z); root.scale.setScalar(scale);
     const body = group(0, .95, 0, root), chest = group(0, 0, 0, body);
     // Adult silhouette: about seven head-heights; no oversized toy head.
@@ -179,8 +215,26 @@ export function toolkit(parent) {
     const leftShin=limb(0,-.43,pants,.4,.065,leftLeg),rightShin=limb(0,-.43,pants,.4,.065,rightLeg);
     const leftFoot=group(0,-.43,0,leftShin),rightFoot=group(0,-.43,0,rightShin);
     const shoeGeo=geometry('adult-shoe',()=>{const g=new THREE.CapsuleGeometry(.5,1,3,8);g.rotateX(Math.PI/2);return g;});
-    for(const foot of [leftFoot,rightFoot]){const shoe=mesh(shoeGeo,'#ded9c9',0,0,.05,foot);shoe.scale.set(.155,.09,.1325);}
+    for(const foot of [leftFoot,rightFoot]){const shoe=mesh(shoeGeo,shoes,0,0,.05,foot);shoe.scale.set(.155,.09,.1325);}
     return {root,body,chest,head,face,leftArm,rightArm,leftForearm,rightForearm,leftHand,rightHand,leftLeg,rightLeg,leftShin,rightShin,leftFoot,rightFoot};
+  }
+  function toy(x, z, shirt = '#456185', pants = '#2c2824', scale = .9, skin = '#c78f66', shoes = '#1f1c19') {
+    const actor = person(x, z, shirt, pants, scale, skin, shoes);
+    const pin = '#bda86b';
+    const bead = (joint, radius) => ball(radius, pin, 0, 0, 0, joint);
+    bead(actor.leftArm, .07); bead(actor.rightArm, .07);
+    bead(actor.leftForearm, .055); bead(actor.rightForearm, .055);
+    bead(actor.leftHand, .045); bead(actor.rightHand, .045);
+    bead(actor.leftLeg, .075); bead(actor.rightLeg, .075);
+    bead(actor.leftShin, .06); bead(actor.rightShin, .06);
+    return actor;
+  }
+  function aim(actor, spec) {
+    for (const key of Object.keys(spec)) {
+      const node = actor[key], value = spec[key];
+      if (!node?.rotation || !Array.isArray(value) || value.length !== 3 || value.some(n => !Number.isFinite(n))) throw new Error('A pose needs finite euler triples on existing joints.');
+      node.rotation.set(value[0], value[1], value[2]);
+    }
   }
   const reachCache=new WeakMap();
   function cacheFor(actor){
@@ -243,18 +297,41 @@ export function toolkit(parent) {
     for (const t of textures) t.dispose();
     parent.traverse(o => { if (o.isInstancedMesh) o.dispose(); });
   }
-  return { THREE, own, reach, plant, surface, group, box, ball, cylinder, line, ring, terrain, grass, tree, bench, person, random, phase, smooth, batch, updateBatches, dispose };
+  return { THREE, own, reach, plant, aim, toy, act, blend, settle, sample, surface, group, box, ball, cylinder, line, ring, terrain, grass, tree, bench, person, random, phase, smooth, batch, updateBatches, dispose };
 }
 
 const vertexShader = `varying vec2 uv0; void main(){uv0=uv;gl_Position=vec4(position.xy,0.,1.);}`;
 const fragmentShader = `
 precision highp float;
-uniform sampler2D image; uniform sampler2D depth; uniform int mode; uniform vec2 resolution; varying vec2 uv0;
+uniform sampler2D image; uniform sampler2D depth; uniform int mode; uniform int poster; uniform vec2 resolution; varying vec2 uv0;
 float bayer(vec2 p){vec2 q=mod(floor(p),4.);float a=mod(q.x,2.)*2.+mod(q.y,2.)*3.;a=mod(a,4.);vec2 r=floor(q/2.);float b=mod(r.x*2.+r.y*3.,4.);return (4.*a+b+.5)/16.-.5;}
 vec3 srgb(vec3 x){return mix(12.92*x,1.055*pow(max(x,vec3(0.)),vec3(1./2.4))-.055,step(vec3(.0031308),x));}
+vec3 palette(vec3 c){
+  vec3 best=vec3(.96,.93,.86);float bestD=dot(c-best,c-best);
+  vec3 a=vec3(.12,.11,.10);float d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  a=vec3(.55,.36,.22);d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  a=vec3(.34,.46,.27);d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  a=vec3(.78,.56,.40);d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  a=vec3(.27,.38,.52);d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  a=vec3(.74,.66,.42);d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  a=vec3(.62,.30,.24);d=dot(c-a,c-a);if(d<bestD){bestD=d;best=a;}
+  return best;
+}
 void main(){
   vec4 c=texture2D(image,uv0);vec3 color=srgb(c.rgb);
-  if(mode==1){float d=bayer(gl_FragCoord.xy);color=floor(clamp(color+d/24.,0.,1.)*23.+.5)/23.;}
+  if(mode==1){
+    float z=texture2D(depth,uv0).x;
+    if(poster==1 && z<.99999){
+      vec2 px=1./resolution;float edge=0.;
+      for(int i=0;i<4;i++){
+        vec2 offset=i==0?vec2(px.x,0.):i==1?vec2(-px.x,0.):i==2?vec2(0.,px.y):vec2(0.,-px.y);
+        edge=max(edge,step(.02,abs(z-texture2D(depth,uv0+offset).x)));
+      }
+      float d=bayer(gl_FragCoord.xy);
+      color=palette(clamp(color+vec3(d*.055),0.,1.));
+      if(edge>.5) color=vec3(.12,.11,.10);
+    }else{float d=bayer(gl_FragCoord.xy);color=floor(clamp(color+d/24.,0.,1.)*23.+.5)/23.;}
+  }
   if(mode>=2){
     float z=texture2D(depth,uv0).x;
     // Depth separates even pale objects from untouched white negative space.
@@ -285,9 +362,10 @@ void main(){
   gl_FragColor=vec4(color,c.a);
 }`;
 
-export function mountWorld(def, { el, finish = 'miniature', paused = false } = {}) {
+export function mountWorld(def, { el, finish = 'miniature', paused = false, pixelInk } = {}) {
   if (!el) throw new Error('mountWorld needs a container.');
   if (!FINISHES.includes(finish)) throw new Error('Unknown finish.');
+  const inkOn = pixelInk === undefined ? def.pixelInk === true : Boolean(pixelInk);
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, powerPreference: 'low-power' }); }
   catch { el.textContent = 'This world needs WebGL 2. Try a browser with hardware acceleration enabled.'; el.dataset.state = 'unavailable'; return null; }
@@ -314,7 +392,7 @@ export function mountWorld(def, { el, finish = 'miniature', paused = false } = {
   const target = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
   target.depthTexture = new THREE.DepthTexture(1, 1, THREE.UnsignedIntType);
   const post = new THREE.Scene(), postCamera = new THREE.Camera();
-  const postMaterial = new THREE.ShaderMaterial({ uniforms: { image: { value: target.texture }, depth: { value: target.depthTexture }, mode: { value: FINISHES.indexOf(finish) }, resolution: { value: new THREE.Vector2(1,1) } }, vertexShader, fragmentShader, depthTest: false, depthWrite: false });
+  const postMaterial = new THREE.ShaderMaterial({ uniforms: { image: { value: target.texture }, depth: { value: target.depthTexture }, mode: { value: FINISHES.indexOf(finish) }, poster: { value: inkOn ? 1 : 0 }, resolution: { value: new THREE.Vector2(1,1) } }, vertexShader, fragmentShader, depthTest: false, depthWrite: false });
   const quadGeo = new THREE.PlaneGeometry(2, 2); post.add(new THREE.Mesh(quadGeo, postMaterial));
   const media = matchMedia('(prefers-reduced-motion: reduce)');
   let disposed = false, visible = true, contextLost = false, looping = false, time = def.still, epoch = performance.now(), anchor = def.still, speed = 1, lastFrame = -Infinity;
@@ -362,7 +440,7 @@ export function mountWorld(def, { el, finish = 'miniature', paused = false } = {
     setSpeed(value) { if (!Number.isFinite(value) || value < .25 || value > 3) throw new Error('Speed must be between 0.25 and 3.'); anchor = time; epoch = performance.now(); speed = value; },
     seek(value) { if (!Number.isFinite(value)) throw new Error('Time must be finite.'); render(phase(value, def.duration) * def.duration); anchor = time; epoch = performance.now(); },
     contacts() { return def.contacts ? def.contacts({ t: time, parts, W }) : []; },
-    stats() { return { time, duration: def.duration, finish, speed, paused, reduced: media.matches, running: looping, frames, draws, triangles, width, height, buffer: [canvas.width, canvas.height], geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }; },
+    stats() { return { time, duration: def.duration, finish, pixelInk: inkOn, speed, paused, reduced: media.matches, running: looping, frames, draws, triangles, width, height, buffer: [canvas.width, canvas.height], geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }; },
     snapshot() { const a = []; content.updateMatrixWorld(true); content.traverse(o => { if (o.isMesh || o.isGroup) a.push(...o.matrixWorld.elements); }); return a; },
     dispose() {
       if (disposed) return; disposed = true; looping = false; renderer.setAnimationLoop(null); ro.disconnect(); io.disconnect();
