@@ -1,6 +1,4 @@
-/* A walled grass yard. The cap's front is a round tile face turned toward
-   the camera. The four sails sit on that face, centred on the axle, and
-   stay inside the rim. The miller lifts a sack. Tap the miller to brake. */
+/* A walled grass yard. The sails sit on the cap face. Tap the miller to brake. */
 Pixel.scene({
   name: 'windmill',
   title: 'The windmill',
@@ -34,41 +32,46 @@ Pixel.scene({
     Dither.wall(P, 1.92, iz, 1.65, 0);
     Dither.gate(P, .55, iz, 0);
 
-    /* Local +Z is the axle, yawed toward the camera. The round face is the
-       front of the cap. The hub is on its centre and the sails stay inside it. */
     var mill = P.group(-1.2, 0, .48);
     mill.rotation.y = .74;
-    P.box(1.75, .18, 1.75, 'stone', 0, .09, 0, mill);
-    P.cyl(.68, .82, 1.72, 'stone', 0, 1.02, 0, mill, 8);
+    var plinth = P.box(1.75, .18, 1.75, 'stone', 0, .09, 0, mill);
+    Dither.seat(plinth, 'plinth');
+    var tower = P.cyl(.68, .82, 1.72, 'stone', 0, 1.02, 0, mill, 8);
+    Dither.seat(tower, 'tower', plinth);
     P.box(.26, .48, .08, 'beam', .72, .42, .02, mill);
     P.box(.14, .22, .05, 'iron', .76, .4, .08, mill);
     P.box(.12, .14, .05, 'iron', .3, 1.1, .38, mill);
-    var cap = P.cyl(.88, .88, .12, 'tile', 0, 2.05, .95, mill, 8);
+    var cap = P.cyl(.88, .88, .12, 'tile', 0, 2.02, .74, mill, 8);
     cap.rotation.x = Math.PI / 2;
-    var rim = P.cyl(.96, .96, .07, 'beam', 0, 2.05, .78, mill, 8);
+    Dither.seat(cap, 'cap', tower);
+    var rim = P.cyl(.96, .96, .08, 'beam', 0, 2.02, .74, mill, 8);
     rim.rotation.x = Math.PI / 2;
-    P.cone(.5, .36, 'tile', 0, 2.2, .15, mill, 8);
-    parts.sails = Dither.rotor(P, mill, { y: 2.05, z: 1.12, face: 1.02, len: .68 });
+    Dither.seat(rim, 'rim', cap);
+    Dither.seat(P.cone(.48, .28, 'tile', 0, 2.02, -.1, mill, 8), 'cone', tower);
+    parts.sails = Dither.rotor(P, mill, { y: 2.02, z: .84, face: .8, len: .68 });
+    Dither.seat(parts.sails, 'sails', cap);
 
     var cart = P.group(-2.25, 0, .15);
     cart.rotation.y = .35;
     cart.name = 'cart';
     parts.cart = cart;
-    P.box(1.15, .1, .62, 'cart', 0, .48, 0, cart);
-    P.box(1.15, .28, .06, 'cart', 0, .64, .3, cart);
-    P.box(1.15, .28, .06, 'cart', 0, .64, -.3, cart);
-    P.box(.06, .28, .62, 'cart', -.55, .64, 0, cart);
-    P.box(.07, .4, .07, 'timber', .68, .4, .18, cart);
-    P.box(.07, .4, .07, 'timber', .68, .4, -.18, cart);
-    P.box(.48, .06, .07, 'timber', .9, .26, .18, cart);
-    P.box(.48, .06, .07, 'timber', .9, .26, -.18, cart);
-    [-.32, .28].forEach(function (x) {
+    var r = .16, axle = null;
+    [-.32, .3].forEach(function (x) {
+      axle = P.box(.08, .06, .84, 'timber', x, r, 0, cart);
+      axle.name = 'axle';
       [-.34, .34].forEach(function (z) {
-        var w = P.cyl(.18, .18, .07, 'iron', x, .18, z, cart, 7);
+        var w = P.cyl(r, r, .08, 'iron', x, r, z, cart, 10);
         w.rotation.x = Math.PI / 2;
+        Dither.seat(w, 'cart-wheel', 'ground', axle);
       });
     });
-    P.box(.28, .2, .2, 'sack', -.12, .62, .04, cart);
+    var floor = P.box(1.02, .08, .52, 'cart', 0, r + .07, 0, cart);
+    Dither.seat(floor, 'cart-bed', axle);
+    Dither.seat(P.box(1.02, .24, .06, 'cart', 0, r + .22, .26, cart), 'cart-side', floor);
+    Dither.seat(P.box(1.02, .24, .06, 'cart', 0, r + .22, -.26, cart), 'cart-side', floor);
+    Dither.seat(P.box(.06, .24, .52, 'cart', -.48, r + .22, 0, cart), 'cart-end', floor);
+    Dither.seat(P.box(.4, .06, .06, 'timber', .7, r + .02, 0, cart), 'cart-tongue', floor);
+    Dither.seat(P.box(.26, .18, .18, 'sack', -.08, r + .2, 0, cart), 'cart-sack', floor);
 
     var miller = Dither.folk(P, 1.15, .55, {
       h: .4, yaw: -2.4, name: 'miller',
@@ -84,8 +87,9 @@ Pixel.scene({
     parts.sack = P.group(0, 0, 0);
     P.box(.4, .3, .28, 'sack', 0, .15, 0, parts.sack);
     P.box(.12, .08, .1, 'beam', 0, .32, 0, parts.sack);
-    P.box(.3, .22, .22, 'sack', -.85, .11, 1.05);
-    P.box(.26, .18, .2, 'sack', -1.95, .09, 1.7);
+    Dither.afloat(parts.sack, 'sack', 'carried');
+    Dither.seat(P.box(.3, .22, .22, 'sack', -.85, .11, 1.05), 'sack');
+    Dither.seat(P.box(.26, .18, .2, 'sack', -1.95, .09, 1.7), 'sack');
 
     parts.plants = Dither.fringe(P, [[2.2, 1.35], [-2.35, -1.35], [1.85, -1.4], [2.35, -.2]]);
     parts.plants.push(Dither.tree(P, 1.7, -1.25, { r: .48, h: .85, clusters: 6, seed: 5 }));
@@ -94,7 +98,7 @@ Pixel.scene({
     });
 
     [[.85, 1.7], [.4, .7], [1.55, -.55]].forEach(function (s, n) {
-      P.box(.22 + (n % 2) * .05, .12, .16, 'stone', s[0], .06, s[1]);
+      Dither.seat(P.box(.22 + (n % 2) * .05, .12, .16, 'stone', s[0], .06, s[1]), 'stone');
     });
     Dither.fence(P, 1.85, -.15, .4, 4);
     Dither.lamp(P, 2.05, -.55);

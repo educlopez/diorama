@@ -1,6 +1,4 @@
-/* A mountain smithy. The smith's hammer comes down, a short burst of
-   bright sparks leaves the anvil, and smoke leaves the stack. The mule
-   stands in profile. Tap the smith to rest. */
+/* A mountain smithy. Tap the smith to rest. */
 Pixel.scene({
   name: 'forge',
   title: 'The mountain forge',
@@ -27,23 +25,31 @@ Pixel.scene({
     spark: Dither.mat('#f3e2a4', { tex: 'plain', rough: 0, dither: 0 })
   },
   build: function (P) {
-    var parts = { plants: [] };
-    P.wedge(2.4, 1.5, 1.6, 'rock', -2.3, 0, -1.55);
-    P.wedge(1.7, 1.15, 1.3, 'rock', -.4, 0, -1.85).rotation.y = .4;
+    var parts = { plants: [] }, S = Dither.seat, A = Dither.afloat;
+    S(P.wedge(2.4, 1.5, 1.6, 'rock', -2.3, 0, -1.55), 'mountain');
+    var ridge = P.wedge(1.7, 1.15, 1.3, 'rock', -.4, 0, -1.85);
+    ridge.rotation.y = .4;
+    S(ridge, 'ridge');
     Dither.wall(P, 1.7, -1.5, 2.2, .15, { h: .4, stone: 'rock', cap: 'stone' });
 
     var shed = P.group(-.55, 0, -.45);
     shed.rotation.y = .45;
-    P.box(1.7, 1.05, 1.25, 'stone', 0, .52, 0, shed);
-    P.box(.34, .5, .08, 'coal', .35, .38, .64, shed);
-    parts.mouth = P.box(.28, .32, .06, 'ember', .35, .4, .7, shed);
-    P.wedge(2.0, .5, 1.55, 'tile', 0, 1.05, 0, shed);
-    P.box(.26, .72, .26, 'rock', -.5, 1.4, -.15, shed);
-    P.box(.34, .06, .34, 'stone', -.5, 1.78, -.15, shed);
-
-    P.box(.16, .38, .14, 'iron', .15, .19, .85);
-    P.box(.42, .1, .18, 'iron', .15, .42, .85);
-    P.box(.16, .08, .08, 'iron', -.08, .5, .85);
+    var shedBox = P.box(1.7, 1.05, 1.25, 'stone', 0, .525, 0, shed);
+    S(shedBox, 'shed');
+    var mouthFrame = P.box(.34, .5, .08, 'coal', .35, .38, .64, shed);
+    S(mouthFrame, 'mouth', shedBox);
+    parts.mouth = P.box(.28, .32, .06, 'ember', .35, .4, .68, shed);
+    S(parts.mouth, 'ember', mouthFrame);
+    var roof = P.wedge(2.0, .5, 1.55, 'tile', 0, 1.05, 0, shed);
+    S(roof, 'roof', shedBox);
+    var stack = P.box(.26, .72, .26, 'rock', -.5, 1.4, -.15, shed);
+    S(stack, 'stack', roof);
+    S(P.box(.34, .06, .34, 'stone', -.5, 1.78, -.15, shed), 'cap', stack);
+    var anvil = P.box(.16, .4, .14, 'iron', .15, .2, .85);
+    S(anvil, 'anvil');
+    var anvilTop = P.box(.42, .1, .18, 'iron', .15, .45, .85);
+    S(anvilTop, 'anvil-top', anvil);
+    S(P.box(.16, .08, .08, 'iron', -.02, .52, .85), 'horn', anvilTop);
 
     var smith = Dither.folk(P, .95, 1.55, {
       h: .44, yaw: 2.2, name: 'smith',
@@ -51,13 +57,15 @@ Pixel.scene({
     });
     parts.smith = smith;
     parts.hammer = P.group(0, -.02, .02, smith.handR);
-    P.box(.05, .24, .05, 'beam', 0, .12, 0, parts.hammer);
-    P.box(.1, .06, .08, 'iron', 0, .26, 0, parts.hammer);
+    P.box(.05, .24, .05, 'beam', 0, .1, 0, parts.hammer);
+    P.box(.1, .06, .08, 'iron', 0, .24, 0, parts.hammer);
+    S(parts.hammer, 'hammer', smith.handR);
     parts.sparks = [0, 1, 2, 3, 4, 5, 6, 7].map(function (i) {
       var big = i % 2 === 0, a = i / 8 * Math.PI * 2;
       var s = P.box(big ? .11 : .07, big ? .1 : .12, big ? .06 : .05, i % 2 === 0 ? 'spark' : 'ember', .15, .52, .85);
       s.home = [.15, .52, .85];
       s.dir = [Math.cos(a), Math.sin(a)];
+      A(s, 'spark', 'burst');
       return s;
     });
 
@@ -66,6 +74,7 @@ Pixel.scene({
       P.box(.18 - i * .02, .12, .16 - i * .02, 'smoke', 0, 0, 0, g);
       g.base = [-.5, 1.82, -.15];
       g.phase = i / 4;
+      A(g, 'smoke', 'smoke');
       return g;
     });
 
@@ -73,30 +82,36 @@ Pixel.scene({
     mule.rotation.y = .42;
     mule.name = 'mule';
     parts.mule = mule;
-    P.box(.84, .3, .22, 'hide', -.02, .68, 0, mule);
-    var neck = P.box(.14, .32, .14, 'hide', .36, .82, 0, mule);
-    neck.rotation.z = -.55;
-    P.box(.28, .16, .16, 'hide', .58, .96, 0, mule);
-    P.box(.14, .08, .1, 'hide', .76, .92, 0, mule);
-    P.box(.05, .16, .04, 'coal', .5, 1.1, .05, mule);
-    P.box(.05, .16, .04, 'coal', .5, 1.1, -.05, mule);
-    P.box(.08, .18, .06, 'coal', .28, .96, 0, mule);
-    P.box(.05, .24, .04, 'coal', -.46, .56, 0, mule);
-    [[-.26, .18], [-.26, -.18], [.16, .17], [.16, -.17]].forEach(function (p) {
-      P.box(.07, .5, .07, 'hide', p[0], .28, p[1], mule);
-      P.box(.09, .07, .09, 'coal', p[0], .04, p[1], mule);
+    var body = P.box(.84, .34, .4, 'hide', -.02, .7, 0, mule);
+    var neck = P.box(.22, .28, .16, 'hide', .34, .84, 0, mule);
+    neck.rotation.z = -.4;
+    S(neck, 'neck', body);
+    var head = P.box(.28, .18, .18, 'hide', .52, .98, 0, mule);
+    S(head, 'head', neck);
+    S(P.box(.16, .1, .12, 'hide', .7, .94, 0, mule), 'muzzle', head);
+    [.06, -.06].forEach(function (z) { S(P.box(.06, .14, .04, 'coal', .46, 1.12, z, mule), 'ear', head); });
+    S(P.box(.1, .16, .06, 'coal', .22, .98, 0, mule), 'mane', neck);
+    S(P.box(.06, .22, .05, 'coal', -.46, .58, 0, mule), 'tail', body);
+    [[-.28, .16], [-.28, -.16], [.18, .16], [.18, -.16]].forEach(function (p) {
+      var leg = P.box(.08, .56, .08, 'hide', p[0], .32, p[1], mule);
+      S(P.box(.1, .08, .1, 'coal', p[0], .04, p[1], mule), 'hoof', 'ground', leg);
+      S(leg, 'leg', body);
     });
+    S(mule, 'mule');
 
     var cart = P.group(2.25, 0, 1.4);
     cart.rotation.y = -.4;
-    P.box(.9, .08, .5, 'cart', 0, .42, 0, cart);
-    P.box(.9, .22, .05, 'cart', 0, .56, .24, cart);
-    P.box(.9, .22, .05, 'cart', 0, .56, -.24, cart);
-    P.box(.22, .16, .16, 'coal', -.1, .54, 0, cart);
-    [-.25, .25].forEach(function (x) {
-      var w = P.cyl(.14, .14, .06, 'iron', x, .16, .28, cart, 6);
+    var cr = .16, axle = P.box(.07, .06, .7, 'timber', .12, cr, 0, cart);
+    [-.28, .28].forEach(function (z) {
+      var w = P.cyl(cr, cr, .08, 'iron', .12, cr, z, cart, 10);
       w.rotation.x = Math.PI / 2;
+      S(w, 'cart-wheel', 'ground', axle);
     });
+    var bed = P.box(.9, .08, .48, 'cart', 0, cr + .07, 0, cart);
+    S(bed, 'cart-bed', axle);
+    [.24, -.24].forEach(function (z) { S(P.box(.9, .2, .05, 'cart', 0, cr + .2, z, cart), 'cart-side', bed); });
+    [-.24, .24].forEach(function (z) { S(P.box(.06, cr + .07, .06, 'timber', -.38, (cr + .07) / 2, z, cart), 'cart-leg', 'ground', bed); });
+    S(P.box(.2, .14, .16, 'coal', -.06, cr + .18, 0, cart), 'load', bed);
 
     Dither.fence(P, -1.7, 1.15, .7, 4);
     parts.plants.push(Dither.tree(P, 2.15, -1.35, { r: .42, h: .6, clusters: 4, seed: 4 }));
@@ -107,7 +122,6 @@ Pixel.scene({
   tick: function (c) {
     var t = c.t, q = c.q, p = c.parts, P = c.P;
     var work = c.active !== p.smith.root;
-    /* Two short bursts a loop. At the still (q = 0.25) the burst is mid-flight. */
     var u = ((q + .29) * 2) % 1;
     var live = u < .18;
     var down = !work ? 0 : live ? u / .18 : u < .4 ? 1 - (u - .18) / .22 : 0;

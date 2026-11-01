@@ -10,6 +10,7 @@ import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "./build.mjs";
+import { supportAudit } from "./support.mjs";
 
 const args = process.argv.slice(2);
 const [src, outArg] = args.filter((a) => !a.startsWith("--"));
@@ -51,6 +52,8 @@ try {
     report.images.push(path);
   };
   await page.evaluate((t) => window.__dither.runtime.renderAt(t), meta.still);
+  const support = await page.evaluate(supportAudit);
+  check("support: every declared piece meets its surface", support.fails.length === 0, support.fails.map((f) => f.why));
   await shot("still");
   const still = await pixels();
   const fill = still.reduce((n, v, i) => (i % 4 === 0 && Math.min(v, still[i + 1], still[i + 2]) < 245 ? n + 1 : n), 0) / (still.length / 4);
@@ -360,6 +363,70 @@ try {
     report.images.push(path);
   }
   check("figures: a zoom for every hot group", folks.length === hotPoints.names.length, { zooms: folks.map((s) => s.name), hot: hotPoints.names });
+
+  const joins = await page.evaluate((stillT) => {
+    const rt = window.__dither.runtime, spec = window.__dither.spec, P = rt.P, c = document.getElementById("stage");
+    const W = c.width, H = c.height, g = c.getContext("2d");
+    rt.renderAt(stillT);
+    P.update();
+    const DEG = Math.PI / 180, TAU = Math.PI * 2, cam = spec.camera || {};
+    const az = (cam.az == null ? 45 : cam.az) * DEG, el = (cam.el == null ? 30 : cam.el) * DEG;
+    const R = [Math.cos(az), 0, -Math.sin(az)], U = [-Math.sin(az) * Math.sin(el), Math.cos(el), -Math.cos(az) * Math.sin(el)];
+    const gr = spec.ground || {}, RX = gr.rx || 4, RZ = gr.rz || 3, TOP = cam.height || 3, corners = [];
+    for (let ca = 0; ca < 48; ca++) {
+      const an = ca / 48 * TAU;
+      corners.push([Math.cos(an) * RX, 0, Math.sin(an) * RZ], [Math.cos(an) * RX * .8, TOP, Math.sin(an) * RZ * .8]);
+    }
+    if (gr.rect) for (let csx = -1; csx <= 1; csx += 2) for (let csz = -1; csz <= 1; csz += 2) corners.push([csx * RX, 0, csz * RZ], [csx * RX * .92, TOP * .35, csz * RZ * .92]);
+    const dot = (a, x, y, z) => a[0] * x + a[1] * y + a[2] * z;
+    let minA = 1e9, maxA = -1e9, minB = 1e9, maxB = -1e9;
+    corners.forEach((p) => { const a = dot(R, p[0], p[1], p[2]), b = dot(U, p[0], p[1], p[2]); minA = Math.min(minA, a); maxA = Math.max(maxA, a); minB = Math.min(minB, b); maxB = Math.max(maxB, b); });
+    const S = cam.scale || Math.min((W - 10) / (maxA - minA), (H - 10) / (maxB - minB));
+    const T = cam.target, OA = T ? dot(R, T[0], T[1], T[2]) : (minA + maxA) / 2, OB = T ? dot(U, T[0], T[1], T[2]) : (minB + maxB) / 2;
+    const scr = (x, y, z) => [(dot(R, x, y, z) - OA) * S + W / 2, (OB - dot(U, x, y, z)) * S + H / 2];
+    const want = ["cart-wheel", "cart-bed", "keeper", "boat", "mule", "hoof"];
+    let root = rt.parts.hot && rt.parts.hot[0];
+    while (root && root.parent) root = root.parent;
+    const found = {};
+    function add(box, node) {
+      (function walk(cur) {
+        if (!cur) return;
+        if (cur.geo && cur.geo.v) {
+          const v = cur.geo.v;
+          for (let i = 0; i < v.length; i += 3) {
+            const p = cur.worldPoint(v[i], v[i + 1], v[i + 2]), s = scr(p[0], p[1], p[2]);
+            box.minX = Math.min(box.minX, s[0]); box.maxX = Math.max(box.maxX, s[0]);
+            box.minY = Math.min(box.minY, s[1]); box.maxY = Math.max(box.maxY, s[1]);
+          }
+        }
+        (cur.children || []).forEach(walk);
+      })(node);
+    }
+    (function walk(n) {
+      if (!n) return;
+      const nm = n.support && n.support.name;
+      if (want.includes(nm)) add(found[nm] || (found[nm] = { minX: 1e9, minY: 1e9, maxX: -1e9, maxY: -1e9 }), n);
+      (n.children || []).forEach(walk);
+    })(root);
+    function crop(box) {
+      const pad = 8;
+      const x0 = Math.max(0, Math.floor(box.minX) - pad), y0 = Math.max(0, Math.floor(box.minY) - pad);
+      const x1 = Math.min(W, Math.ceil(box.maxX) + pad), y1 = Math.min(H, Math.ceil(box.maxY) + pad);
+      const sw = Math.max(1, x1 - x0), sh = Math.max(1, y1 - y0), Z = 6;
+      const src = g.getImageData(x0, y0, sw, sh);
+      const tmp = document.createElement("canvas"); tmp.width = sw; tmp.height = sh;
+      tmp.getContext("2d").putImageData(src, 0, 0);
+      const out = document.createElement("canvas"); out.width = sw * Z; out.height = sh * Z;
+      const o = out.getContext("2d"); o.imageSmoothingEnabled = false; o.drawImage(tmp, 0, 0, sw * Z, sh * Z);
+      return out.toDataURL("image/png");
+    }
+    return Object.keys(found).filter((nm) => found[nm].maxX > found[nm].minX).map((nm) => ({ name: nm, url: crop(found[nm]) }));
+  }, meta.still);
+  for (const shot of joins || []) {
+    const path = join(outdir, `${name}-join-${shot.name}.png`);
+    writeFileSync(path, Buffer.from(shot.url.split(",")[1], "base64"));
+    report.images.push(path);
+  }
 
   const bench = async () => page.evaluate(() => {
     const rt = window.__dither.runtime, ts = [];

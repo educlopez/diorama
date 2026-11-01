@@ -1,7 +1,7 @@
 /* GENERATED, do not edit.
    sources:
    skills/diorama-pixel/kit/pixel.js e1ae2ae4ad209c545e283f39ae6ac005c69cb2d3da467b6014c7365c53d9fa96
-   skills/diorama-dither/kit-src/finish.js a23b6e0c8935609d410a5feec63ea477c2a24ff7b53665ba92cf1e850ecc9056
+   skills/diorama-dither/kit-src/finish.js f36f5b05e78985e0f9657252c7c78d1ba43022eb3aa3a67c7b73085e9edee244
 */
 /* ============================================================================
    Diorama Pixel kernel · one global `Pixel`, no dependency: a software
@@ -624,11 +624,7 @@ var Pixel = (function () {
   return { scene: scene, scenes: scenes, mount: mount, RAMPS: RAMPS, TEX: TEX, noise: noise, fbm: fbm, hash: hash };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Pixel;
-/* Dither finish. Concatenated after the pixel kernel by scripts/sync-dither-kit.mjs.
-   A Pixel page never loads this file, so the three Pixel scenes stay on the
-   kernel defaults. Here the mount fills a dither scene only where it left a
-   field empty: 360 x 280, Bayer 4 x 4, hard shadows, a warm rim, wind at
-   8 frames per second, and a darker contact underfoot. */
+/* Dither finish. A Pixel page never loads this file. */
 var Dither = (function () {
   var COOL = [78, 88, 102], WARM = [255, 220, 160];
 
@@ -646,10 +642,6 @@ var Dither = (function () {
     return '#' + c.map(function (v) { return ('0' + clamp(Math.round(v), 0, 255).toString(16)).slice(-2); }).join('');
   }
 
-  /* Five close tones around one colour. Index 0 is a touch cooler, index 4 a
-     touch warmer. The lit colour stays itself: violet is reserved for the
-     shadow veil. Adjacent steps stay between about 3.4 and 7.5 percent
-     luminance so the 4 x 4 Bayer pattern does not read as a checker. */
   function targetsFor(L) {
     var t = [-.12, -.06, 0, .05, .1].map(function (d) { return clamp(L + d, .15, .8); }), i, over;
     for (i = 1; i < t.length; i++) {
@@ -674,8 +666,6 @@ var Dither = (function () {
     return seeds.map(function (s, i) { return hex(tone(s, goal[i], tint[i], amt[i])); });
   }
 
-  /* A figure material: the same five tones, no texture, no dither. The kernel
-     then paints flat bands and a dark silhouette. */
   function wear(color) { return { ramp: ramp(color), figure: true, tex: 'plain', dither: 0 }; }
 
   var PRESETS = {
@@ -715,7 +705,19 @@ var Dither = (function () {
     return m;
   }
 
-  /* A small person: hat or hair, two or three cloth colours, a name for the pointer. */
+  function seat(node, name, on, join) {
+    var s = { name: name || 'piece' };
+    if (on) s.on = on;
+    else if (!join) s.on = 'ground';
+    if (join) s.join = join;
+    node.support = s;
+    return node;
+  }
+  function afloat(node, name, why) {
+    node.support = { name: name || 'piece', float: why || 'lifted' };
+    return node;
+  }
+
   function folk(P, x, z, opt) {
     opt = opt || {};
     var shirt = opt.shirt || '#b5523a';
@@ -727,18 +729,18 @@ var Dither = (function () {
       shoes: wear(opt.shoes || '#2a2420'), sleeve: wear(opt.sleeve || shirt)
     });
     who.root.name = opt.name || '';
+    who.root.figure = true;
+    seat(who.root, opt.name || 'figure');
     return who;
   }
 
-  /* A stone run with a timber coping. len is along local X. The coping is
-     slightly wider so the top edge reads as a separate course. */
   function wall(P, x, z, len, yaw, opt) {
     opt = opt || {};
     var h = opt.h == null ? .34 : opt.h, d = opt.d == null ? .26 : opt.d;
     var g = P.group(x, 0, z); g.rotation.y = yaw || 0;
-    P.box(len, h, d, opt.stone || 'stone', 0, h / 2, 0, g);
-    P.box(len + .08, .07, d + .08, opt.cap || 'timber', 0, h + .035, 0, g);
-    return g;
+    var run = P.box(len, h, d, opt.stone || 'stone', 0, h / 2, 0, g);
+    seat(P.box(len + .08, .07, d + .08, opt.cap || 'timber', 0, h + .035, 0, g), 'coping', run);
+    return seat(g, 'wall');
   }
 
   function gate(P, x, z, yaw) {
@@ -746,7 +748,7 @@ var Dither = (function () {
     P.box(.1, .66, .1, 'timber', -.48, .33, 0, g);
     P.box(.1, .66, .1, 'timber', .48, .33, 0, g);
     P.box(1.06, .07, .08, 'timber', 0, .62, 0, g);
-    return g;
+    return seat(g, 'gate');
   }
 
   function fence(P, x, z, yaw, n) {
@@ -757,18 +759,19 @@ var Dither = (function () {
     for (i = 0; i < n; i++) P.box(.06, .42, .06, 'timber', -span / 2 + i * .36, .21, 0, g);
     P.box(span + .08, .05, .05, 'beam', 0, .32, 0, g);
     P.box(span + .08, .05, .05, 'beam', 0, .16, 0, g);
-    return g;
+    return seat(g, 'fence');
   }
 
-  /* A post and a paper box. No bright halo: the shade is a flat warm face. */
   function lamp(P, x, z, opt) {
     opt = opt || {};
     var h = opt.h == null ? .64 : opt.h, post = opt.post || 'beam', shade = opt.shade || 'lantern';
     var g = P.group(x, 0, z);
-    P.box(.07, h, .07, post, 0, h / 2, 0, g);
-    P.box(.18, .22, .18, shade, 0, h + .08, 0, g);
-    P.box(.24, .05, .24, post, 0, h + .22, 0, g);
-    return g;
+    var postN = P.box(.07, h, .07, post, 0, h / 2, 0, g);
+    var shadeN = P.box(.18, .22, .18, shade, 0, h + .08, 0, g);
+    seat(shadeN, 'lamp-shade', postN);
+    seat(P.box(.24, .05, .24, post, 0, h + .22, 0, g), 'lamp-cap', shadeN);
+    g.shade = shadeN;
+    return seat(g, 'lamp');
   }
 
   function tree(P, x, z, opt) {
@@ -778,21 +781,21 @@ var Dither = (function () {
       clusters: opt.clusters == null ? 5 : opt.clusters, mat: opt.mat || 'leaf', trunk: opt.trunk || 'beam', seed: opt.seed == null ? 3 : opt.seed
     });
     g.base = [x, 0, z];
-    return g;
+    return seat(g, 'tree');
   }
 
   function bush(P, x, z, r) {
     var g = P.bush(x, z, null, { r: r || .22, clusters: 4, mat: 'leaf' });
     g.base = [x, 0, z];
-    return g;
+    return seat(g, 'bush');
   }
 
-  /* Three blades of grass per spot. Returns the groups so a tick can sway them. */
   function fringe(P, spots, matName) {
     var out = [];
     spots.forEach(function (p, n) {
       var x = p[0], z = p[1], h = p[2] || (.18 + (n % 3) * .04), g = P.group(x, 0, z), k;
       g.base = [x, 0, z];
+      seat(g, 'fringe');
       for (k = 0; k < 3; k++) {
         var a = k * 2.2 + x;
         P.box(.08, h, .08, matName || 'moss', Math.cos(a) * .08, h / 2, Math.sin(a) * .08, g);
@@ -802,11 +805,6 @@ var Dither = (function () {
     return out;
   }
 
-  /* Four equal sails on the front of a cap. The axle is the parent's +Z, so
-     the disk spins in the parent's XY. y is the cap centre. face is the cap
-     surface along Z; z is the hub, just past that face, on the axis (x = 0).
-     len is the spar. Keep the whole cross inside the cap face: the cloth
-     reaches about 0.9 * len from the hub, so len stays under the face radius. */
   function rotor(P, parent, opt) {
     opt = opt || {};
     var y = opt.y == null ? 2.6 : opt.y, z = opt.z == null ? 1.2 : opt.z, face = opt.face == null ? .8 : opt.face, len = opt.len == null ? .96 : opt.len;
@@ -826,10 +824,6 @@ var Dither = (function () {
     return sails;
   }
 
-  /* Plants step by whole pixels. spec.wind (8) quantises t; snap() quantises
-     the offset. Period 4 closes on an 8 second loop. Reduced motion never
-     advances t, so a plant stays on its still-frame pixel. No rotation: a
-     turn of a few degrees would slide the edges off the pixel grid. */
   function sway(P, node, base, t, amp, phase) {
     var w = P.wind(t, 4, phase || 0), s = P.wind(t, 4, (phase || 0) + .37);
     var px = amp == null ? 2 : amp;
@@ -838,11 +832,6 @@ var Dither = (function () {
     node.position.z = base[2] + P.snap(px * P.px * .6 * s);
   }
 
-  /* A sun whose shadows fall toward screen-right for the usual isometric azimuth.
-     elevation is in degrees: lower throws a longer shadow. turn, in degrees,
-     swings the sun off that axis so a sail that faces the camera still blocks
-     a face, and the four blades stay apart on the ground instead of stacking
-     into one bar. */
   function sun(cameraAz, elevation, turn) {
     var az = cameraAz == null ? 45 : cameraAz, el = elevation == null ? 24 : elevation;
     var rad = Math.PI / 180;
@@ -850,8 +839,6 @@ var Dither = (function () {
     return { az: saz, el: el, ambient: .3 };
   }
 
-  /* Sack height through one loop: on the ground at both ends, resting on the
-     cart through the middle. The ends match, so the loop seam is exact. */
   function carry(q) {
     var smooth = function (t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
     if (q < .12) return 0;
@@ -861,7 +848,6 @@ var Dither = (function () {
     return 0;
   }
 
-  /* Tones, gaps, how cool the darkest step is (b - r) and how warm the lightest is. */
   function report(color) {
     var row = ramp(color), L = row.map(function (h) { return lum(rgb(h)); }), gaps = [], i;
     for (i = 1; i < L.length; i++) gaps.push(L[i] - L[i - 1]);
@@ -883,6 +869,7 @@ var Dither = (function () {
 
   return {
     ramp: ramp, wear: wear, mat: mat, folk: folk, sway: sway, carry: carry, sun: sun, report: report,
-    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor
+    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor,
+    seat: seat, afloat: afloat
   };
 })();

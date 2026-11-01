@@ -55,7 +55,7 @@ The cap front is a cylinder turned on its side (`rotation.x = π/2`) so the roun
 `Dither.rotor(P, parent, { y, z, face, len })`:
 
 - `y` is the centre of the cap face, not a point on the shaft.
-- The disk's `z` has to clear the tower radius. A face at `z` `0.3` sits inside a shaft of radius `0.8`, and the lower blade paints the stone. Put the face near `z` `0.95` and the hub just past it (`face` `1.02`, `z` `1.12`). The hub's `x` stays `0`.
+- The disk's back face meets the tower within one voxel, and the cloth stays in front of the stone. On this mill the shaft top radius is `0.68`. The disk is radius `0.88`, thickness `0.12`, at `y` `2.02` and `z` `0.74`, so the back face is `z` `0.68`. The hub is `face` `0.80`, `z` `0.84`, `x` `0`. A disk buried in the taper paints the lower blade on the stone. A disk pulled clear of the shaft floats off the cap.
 - The cloth reaches about `0.9 * len` from the hub. Keep that inside the disk radius. On a face of radius `0.88`, `len` `0.68` leaves a tile rim and the canvas still reads.
 - The four spars are the same boxes, turned by `i * π/2`. Do not scale one of them.
 - Spin `sails.rotation.z = q * TAU`. Braking stores `P.phase(pressedAt, duration)`.
@@ -66,9 +66,42 @@ A lighthouse ray is a run of boxes in one group, each shorter in width than the 
 
 A tea house needs two paper walls on the faces the camera sees, with an ink lattice, a floor of separate planks, and a soffit wider than the walls. One screen at the back of an open shed disappears under the roof. Carp swim an oval in the near water, clear of the bridge deck for the whole loop, including the still.
 
-A mule is a body, a neck tilted toward the head, a head and a muzzle, two ears, a mane, a tail, and four legs set wider than the body so they do not stack into one post. Yaw it so the side and a little of the front both show. Sparks are boxes around `0.07` to `0.11`, half of them a pale hard tone and half ember, visible only while a wrapped phase is under about `0.18`. They fly out and die inside that window.
+A mule is a body, a neck tilted toward the head, a head and a muzzle, two ears, a mane, a tail, and four legs. The body is deep enough to meet the legs. Each hoof sits on the ground and meets its leg. Yaw it so the side and a little of the front both show. Sparks are boxes around `0.07` to `0.11`, half of them a pale hard tone and half ember, visible only while a wrapped phase is under about `0.18`. They fly out and die inside that window.
 
 Smoke is three or four boxes on a loop `(q + i / n) % 1`, rising from the stack and back.
+
+## Support
+
+Every solid group sets `support` through `Dither.seat` or `Dither.afloat`. The check allows one voxel (`P.px`, `1 / camera.scale`).
+
+```js
+Dither.seat(plinth, 'plinth');
+Dither.seat(tower, 'tower', plinth);
+Dither.seat(wheel, 'cart-wheel', 'ground', axle);
+Dither.seat(hull, 'boat', 'water');
+Dither.seat(crest, 'crest', 'surface');
+Dither.afloat(sack, 'sack', 'carried');
+```
+
+- `seat(node, name)` — bottom on the ground. A figure here must not fall in a water zone.
+- `seat(node, name, other)` — the two bounds meet. Pass an axle, a cap, a floor, a post.
+- `seat(node, name, 'ground', other)` — on the ground and against that solid. Wheels.
+- `seat(node, name, 'water')` — the plane cuts the body. A hull stays cut even when the bob is at its highest.
+- `seat(node, name, 'surface')` — bottom on the water, and the spot is water.
+- `afloat(node, name, reason)` — the only float. Reason required.
+
+`folk` seats the person. Helpers for walls, gates, fences, lamps, trees, bushes and grass seat themselves. A lamp shade sits on the post. The cap sits on the shade.
+
+Wheels use 10 sides and `rotation.x = π/2`, with the centre at `y = radius`, so one vertex is on `y = 0`. The axle runs through the hub and the bed sits on the axle. Feet and hooves meet a solid: meadow, earth, sand, rock, a deck, or the floor of a boat. A bridge's piles stand on the banks, not in the pond. Posts reach `y = 0`.
+
+Checklist:
+
+- Every group declares `seat` or `afloat`.
+- Wheels, legs and feet contact. The axle contacts the box.
+- The hull is partly under the water. Foam sits on the surface.
+- Nothing floats without a named reason.
+
+`node scripts/support.mjs examples/<name>.js` prints `ok` or `FAIL` and the group name, and exits 1 on a miss. `node scripts/support.mjs --negative` lifts one `cart-wheel` by `0.25` and must fail on that name. The look runs the same check at the still frame.
 
 ## Shadow check
 
@@ -91,7 +124,7 @@ These are the misses from the first render of each place, after the yard rules a
 
 - **Windmill rotor.** A hub set to the side of the shaft, or an axle yawed toward the side of the frame, draws the sails edge-on. A long blade in front of a cone still crosses the roof edge. The cross has to sit inside a round face turned toward the camera, hub on the axis, every blade the same length. The downward blade may meet the top of the shaft. It must not leave the cap or paint the door.
 - **Windmill people.** The near wall and the gate post cover anyone standing on the path by the opening, even when their feet are inside the yard. The open grass left of the tower, and the path in front of the plinth but short of the gate, are the spots that stay whole. A lamp post in that path does the same thing.
-- **Windmill shadow.** With the sails inside the cap face, a high sun (`elevation` near 58) leaves a thin run that merges with the right-hand wall. `Dither.sun(45, 38, 16)` throws one grass silhouette to the right of the tower, short of the wall, and it still changes shape as the cross turns. The cap face has to sit in front of the shaft (`z` past the tower radius) or the lower blade paints the stone and the shadow test sees the wall instead.
+- **Windmill shadow.** With the sails inside the cap face, a high sun (`elevation` near 58) leaves a thin run that merges with the right-hand wall. `Dither.sun(45, 38, 16)` throws one grass silhouette to the right of the tower, short of the wall, and it still changes shape as the cross turns. The disk's back face meets the tower top. If that face is buried in the taper, the lower blade paints the stone and the shadow test sees the wall.
 - **Lighthouse.** A single box the same thickness for its whole length reads as a bar, even when it is thin. Segments that narrow, with a dithered tone on the alternate ones, read as a ray. The keeper stood behind the parapet in an earlier pass, and the crests were dark dashes. Pale foam boxes read as waves. The cast on the sea is a dark blue strip, not a column of grass, so a grass-shaped test counts it as nothing.
 - **Tea house.** A roof on four posts is a shed. Two shoji walls toward the camera, a plank floor and an eave make the house. One carp was under the bridge at the still frame when the oval crossed the deck. Keep both fish in the near water. The host stood behind the near lantern in an earlier pass. The dusk sun sat high in the empty page. The light direction is fixed when the page is built, so dusk is a swap of the paper, the lantern cores and one hard disk near the roof. It is not a new sun.
 - **Forge.** A mule built as one bar with a lump for a head does not read. Neck, muzzle, ears and legs wider than the body do. Sparks of a single pixel at the anvil disappear. A short burst of larger pale and ember pixels does not. The fence crossed the smith in an earlier pass. The grass shadow is a narrow run at the right, real, and thinner than the mill's.
