@@ -26,6 +26,11 @@
      camera                   { az: 45, el: 30, scale (px per unit, default: fit), target: [x, y, z], height }
      sun                      { az: -40, el: 48, ambient: .34 }   az/el in degrees, the light comes from there
      outline                  true: one ramp step darker on silhouettes against farther things (default true)
+     bayer                    8 (default) or 4: ordered-dither matrix. 8 is the original picture
+     shadow                   'soft' (default, 2 x 2) or 'hard' (one sample, no penumbra)
+     rim                      false (default). true adds a warm tint on top-left edges of solids, never on the ground
+     wind                     0 (default) or a step rate in frames per second for P.wind
+     contact                  .32 (default): how hard the ground darkens under a foot
      ground                   { rx, rz, wobble: .3, fade: .45, zone(x, z, P) -> material key or object }
      materials                { key: material } extra named materials
      build(P)                 build once; return parts; parts.hot = [groups the pointer may pick], each with a .name
@@ -48,7 +53,9 @@
      P.bush(x, z, parent, { r, clusters, mat, flowers })                  a low clump, flowers a hex
      P.mat(spec)                                    a material: a hex colour, a key ('grass', 'water', 'wood', 'thatch',
                                                     'stone', 'paving', 'leaf', 'cloth', 'dirt', 'sand'), or
-                                                    { color | ramp, tex, grain: 'x'|'y'|'z', plank, size, stripe, alt, rough, dither, glow, round, flat }
+                                                    { color | ramp, tex, grain: 'x'|'y'|'z', plank, size, stripe, alt, rough, dither, glow, round, flat, figure }
+     P.snap(v)                                  round a world offset to a whole screen pixel (0 when unused)
+     P.wind(t, period, offset)                  P.wave on time stepped by spec.wind (plain P.wave when wind is 0)
      P.update()                                     compose every world matrix now, so tick can read node.worldPoint(x, y, z)
      P.wave(t, period, offset) P.phase(t, period, offset) P.pulse(t, period, width) P.smooth(t) P.lerp(a, b, t) P.clamp
      P.noise(x, y) P.fbm(x, y) P.hash(x, y)        the same noise the textures use (for zones and outlines)
@@ -85,6 +92,11 @@ var Pixel = (function () {
     var b = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
       3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21];
     return new Float32Array(b.map(function (v) { return (v + .5) / 64; }));
+  })();
+  /* 4 x 4 ordered matrix, used only when a scene sets bayer: 4. The default path never reads it. */
+  var BAYER4 = (function () {
+    var b = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    return new Float32Array(b.map(function (v) { return (v + .5) / 16; }));
   })();
 
   /* ---------- colour ramps ---------- */
@@ -172,7 +184,7 @@ var Pixel = (function () {
     var o = typeof spec === 'string' ? (registry.named[spec] || DEFAULTS[spec] || { color: spec }) : spec;
     if (o.isMaterial) return o;
     var m = { isMaterial: true, id: registry.list.length, tex: TEX[o.tex || 'plain'], grain: o.grain || 'x', plank: o.plank || .14, size: o.size || .4,
-      rough: o.rough == null ? 1 : o.rough, blades: !!o.blades, dither: o.dither != null ? o.dither : (o.tex && o.tex !== 'plain' ? 1 : .55), stripe: o.stripe || 0, ground: !!o.ground, water: !!o.water, flat: !!o.flat, glow: o.glow || 0, round: o.round != null ? !!o.round : o.tex === 'leaf' };
+      rough: o.rough == null ? 1 : o.rough, blades: !!o.blades, dither: o.dither != null ? o.dither : (o.tex && o.tex !== 'plain' ? 1 : .55), stripe: o.stripe || 0, ground: !!o.ground, water: !!o.water, flat: !!o.flat, figure: !!o.figure, glow: o.glow || 0, round: o.round != null ? !!o.round : o.tex === 'leaf' };
     var r = o.ramp ? (typeof o.ramp === 'string' ? RAMPS[o.ramp] : o.ramp) : autoRamp(o.color || '#999999');
     m.ramp = packRamp(r); m.n = m.ramp.length;
     if (o.alt) { var ra = typeof o.alt === 'string' && RAMPS[o.alt] ? RAMPS[o.alt] : (Array.isArray(o.alt) ? o.alt : autoRamp(o.alt)); m.alt = packRamp(ra); }
@@ -250,7 +262,7 @@ var Pixel = (function () {
       line: function (points, mat, parent) { var n = new Node(); n.line = points; n.mat = makeMaterial(mat, registry); return place(n, 0, 0, 0, parent); },
       person: function (x, z, parent, o) {
         o = o || {}; var k = o.h || 1.3, root2 = P.group(x, 0, z, parent); root2.rotation.y = o.yaw || 0;
-        var shirt = o.shirt || '#a8644c', pants = o.pants || '#3f4a5a', skin = o.skin || '#e0b08a', sleeve = o.sleeve || shade(shirt, .8), shoes = o.shoes || '#2b2624';
+        var shirt = o.shirt || '#a8644c', pants = o.pants || '#3f4a5a', skin = o.skin || '#e0b08a', sleeve = o.sleeve || (typeof shirt === 'string' ? shade(shirt, .8) : shirt), shoes = o.shoes || '#2b2624';
         var hips = P.group(0, .36 * k, 0, root2), legs = [], knees = [];
         [-1, 1].forEach(function (sd) {
           var leg = P.group(sd * .055 * k, 0, 0, hips); P.box(.09 * k, .19 * k, .11 * k, pants, 0, -.095 * k, 0, leg);
@@ -331,6 +343,11 @@ var Pixel = (function () {
     var S = cam.scale || Math.min((W - 10) / (maxA - minA), (H - 10) / (maxB - minB));
     var T = cam.target || [0, 0, 0], OA = cam.target ? dot(R, T[0], T[1], T[2]) : (minA + maxA) / 2, OB = cam.target ? dot(U, T[0], T[1], T[2]) : (minB + maxB) / 2;
     var CX = W / 2, CY = H / 2;
+    /* optional finish. Every default below is the value the original picture used. */
+    var bayerN = spec.bayer == null ? 8 : spec.bayer | 0, shadowMode = spec.shadow || 'soft', rimOn = !!spec.rim, windFps = spec.wind || 0, contactK = spec.contact == null ? .32 : spec.contact;
+    P.px = 1 / S;
+    P.snap = function (v) { return Math.round(v * S) / S; };
+    P.wind = function (t, period, offset) { var qt = windFps > 0 ? Math.floor(t * windFps + 1e-8) / windFps : t; return wave(qt, period, offset); };
 
     /* shadow map over the same box, seen from the sun */
     var SM = 512, smin = [1e9, 1e9], smax = [-1e9, -1e9];
@@ -348,7 +365,8 @@ var Pixel = (function () {
       gx[i] = wx; gz[i] = wz; gdep[i] = dot(C, wx, 0, wz);
       var d = Math.sqrt(wx * wx / (RX * RX) + wz * wz / (RZ * RZ)), edge = (1 - d) * Math.min(RX, RZ) + wob * (fbm(wx * .55 + 3, wz * .55 - 7) - .5) * 2.4 + (noise(wx * 3, wz * 3) - .5) * .25;
       var al = clamp(edge / fade, 0, 1);
-      if (al <= BAYER[(py & 7) * 8 + (px & 7)] * .999 || al <= 0) { gmat[i] = -1; continue; }
+      var bv = bayerN === 8 ? BAYER[(py & 7) * 8 + (px & 7)] : BAYER4[(py & 3) * 4 + (px & 3)];
+      if (al <= bv * .999 || al <= 0) { gmat[i] = -1; continue; }
       gfade[i] = 1 - al;
       var zm = makeMaterial(zone(wx, wz, P), registry); gmat[i] = zm.id;
     }
@@ -414,6 +432,7 @@ var Pixel = (function () {
     }
     function lit(x, y, z) {
       var u = (dot(LR, x, y, z) - smin[0]) * SS + 2, v = (smax[1] - dot(LU, x, y, z)) * SS + 2, d = dot(L, x, y, z) + .035, s = 0;
+      if (shadowMode === 'hard') { var hu = clamp(Math.floor(u), 0, SM - 1), hv = clamp(Math.floor(v), 0, SM - 1); return shadow[hv * SM + hu] <= d ? 1 : 0; }
       var iu = Math.floor(u - .5), iv = Math.floor(v - .5);
       for (var oy = 0; oy < 2; oy++) for (var ox = 0; ox < 2; ox++) { var uu = clamp(iu + ox, 0, SM - 1), vv = clamp(iv + oy, 0, SM - 1); if (shadow[vv * SM + uu] <= d) s += .25; }
       return s;
@@ -476,11 +495,11 @@ var Pixel = (function () {
       var i, px, py;
       for (py = 0; py < H; py++) for (px = 0; px < W; px++) {
         i = py * W + px;
-        var id = tri[i], b = BAYER[(py & 7) * 8 + (px & 7)], m, x, y, z, nx, ny, nz, nd, tone, extra = 0;
+        var id = tri[i], b = bayerN === 8 ? BAYER[(py & 7) * 8 + (px & 7)] : BAYER4[(py & 3) * 4 + (px & 3)], m, x, y, z, nx, ny, nz, nd, tone, extra = 0;
         if (id < 0 || gdep[i] > depth[i] && gmat[i] >= 0) {
           if (gmat[i] < 0) { mid[i] = -1; continue; }
           m = mats[gmat[i]]; x = gx[i]; y = 0; z = gz[i]; nx = 0; ny = 1; nz = 0; nd = Math.max(0, L[1]); tri[i] = -1; depth[i] = gdep[i];
-          extra = gfade[i] * .45 - occl(x, z) * .32;
+          extra = gfade[i] * .45 - occl(x, z) * contactK;
           if (m.blades && hash(px, py + 1) > .955 && !(hash(px, py) > .955)) extra += .22;
           else if (m.blades && hash(px, py) > .955) extra -= .1;
         } else {
@@ -496,7 +515,9 @@ var Pixel = (function () {
         if (m.grain === av) { along = v; across = u; }
         tone = .08 + .84 * l + m.tex(m, x, y, z, along, across, t, px, py) + extra;
         var ramp = m.alt && m.stripe && (Math.floor(along / m.stripe) & 1) ? m.alt : m.ramp, nR = ramp.length;
-        var f = tone * (nR - 1) + (b - .5) * m.dither, k = Math.floor(f + .5);
+        /* a flat figure ignores the texture and the dither and lands on whole ramp steps */
+        if (m.figure) tone = Math.min(nR - 1, Math.floor(clamp(l, 0, .999) * nR)) / (nR - 1);
+        var f = tone * (nR - 1) + (b - .5) * (m.figure ? 0 : m.dither), k = Math.floor(f + .5);
         if (m.water && hash3(px, py, tick) > .993 && tone > .7) k = nR - 1;
         idx[i] = k < 0 ? 0 : k >= nR ? nR - 1 : k; mid[i] = m.id * 2 + (ramp === m.alt ? 1 : 0);
       }
@@ -507,9 +528,18 @@ var Pixel = (function () {
         var mm = mats[mid[i] >> 1], rr = mid[i] & 1 ? mm.alt : mm.ramp, kk = idx[i];
         if (outline && tri[i] >= 0) {
           var dz = depth[i], far = .18;
-          if ((px > 0 && (mid[i - 1] < 0 || dz - depth[i - 1] > far)) || (px < W - 1 && (mid[i + 1] < 0 || dz - depth[i + 1] > far)) || (py > 0 && (mid[i - W] < 0 || dz - depth[i - W] > far)) || (py < H - 1 && (mid[i + W] < 0 || dz - depth[i + W] > far))) kk = Math.max(0, kk - 1);
+          if ((px > 0 && (mid[i - 1] < 0 || dz - depth[i - 1] > far)) || (px < W - 1 && (mid[i + 1] < 0 || dz - depth[i + 1] > far)) || (py > 0 && (mid[i - W] < 0 || dz - depth[i - W] > far)) || (py < H - 1 && (mid[i + W] < 0 || dz - depth[i + W] > far))) kk = mm.figure ? 0 : Math.max(0, kk - 1);
         }
         if (hoverIdx >= 0 && tri[i] >= 0 && triHot[tri[i]] === hoverIdx) kk = Math.min(rr.length - 1, kk + 1);
+        /* warm rim on a top-left edge whose face points that way. The ground is not a triangle, so it never takes a rim. */
+        if (rimOn && tri[i] >= 0) {
+          var rimL = px > 0 && (mid[i - 1] < 0 || depth[i] - depth[i - 1] > .18), rimU = py > 0 && (mid[i - W] < 0 || depth[i] - depth[i - W] > .18);
+          if (rimL || rimU) {
+            var rnx = triN[tri[i] * 3], rny = triN[tri[i] * 3 + 1], rnz = triN[tri[i] * 3 + 2];
+            var face = (-R[0] + U[0]) * rnx + (-R[1] + U[1]) * rny + (-R[2] + U[2]) * rnz;
+            if (face > .22) { var base = [rr[kk] & 255, (rr[kk] >> 8) & 255, (rr[kk] >> 16) & 255]; out[i] = pack(mix(base, [255, 214, 120], .48)); continue; }
+          }
+        }
         out[i] = rr[kk];
       }
     }
