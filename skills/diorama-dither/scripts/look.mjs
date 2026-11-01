@@ -10,7 +10,7 @@ import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "./build.mjs";
-import { supportAudit, frameTimes } from "./support.mjs";
+import { supportAudit, frameTimes, groundFamily, shadowOk, fnBody } from "./support.mjs";
 
 const args = process.argv.slice(2);
 const [src, outArg] = args.filter((a) => !a.startsWith("--"));
@@ -44,6 +44,7 @@ try {
     duration: window.__dither.spec.duration, still: window.__dither.spec.still || 0,
     scene: window.__dither.spec.name || "",
     shadow: window.__dither.spec.shadow || "none",
+    snow: !!(window.__dither.spec.materials && window.__dither.spec.materials.snow && window.__dither.spec.materials.snow.ground),
     hint: window.__dither.spec.hint || "", fps: window.__dither.spec.fps == null ? 12 : window.__dither.spec.fps,
     w: document.getElementById("stage").width, h: document.getElementById("stage").height
   }));
@@ -143,7 +144,7 @@ try {
   check("scale: the canvas enlarges by a whole number of pixels", scale.rw >= 1 && Math.abs(scale.rw - Math.round(scale.rw)) < 1e-6 && Math.abs(scale.rh - Math.round(scale.rh)) < 1e-6, scale);
   check("touch-action: manipulation", scale.touch === "manipulation", scale.touch);
 
-  const zooms = await page.evaluate((stillT) => {
+  const zooms = await page.evaluate(({ stillT, familyBody }) => {
     const rt = window.__dither.runtime, c = document.getElementById("stage");
     const W = c.width, H = c.height, g = c.getContext("2d");
     const grab = (t) => { rt.renderAt(t); return g.getImageData(0, 0, W, H).data; };
@@ -151,15 +152,9 @@ try {
     rt.hoverAt(5, 5);
     const now = grab(stillT);
     const lum = (d, p) => 0.2126 * d[p] + 0.7152 * d[p + 1] + 0.0722 * d[p + 2];
-    /* Grass and earth, including the darker cast of the same hue. Stone, cloth and the page stay out. */
-    const family = (d, p) => {
-      if (white(d, p)) return 0;
-      const r = d[p], g = d[p + 1], b = d[p + 2];
-      if (g + 4 >= r && g > b + 8 && g > 38 && r < 200 && b < 165) return 1;
-      if (r > g + 6 && g > b + 2 && r < 210 && g > 36 && r - g < 78 && b < 155) return 2;
-      if (b > r + 2 && b + 12 >= g && b > 8 && r < 190 && g > 6 && g < 200) return 3;
-      return 0;
-    };
+    /* Grass, earth, water, then a low-chroma cold ground. The white page stays out. */
+    const familyOf = new Function("r", "g", "b", familyBody);
+    const family = (d, p) => familyOf(d[p], d[p + 1], d[p + 2]);
     const meadow = (d, p) => family(d, p) === 1;
     const ground = (d, p) => family(d, p) > 0;
     let edge = null;
@@ -257,6 +252,7 @@ try {
     const soft0 = measure(grab(0), 1, 22);
     const earth0 = measure(grab(0), 2);
     const waterHard = measure(grab(0), 3);
+    const cold0 = measure(grab(0), 4);
     let shape = 0;
     for (let i = 0; i < at0.ink.length; i++) if (at0.ink[i] !== at8.ink[i]) shape++;
     let shadow = null, best = -1;
@@ -334,23 +330,26 @@ try {
       water0: brief(water0),
       soft0: brief(soft0),
       earth0: brief(earth0),
-      waterHard: brief(waterHard)
+      waterHard: brief(waterHard),
+      cold0: brief(cold0)
     };
-  }, meta.still);
+  }, { stillT: meta.still, familyBody: fnBody(groundFamily) });
   for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-carter", zooms.carter], ["zoom-sail", zooms.sail], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
     const path = join(outdir, `${name}-${label}.png`);
     writeFileSync(path, Buffer.from(url.split(",")[1], "base64"));
     report.images.push(path);
   }
   const sh = zooms.shadowReport;
-  const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > meta.w * .52 && m.x1 < meta.w * .84 && m.beyond >= 200;
-  const hardGround = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 4 && m.w >= 10 && m.w < meta.w * .85;
+  const kind = shadowOk(meta.shadow, meta.w, {
+    at0: sh && sh.at0, at8: sh && sh.at8, at4: sh && sh.at4, shape: sh && sh.shape,
+    earth: zooms.earth0, water: zooms.waterHard, cold: zooms.cold0
+  }, meta.snow);
   if (meta.shadow !== "hard") {
     check("shadow: a hard cast is declared", false, meta.shadow);
-  } else if (sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 100) {
+  } else if (kind === "silhouette") {
     check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", true, sh);
   } else {
-    check("shadow: a hard cast on the ground, textured and short of the edge", !!(hardGround(zooms.earth0) || hardGround(zooms.waterHard) || hardGround(sh && sh.at0)), { earth: zooms.earth0, water: zooms.waterHard, grass: sh && sh.at0 });
+    check("shadow: a hard cast on the ground, textured and short of the edge", !!kind, { kind, earth: zooms.earth0, water: zooms.waterHard, cold: zooms.cold0, grass: sh && sh.at0 });
   }
 
   const folks = await page.evaluate(([stillT, found, names]) => {

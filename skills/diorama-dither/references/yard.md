@@ -1,6 +1,6 @@
 # Yard, materials, figures, rotors
 
-Numbers for a 360 x 280 dither scene at camera azimuth 45, elevation 30, scale 48. Change scale and these sizes together: a person at scale 52 needs a slightly smaller `h` if you still want 16 pixels.
+Numbers for a 360 x 280 dither scene at camera azimuth 45, elevation 30. A standing figure's pixels are `h × cos(elevation) × scale`. At elevation 30 and scale 58, `h` 0.4 is about 20. A pitched pose's box is a little shorter, about 18 by 19. Change `h` with the scale if you want that height.
 
 ## Yard
 
@@ -18,15 +18,17 @@ Dither.wall(P, 1.92, iz, 1.65, 0);
 Dither.gate(P, .55, iz, 0);
 ```
 
-`Dither.wall` is a stone box plus a timber coping `0.08` wider and `0.07` thick. Pass `{ stone, cap, h, d }` for a rock parapet. The gate is two posts and a lintel, `1.06` wide, so the opening reads.
+`Dither.wall` is a stone box plus a timber coping `0.08` wider and `0.07` thick. Pass `{ stone, cap, h, d }` for a rock parapet. The gate is two posts and a lintel, `1.06` wide. `Dither.gate(P, x, z, yaw, { h })` sets the post height. The default `h` is `0.66`, the posts are centred at `h / 2`, and the lintel sits at `h - 0.04`.
 
-One earth zone for the path. Grass fringe with `Dither.fringe` at three or four spots on the rim. One tree and two bushes, off the people. A fence is posts and two rails, four posts unless the run is longer. A lamp is a post and a paper box.
+One earth zone for the path. Grass fringe with `Dither.fringe` at three or four spots on the rim. One tree and two bushes, off the people. A snow yard has no conifer helper: `Dither.tree` is a leaf canopy, and a pine does not fit in the 70 KB page. A fence is posts and two rails, four posts unless the run is longer. A lamp is a post and a paper box.
 
 ## Materials
 
 Stone courses, tile courses, wood grain and grass grain come from the preset textures. Do not replace them with a flat colour on a large face.
 
-The hard shadow does not swap in a grey. It darkens the ground pixel that is already there, a little cooler, and leaves the dither. That only reads if the lit ground and the cast ground are the same zone. Put the shadow on meadow, earth, sand or water, not across a texture change.
+`snow` is `#d5e6ee`, sand grain, `ground`, rough `0.4`. It is lighter than a blue-grey such as `#7f97a8`. The shared ramp still warms the lightest step. Lit snow reads pale, and the veil cools the cast toward blue.
+
+The hard shadow does not swap in a grey. It darkens the ground pixel that is already there, a little cooler, and leaves the dither. That only reads if the lit ground and the cast ground are the same zone. Put the shadow on meadow, earth, sand, snow, rock or water, not across a texture change.
 
 Water already carries moving highlights. Add two to four short crest boxes if the sea needs a readable wave. A pond is the `pond` preset inside an ellipse in `zone`.
 
@@ -34,7 +36,7 @@ Water already carries moving highlights. Add two to four short crest boxes if th
 
 `Dither.folk(P, x, z, { h: .46, yaw, name, shirt, pants, sleeve })`.
 
-At scale 48, `h` `0.44` is about 14 pixels and `h` `0.48` is about 16, including the hat. Below `0.4` the face and the forearms merge. Above `0.55` the person outgrows the yard.
+Standing pixels are `h × cos(elevation) × scale`, because screen-up is `cos(elevation)`. At elevation 30 and scale 58, `h` 0.4 is `0.4 × cos(30°) × 58`, about 20. A pitched work pose's box is a little shorter, about 18 by 19, because the body leans. The four yards use `h` 0.38 to 0.44 at scale 56 to 62, which is about 19 to 21 standing. Below about 16 the face and the forearms merge. Above `0.55` the person outgrows the yard.
 
 Three colours: shirt, pants, sleeve. Hat and hair may repeat pants. Skin stays the default. The name is the read-out.
 
@@ -106,13 +108,15 @@ Checklist:
 - The hull is partly under the water. Foam sits on the surface.
 - Nothing floats without a named reason. The check covers a mesh with declared support, or a group that meets the nearest mesh. It does not cover a chain of loose pieces that only touch each other.
 
-`npm run support` audits every `examples/*.js` at `t = 2, 4, 6` and `8`, then `--negative` and `--water`. One scene is `node scripts/support.mjs examples/<name>.js`. A real miss exits 1 and names the group. An expected miss prints `ok negative` or `ok water` with the reason, and does not print `FAIL`. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. It also parks an undeclared box named `childfloat` at `y = 4.5` inside the mill, and that must fail as floating apart from the nearest mesh. An unnamed box in the same place must fail as `mill child` apart from that mesh. A figure stood in the tower must fail as `stands inside`. A figure against a seated step must fail as `stands against`, and one inside `1.2` of the near wall must fail as `stands in the opening`. A figure on sand, once a step is seated, must fail as `stands off the path`. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. A mesh vertex of `NaN` must fail as `has no place to stand`. `folk(NaN)` and `folk(undefined)` must fail the same way: the kernel would have placed them at `0`, and the helper does not let that pass. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same frames. `shadow: 'soft'` or `none` fails. A declared hard cast that reads as a grass silhouette takes that check, including the change of shape. A hard cast on earth or water has to clear the sharp threshold. The scene name is not what chooses it.
+`npm run support` audits every `examples/*.js` at `t = 2, 4, 6` and `8`, then `--negative` and `--water`. One scene is `node scripts/support.mjs examples/<name>.js`. A real miss exits 1 and names the group. An expected miss prints `ok negative` or `ok water` with the reason, and does not print `FAIL`. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. It also parks an undeclared box named `childfloat` at `y = 4.5` inside the mill, and that must fail as floating apart from the nearest mesh. An unnamed box in the same place must fail as `mill child` apart from that mesh. A figure stood in the tower must fail as `stands inside`. A figure against a seated step must fail as `stands against`, and one inside `1.2` of the near wall must fail as `stands in the opening`. A figure on sand, once a step is seated, must fail as `stands off the path`. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. A mesh vertex of `NaN` must fail as `has no place to stand`. `folk(NaN)` and `folk(undefined)` must fail the same way: the kernel would have placed them at `0`, and the helper does not let that pass. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same frames. `shadow: 'soft'` or `none` fails. A declared hard cast that reads as a grass silhouette takes that check, including the change of shape. A hard cast on earth, water, or a cold ground has to clear the sharp threshold. The scene name is not what chooses it. `--negative` also checks the snow report, a default gate against `{ h: 0.4 }`, and the cold family: grass, earth and water stay put, rock grey and lit snow are cold, a blue snow shadow stays water, and a spread of 3 passes only for snow and only when the cast is at least 36 pixels wide.
 
 A figure fails as `stands inside` when the centre of the body, or a point just above the feet, lies inside another mesh. A shared face does not count. Carried pieces are `afloat` and are not the body and not the solid. The `1.2` and `0.4` rules run only when some support name starts with `step`. The four yards have no step, and the miller stands closer than `1.2` to the near wall, so those yards are not moved to satisfy a rule they do not use. To stand on a plinth, raise the root to the top face and call `Dither.seat(root, name, plinth)` again. A root left on the ground, with the shins in the plinth, fails as `stands inside`.
 
 ## Shadow check
 
-`Dither.sun(45, elevation, turn)` aims the light so the cast falls to screen-right of the usual camera. A readable cast:
+`Dither.sun(45, elevation, turn)` aims the light so the cast falls to screen-right of the usual camera. Families 1 to 3 are grass, earth and water, unchanged. Family 4 is the neutral or cold ground they miss: not white, chroma at most 36, luminance from 68 to 248, and blue within 22 of red. A warm earth light stays family 2. Pure white is still no family. A hard cast passes on family 4 with the same sharp threshold as earth (count, contrast, spread of 4, width at least 10). Snow is the exception: the lit ground is family 4 and the veil moves the cast into water, where the spread is about 3. That allowance runs only when a ground material is named `snow`, and the cast must be at least 36 pixels wide. The grass silhouette test is unchanged.
+
+A readable cast:
 
 - starts at the object and stops before the right edge and before a yard wall
 - is wider than a post and narrower than half the frame

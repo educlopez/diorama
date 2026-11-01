@@ -1,7 +1,7 @@
 /* GENERATED, do not edit.
    sources:
    skills/diorama-pixel/kit/pixel.js b09c660802b92eed77da10f1c0fbed3902f0c504b4295fe65aa6587c502f17e6
-   skills/diorama-dither/kit-src/finish.js c1037ffa92da7f43b9c136f8328e54b4ad9f6c0a234d7ebf3f769066988b99f2
+   skills/diorama-dither/kit-src/finish.js a96794da9ee404adbc925b3eef4c96ad2c8542a1d639bfb737eddf0bb863bae6
 */
 /* ============================================================================
    Diorama Pixel kernel · one global `Pixel`, no dependency: a software
@@ -688,6 +688,7 @@ var Dither = (function () {
     water: { hex: '#4e86a0', tex: 'water', water: true, ground: true },
     pond: { hex: '#3e7594', tex: 'water', water: true, ground: true },
     sand: { hex: '#d2c09a', tex: 'sand', ground: true },
+    snow: { hex: '#d5e6ee', tex: 'sand', ground: true, rough: .4 },
     rock: { hex: '#8d8982', tex: 'stone', size: .28, rough: .9 },
     plaster: { hex: '#efe6d2', tex: 'plain', rough: .35 },
     paper: { hex: '#f3ead4', tex: 'cloth', rough: .25 },
@@ -758,11 +759,12 @@ var Dither = (function () {
     return seat(g, 'wall');
   }
 
-  function gate(P, x, z, yaw) {
+  function gate(P, x, z, yaw, opt) {
+    var h = opt && opt.h != null ? opt.h : .66;
     var g = P.group(x, 0, z); g.rotation.y = yaw || 0;
-    P.box(.1, .66, .1, 'timber', -.48, .33, 0, g);
-    P.box(.1, .66, .1, 'timber', .48, .33, 0, g);
-    P.box(1.06, .07, .08, 'timber', 0, .62, 0, g);
+    P.box(.1, h, .1, 'timber', -.48, h / 2, 0, g);
+    P.box(.1, h, .1, 'timber', .48, h / 2, 0, g);
+    P.box(1.06, .07, .08, 'timber', 0, h - .04, 0, g);
     return seat(g, 'gate');
   }
 

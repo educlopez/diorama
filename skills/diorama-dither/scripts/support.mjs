@@ -18,7 +18,8 @@
  * `--negative` lifts a windmill wheel, parks an undeclared box at y = 4.5 inside the mill,
  * stands a figure in the tower, and stands figures on a step's edge and in the opening.
  * Those must fail, and the tower figure must fail only as `stands inside`. A figure in the
- * square corner of a cylinder, outside the round wall, must pass. `--water` requires a figure in the tea-house pond to fail, a figure in the
+ * square corner of a cylinder, outside the round wall, must pass. It also checks the snow
+ * report, the gate height, and the cold ground family. `--water` requires a figure in the tea-house pond to fail, a figure in the
  * lighthouse's open water to fail, and a figure on lighthouse rock to pass.
  */
 import { existsSync, readdirSync, rmSync } from "node:fs";
@@ -27,6 +28,40 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { build } from "./build.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
+
+/* 1 grass, 2 earth, 3 water, 4 neutral or cold. The first three stay as they were.
+   Family 4 is what they miss: not white, chroma at most 36, luminance 68 to 248,
+   and blue within 22 of red, so a warm light stays earth or nothing. */
+export function groundFamily(r, g, b) {
+  if (r > 250 && g > 250 && b > 250) return 0;
+  if (g + 4 >= r && g > b + 8 && g > 38 && r < 200 && b < 165) return 1;
+  if (r > g + 6 && g > b + 2 && r < 210 && g > 36 && r - g < 78 && b < 155) return 2;
+  if (b > r + 2 && b + 12 >= g && b > 8 && r < 190 && g > 6 && g < 200) return 3;
+  const hi = Math.max(r, g, b), lo = Math.min(r, g, b), L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  if (hi - lo <= 36 && L >= 68 && L <= 248 && b + 22 >= r && g + 18 >= r) return 4;
+  return 0;
+}
+
+export function fnBody(fn) {
+  const s = fn.toString();
+  return s.slice(s.indexOf("{") + 1, s.lastIndexOf("}"));
+}
+
+/* A hard cast passes on a grass silhouette, or on earth, water, grass or cold
+   ground at the sharp threshold. Snow's lit pixels are cold and the veil moves
+   the cast into water, where the spread is about 3. That wider allowance applies
+   only when a ground material is named snow, and the cast has to be at least 36
+   pixels wide. Rock uses family 4 and the sharp threshold. */
+export function shadowOk(shadow, width, part, snow) {
+  if (shadow !== "hard" || !part) return "";
+  const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > width * .52 && m.x1 < width * .84 && m.beyond >= 200;
+  if (arm(part.at0) && arm(part.at8) && arm(part.at4) && part.shape >= 100) return "silhouette";
+  const sharp = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 4 && m.w >= 10 && m.w < width * .85;
+  if (sharp(part.earth) || sharp(part.water) || sharp(part.at0) || sharp(part.cold)) return "sharp";
+  const veil = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 3 && m.w >= 36 && m.w < width * .85;
+  if (snow && veil(part.water)) return "snow";
+  return "";
+}
 const args = process.argv.slice(2);
 const negative = args.includes("--negative");
 const water = args.includes("--water");
@@ -784,6 +819,93 @@ async function runWater() {
   if (process.exitCode) process.exit(process.exitCode);
 }
 
+async function runKit() {
+  const samples = [
+    [111, 143, 60, 1, "grass"],
+    [166, 124, 74, 2, "earth"],
+    [78, 134, 160, 3, "water"],
+    [141, 137, 130, 4, "rock"],
+    [194, 197, 187, 4, "snow lit"],
+    [117, 119, 129, 3, "snow shadow"],
+    [175, 189, 196, 3, "snow blue"],
+    [161, 149, 129, 2, "rock light"],
+    [255, 255, 255, 0, "white"]
+  ];
+  for (const [r, g, b, want, label] of samples) {
+    const got = groundFamily(r, g, b);
+    if (got !== want) {
+      console.log("FAIL negative: " + label + " is family " + got + ", wanted " + want);
+      process.exitCode = 1;
+      return;
+    }
+  }
+  const sharp = { n: 400, contrast: 50, std: 7, w: 40 };
+  const snowVeil = { n: 3000, contrast: 60, std: 3.2, w: 90 };
+  const thin = { n: 400, contrast: 50, std: 3.2, w: 13 };
+  const cold = { n: 2000, contrast: 50, std: 7, w: 51 };
+  const miss = (why) => { console.log("FAIL negative: " + why); process.exitCode = 1; };
+  if (shadowOk("hard", 360, { earth: sharp }) !== "sharp") return miss("an earth cast did not pass");
+  if (shadowOk("hard", 360, { water: snowVeil }, false)) return miss("a spread of 3 passed without snow");
+  if (shadowOk("hard", 360, { water: snowVeil }, true) !== "snow") return miss("a snow veil did not pass");
+  if (shadowOk("hard", 360, { water: thin }, true)) return miss("a thin snow cast passed");
+  if (shadowOk("hard", 360, { cold: cold }) !== "sharp") return miss("a rock cast did not pass");
+  if (shadowOk("soft", 360, { earth: sharp })) return miss("a soft shadow passed");
+  console.log("ok negative: cold ground");
+
+  const opened = await open(join(here(".."), "examples", "windmill.js"));
+  try {
+    const kit = await opened.page.evaluate(() => {
+      function lum(hex) {
+        var n = parseInt(String(hex).slice(1), 16);
+        return (0.2126 * (n >> 16 & 255) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255;
+      }
+      function boxH(node) {
+        var v = node.geo && node.geo.v, i, lo = 1e9, hi = -1e9;
+        if (!v) return 0;
+        for (i = 1; i < v.length; i += 3) { if (v[i] < lo) lo = v[i]; if (v[i] > hi) hi = v[i]; }
+        return hi - lo;
+      }
+      var snow = Dither.mat("snow");
+      var rep = Dither.report("#d5e6ee");
+      var ramp = Dither.ramp("#d5e6ee");
+      var grey = Dither.ramp("#7f97a8");
+      var P = window.__dither.runtime.P;
+      var tall = Dither.gate(P, 8, 8, 0);
+      var low = Dither.gate(P, -8, 8, 0, { h: .4 });
+      function posts(g) { return g.children.map(boxH).filter(function (h) { return h > .2; }); }
+      function lintel(g) {
+        return g.children.map(function (n) { return { y: n.position.y, h: boxH(n) }; }).filter(function (n) { return n.h < .2; })[0];
+      }
+      return {
+        ground: !!snow.ground, tex: snow.tex,
+        tones: rep.tones, maxGap: rep.maxGap, shadowViolet: rep.shadowViolet, lightYellow: rep.lightYellow,
+        same: snow.ramp.join() === ramp.join(),
+        lighter: lum(snow.ramp[2]) > lum(grey[2]),
+        tall: posts(tall), low: posts(low),
+        tallLintel: lintel(tall), lowLintel: lintel(low)
+      };
+    });
+    const repOk = kit.ground && kit.tex === "sand" && kit.tones === 5 && kit.maxGap <= .08 && kit.shadowViolet < 36 && kit.lightYellow > 0 && kit.same && kit.lighter;
+    if (!repOk) {
+      console.log("FAIL negative: snow report");
+      console.log(JSON.stringify(kit));
+      process.exitCode = 1;
+      return;
+    }
+    console.log("ok negative: snow report");
+    const near = (a, b) => Math.abs(a - b) < 1e-9;
+    const postsOk = kit.tall.length === 2 && kit.tall.every((h) => near(h, .66)) && kit.low.length === 2 && kit.low.every((h) => near(h, .4));
+    const lintelOk = kit.tallLintel && near(kit.tallLintel.y, .62) && near(kit.tallLintel.h, .07) && kit.lowLintel && near(kit.lowLintel.y, .36) && near(kit.lowLintel.h, .07);
+    if (!postsOk || !lintelOk) {
+      console.log("FAIL negative: gate height");
+      console.log(JSON.stringify(kit));
+      process.exitCode = 1;
+      return;
+    }
+    console.log("ok negative: gate height");
+  } finally { await close(opened); }
+}
+
 function exampleFiles() {
   const dir = join(here(".."), "examples");
   return readdirSync(dir).filter((n) => n.endsWith(".js")).sort().map((n) => join(dir, n));
@@ -791,6 +913,8 @@ function exampleFiles() {
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(here("./support.mjs"))) {
   if (negative) {
+    await runKit();
+    if (process.exitCode) process.exit(process.exitCode);
     await runNegative();
     if (process.exitCode) process.exit(process.exitCode);
     await runChild();

@@ -6,7 +6,7 @@ compatibility: Needs Node.js 20+ and Chrome or Chromium for the look. Do not edi
 
 # Dither diorama
 
-You are making one small place, drawn at 360 x 280 and enlarged with nearest-neighbour pixels. Surfaces use five close tones and a 4 x 4 ordered dither. The sun throws a hard shadow that darkens the ground's own colour. One or two people, about 14 to 16 pixels tall, do one looping action. A tap toggles one state. There is no score, no audio, and no halo around a light.
+You are making one small place, drawn at 360 x 280 and enlarged with nearest-neighbour pixels. Surfaces use five close tones and a 4 x 4 ordered dither. The sun throws a hard shadow that darkens the ground's own colour. One or two people do one looping action. A tap toggles one state. There is no score, no audio, and no halo around a light.
 
 The pixel kernel (`skills/diorama-pixel/kit/pixel.js`) is fixed. A change there shifts the three pixel scenes. Put new helpers in `kit-src/finish.js`, then run `node scripts/sync-dither-kit.mjs` from the repo root. Never set `glow` on a material: it forces a face up to a flat brightness and reads as a bloom. A lamp is a paper box. A beam is a thin box of hard pixels.
 
@@ -18,7 +18,7 @@ Write four lines, then stop and check them against the rules below:
 
 - **Ground.** A yard or a shore that fills the frame. Name the zones (meadow, earth, rock, sand, water).
 - **Mass.** The one structure, where its front faces, and what must stay visible in front of it (a door, a course of stone, a person).
-- **People.** Who, in the open, facing the work. Height `0.44` to `0.48`. Two or three cloth colours.
+- **People.** Who, in the open, facing the work. Standing height is `h × cos(elevation) × scale` pixels. Two or three cloth colours.
 - **Life.** What loops, and the one thing a tap toggles. The loop is a function of `q` that matches at `0` and `1`.
 
 If a person, a door or the front of the structure would sit behind a post, a wheel, a sail or a roof, move the person or the occluder now. The camera does not move.
@@ -43,6 +43,7 @@ Call `Dither.mat(name)` and put the result on `materials`. The names already car
 | Planks, posts, cart | `timber`, `beam`, `cart` | Grain along the long axis |
 | Sail, sack, paper screen | `sail`, `sack`, `paper` | Cloth, flat, no dither extreme |
 | Sea, pond | `water`, `pond` | The texture already moves and sparks. A crest is a short box, not a soft band |
+| Snow | `snow` | Light blue-white ground, sand grain. `Dither.report` on `#d5e6ee` must pass |
 | Lamp, ember, ray | `lantern`, `ember`, `ray` | Solid faces. `ray` has dither `0`. A second, darker dithered tone on alternate segments keeps a ray from reading as one bar |
 
 `Dither.report(hex)` must come back with five tones, a max gap of `0.08` or less, a cool dark step and a warm light step. Do not hand-build a ramp unless a preset cannot say the hue.
@@ -51,8 +52,8 @@ Call `Dither.mat(name)` and put the result on `materials`. The names already car
 
 These live on `Dither` and do not run for a pixel scene:
 
-- `wall(P, x, z, len, yaw, opt)` stone run plus a wider coping. `gate` for the opening. A yard is four runs and one gate, inside `rx` and `rz`.
-- `folk(P, x, z, { h, yaw, name, shirt, pants, sleeve, hat })` a person the pointer can name. `h` is `0.44` to `0.48` at scale `48`, which lands near 14 to 16 pixels. At scale `56` to `62`, drop `h` toward `0.38` to `0.42` so the figure stays that tall. Shirt, pants and sleeve are the three colours. After `P.pose`, set the arms so the forearms leave the torso: a `work` or `hold` pose, elbows bent, hands out. If the hands hold something, that object has its own colour.
+- `wall(P, x, z, len, yaw, opt)` stone run plus a wider coping. `gate(P, x, z, yaw, opt)` for the opening. `opt.h` defaults to `0.66`. A yard is four runs and one gate, inside `rx` and `rz`.
+- `folk(P, x, z, { h, yaw, name, shirt, pants, sleeve, hat })` a person the pointer can name. Standing pixels are `h × cos(elevation) × scale`. At elevation 30 and scale 58, `h` 0.4 is about 20. A pitched pose measures a little shorter. The yards use `h` 0.38 to 0.44 at scale 56 to 62. Shirt, pants and sleeve are the three colours. After `P.pose`, set the arms so the forearms leave the torso: a `work` or `hold` pose, elbows bent, hands out. If the hands hold something, that object has its own colour.
 - `tree`, `bush`, `fringe`, `fence`, `lamp`. `lamp` is a post, a paper box and a cap. Pass `shade: 'lantern'` or `'paper'`. Never a glow.
 - `cap(P, tower, { y, r, over, h })` an upright cone. `y` is the tower top, `r` is that top's radius, `over` is the overhang (about `0.1`), `h` is the slope. A cylinder with `rotation.x` of `π/2` is a lid seen from above. Do not use one for a roof.
 - `rotor(P, parent, { y, z, face, len, tilt })` four equal sails on a shaft. Yaw the parent so local `+Z` points toward the camera (about `0.74` at azimuth 45). `y` and `z` are the hub on that front face. `face` is back inside the cone, so the neck meets the cap. `tilt` (about `0.3`) is `rotation.x`: the shaft drops toward the camera. The cloth stays in front of the stone. Spin `rotation.z` only. A cross drawn on the roof is the shaft left at `tilt` `0`.
@@ -74,7 +75,7 @@ A piece either meets a surface or names why it does not. `npm run support` and t
 
 A figure whose body passes through a solid that is not the ground fails as `stands inside`. To stand on a plinth, raise the root to the top face and call `Dither.seat(root, name, plinth)` again.
 
-A figure on the ground must not stand in a water zone. Feet are the figure's `x` and `z`. The kernel's `place` turns a missing or `NaN` coordinate into `0`, so `Dither.folk` checks `x` and `z` before that call and the support check reads the requested pair. A non-finite foot fails as `has no place to stand`. It does not stand at the origin and pass. Feet go on meadow, earth, sand, rock, a pier deck, or inside a boat. Never on open water. A wheel is a cylinder with `rotation.x` of `π/2` and 10 sides, so a vertex sits at the bottom. Its centre `y` equals the radius, the axle passes through that hub, and the bed sits on the axle.
+A figure on the ground must not stand in a water zone. Feet are the figure's `x` and `z`. The kernel's `place` turns a missing or `NaN` coordinate into `0`, so `Dither.folk` checks `x` and `z` before that call and the support check reads the requested pair. A non-finite foot fails as `has no place to stand`. It does not stand at the origin and pass. Feet go on meadow, earth, sand, snow, rock, a pier deck, or inside a boat. Never on open water. A wheel is a cylinder with `rotation.x` of `π/2` and 10 sides, so a vertex sits at the bottom. Its centre `y` equals the radius, the axle passes through that hub, and the bed sits on the axle.
 
 Checklist before the first render:
 
@@ -96,8 +97,8 @@ Reduced motion and `?still` hold the clock. Do not start your own timer.
 From `skills/diorama-dither`:
 
 1. `node scripts/validate.mjs examples/<name>.js`
-2. `npm run support` audits every file in `examples/`. One scene: `node scripts/support.mjs examples/<name>.js`. Then a lifted `cart-wheel`, a box at `y = 4.5` inside the mill, and a figure standing in the tower. Each must fail. The line is `ok negative` and the reason. It does not print `FAIL` for a miss that was required. Then the water cases. A host in the tea pond must fail. A figure in the lighthouse's open water must fail. A figure on the lighthouse rock must pass. A bad foot coordinate must fail. `folk(NaN)` and `folk(undefined)` must fail. A mesh with no support must fail. A blank float reason must fail.
-3. `node scripts/look.mjs examples/<name>.js <outdir>` — the look runs the same support check on those frames. `shadow` must be `hard`. `soft` or `none` fails. A grass silhouette takes the strong cast check. A hard cast on earth or water takes the sharp threshold. The scene name does not choose it.
+2. `npm run support` audits every file in `examples/`. One scene: `node scripts/support.mjs examples/<name>.js`. Then a lifted `cart-wheel`, a box at `y = 4.5` inside the mill, and a figure standing in the tower. Each must fail. The line is `ok negative` and the reason. It does not print `FAIL` for a miss that was required. Then the water cases. A host in the tea pond must fail. A figure in the lighthouse's open water must fail. A figure on the lighthouse rock must pass. A bad foot coordinate must fail. `folk(NaN)` and `folk(undefined)` must fail. A mesh with no support must fail. A blank float reason must fail. The same run checks the snow report, the gate height and the cold family.
+3. `node scripts/look.mjs examples/<name>.js <outdir>` — the look runs the same support check on those frames. `shadow` must be `hard`. `soft` or `none` fails. A grass silhouette takes the strong cast check. A hard cast on earth, water, or a cold ground takes the sharp threshold. The scene name does not choose it.
 4. Open the still, one moving frame, the hover, the press, the mobile shot and the figure zooms. Look at the wheels, the feet and anything that should meet a neighbour.
 
 The look checks fill, the loop seam, picking, hover, the tap, reduced motion, a hidden tab, off-screen pause, and a median frame at or under `83.3` ms, including CPU throttle 4. A pass is not a picture. Judge the still yourself: the action, the materials, the shadow, and whether the front of the structure is still readable.
@@ -114,7 +115,7 @@ Walk this list. Each line is a failure that already shipped once:
 - A wheel, a hoof, a foot or a post with daylight under it. The axle meets the box. A person stands on ground, rock, a pier or in a boat, never on open water. A hull sits in the water, not on it. Anything else that leaves the ground has `afloat` and a reason.
 - A sail, cart, bush, lamp or gate post crossing the person. With a step in the yard, feet go on meadow or earth, at least `1.2` inside the near wall and `0.4` clear of a step or a slab. The coping covers anyone standing in the opening.
 - A shadow that is a flat grey bar, or that runs through the right-hand wall. Hard veil, one sun, lit ground beyond. Do not add a second light for a lamp, a ray or dusk.
-- A figure under about 14 pixels, or one colour, so the pose does not read. Scale `h` with the camera so the figure stays near 16 pixels. Two or three colours, forearms out.
+- A standing figure under about 16 pixels (`h × cos(elevation) × scale`), or one colour, so the pose does not read. The yards land near 20. Two or three colours, forearms out.
 - A yard that leaves a wide white band above the roof. `height` is not the summit: start near `0.6` times the tallest point and correct from the still.
 - A lamp or a beam with `glow`, or one thick box that reads as a bar. A ray is several segments, thinner toward the tip, one of them a darker dithered tone. Paper and ember stay flat.
 - A tap whose only change is one joint. Hide or swap a mass the size of a door, a screen or a ray.

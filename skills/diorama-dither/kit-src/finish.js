@@ -59,6 +59,7 @@ var Dither = (function () {
     water: { hex: '#4e86a0', tex: 'water', water: true, ground: true },
     pond: { hex: '#3e7594', tex: 'water', water: true, ground: true },
     sand: { hex: '#d2c09a', tex: 'sand', ground: true },
+    snow: { hex: '#d5e6ee', tex: 'sand', ground: true, rough: .4 },
     rock: { hex: '#8d8982', tex: 'stone', size: .28, rough: .9 },
     plaster: { hex: '#efe6d2', tex: 'plain', rough: .35 },
     paper: { hex: '#f3ead4', tex: 'cloth', rough: .25 },
@@ -129,11 +130,12 @@ var Dither = (function () {
     return seat(g, 'wall');
   }
 
-  function gate(P, x, z, yaw) {
+  function gate(P, x, z, yaw, opt) {
+    var h = opt && opt.h != null ? opt.h : .66;
     var g = P.group(x, 0, z); g.rotation.y = yaw || 0;
-    P.box(.1, .66, .1, 'timber', -.48, .33, 0, g);
-    P.box(.1, .66, .1, 'timber', .48, .33, 0, g);
-    P.box(1.06, .07, .08, 'timber', 0, .62, 0, g);
+    P.box(.1, h, .1, 'timber', -.48, h / 2, 0, g);
+    P.box(.1, h, .1, 'timber', .48, h / 2, 0, g);
+    P.box(1.06, .07, .08, 'timber', 0, h - .04, 0, g);
     return seat(g, 'gate');
   }
 
