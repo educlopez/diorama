@@ -157,6 +157,7 @@ try {
     const family = (d, p) => familyOf(d[p], d[p + 1], d[p + 2]);
     const meadow = (d, p) => family(d, p) === 1;
     const ground = (d, p) => family(d, p) > 0;
+    const warmGround = (d, p) => { const f = family(d, p); return f > 0 && f < 4; };
     let edge = null;
     for (let y = Math.floor(H * .5); y <= H - 64; y += 4) for (let x = 0; x <= W - 64; x += 4) {
       let n = 0, w = 0, gr = 0, colored = 0;
@@ -282,7 +283,7 @@ try {
       for (let x = 0; x < W; x++) col.push({ minY: H, maxY: -1 });
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const p = (y * W + x) * 4;
-        if (white(now, p) || ground(now, p)) continue;
+        if (white(now, p) || warmGround(now, p)) continue;
         if (y < col[x].minY) col[x].minY = y;
         if (y > col[x].maxY) col[x].maxY = y;
       }
@@ -296,7 +297,7 @@ try {
       const hitsBand = (x) => {
         for (let y = col[x].minY; y <= Math.min(col[x].maxY, band); y++) {
           const p = (y * W + x) * 4;
-          if (!white(now, p) && !ground(now, p)) return true;
+          if (!white(now, p) && !warmGround(now, p)) return true;
         }
         return false;
       };

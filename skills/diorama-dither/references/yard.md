@@ -114,7 +114,7 @@ A figure fails as `stands inside` when the centre of the body, or a point just a
 
 ## Shadow check
 
-`Dither.sun(45, elevation, turn)` aims the light so the cast falls to screen-right of the usual camera. Families 1 to 3 are grass, earth and water, unchanged. Family 4 is the neutral or cold ground they miss: not white, chroma at most 36, luminance from 68 to 248, and blue within 22 of red. A warm earth light stays family 2. Pure white is still no family. A hard cast passes on family 4 with the same sharp threshold as earth (count, contrast, spread of 4, width at least 10). Snow is the exception: the lit ground is family 4 and the veil moves the cast into water, where the spread is about 3. That allowance runs only when a ground material is named `snow`, and the cast must be at least 36 pixels wide. The grass silhouette test is unchanged.
+`Dither.sun(45, elevation, turn)` aims the light so the cast falls to screen-right of the usual camera. Families 1 to 3 are grass, earth and water, unchanged. Family 4 is the neutral or cold ground they miss: not white, chroma at most 36, luminance from 68 to 248, blue within 22 of red, and `g + 18 >= r`. The miniature skips only families 1 to 3, so on a snow scene the snow counts as structure. A warm earth light stays family 2. Pure white is still no family. A hard cast passes on family 4 with the same sharp threshold as earth (count, contrast, spread of 4, width at least 10). Snow is the exception: the lit ground is family 4 and the veil moves the cast into water, where the spread is about 3. That allowance runs only when a ground material is named `snow`, and the cast must be at least 36 pixels wide. The grass silhouette test is unchanged.
 
 A readable cast:
 
