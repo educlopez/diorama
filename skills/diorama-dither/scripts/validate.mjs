@@ -7,7 +7,7 @@
  *  1 declaration    exactly one Pixel.scene({ ... }); name lowercase-hyphen;
  *                   title; means of at most 140 characters; build() and tick();
  *                   a positive duration and a still inside the loop.
- *  2 resolution     360 x 280. The finish is this frame, scaled by whole pixels.
+ *  2 resolution     360 x 280, or 480 x 360 when the yard needs the larger frame.
  *  3 clock          no requestAnimationFrame, setTimeout, setInterval,
  *                   Date.now, performance.now or Math.random in the scene.
  *  4 self-contained no import, require, fetch, XMLHttpRequest, WebSocket,
@@ -51,7 +51,8 @@ export function validate(text) {
   check(1, "declaration", !why1, why1);
 
   const w = num("width"), h = num("height");
-  check(2, "resolution", w === 360 && h === 280, `${w} x ${h}, the finish is 360 x 280`);
+  const frameOk = (w === 360 && h === 280) || (w === 480 && h === 360);
+  check(2, "resolution", frameOk, `${w} x ${h}, the finish is 360 x 280 or 480 x 360`);
 
   const clock = /\b(requestAnimationFrame|setTimeout|setInterval|Date\.now|performance\.now|Math\.random)\b/.exec(strip);
   check(3, "clock", !clock, clock && `${clock[1]} in the scene: pose from ctx.t in tick (and P.hash for variety)`);

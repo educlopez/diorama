@@ -29,7 +29,10 @@ try {
   const page = await browser.newPage({ viewport: { width: 800, height: 700 }, deviceScaleFactor: 1 });
   await page.goto(pathToFileURL(file).href + "?still");
   await page.waitForFunction(() => window.__dither?.runtime);
-  const meta = await page.evaluate(() => ({ duration: window.__dither.spec.duration, still: window.__dither.spec.still || 0, fps: window.__dither.spec.fps == null ? 12 : window.__dither.spec.fps }));
+  const meta = await page.evaluate(() => {
+    const c = document.getElementById("stage");
+    return { duration: window.__dither.spec.duration, still: window.__dither.spec.still || 0, fps: window.__dither.spec.fps == null ? 12 : window.__dither.spec.fps, w: c.width, h: c.height };
+  });
   const n = Math.round(meta.duration * meta.fps);
   const save = async (t, path) => {
     const b64 = await page.evaluate((t) => {
@@ -50,7 +53,7 @@ try {
   }, meta.duration);
   console.log(`frames ${n}, seam pixels ${seam}`);
   if (seam !== 0) process.exitCode = 1;
-  const scale = "scale=1440:1120:flags=neighbor";
+  const scale = `scale=${meta.w * 4}:${meta.h * 4}:flags=neighbor`;
   const webm = join(outdir, `${name}.webm`);
   const mp4 = join(outdir, `${name}.mp4`);
   const enc = (out, extra) => spawnSync("ffmpeg", ["-y", "-framerate", String(meta.fps), "-i", join(frames, "f%04d.png"), "-vf", scale, "-an", ...extra, out], { stdio: "inherit" });

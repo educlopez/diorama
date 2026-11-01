@@ -3,7 +3,7 @@
  * Looks at a dither scene: `node look.mjs <scene.js> <outdir>`.
  * Builds the page, opens it in headless Chromium with the network blocked, and writes
  * still, four loop moments, hover, the frame after a tap, a 390 x 844 mobile view,
- * and 8x nearest zooms of a 64 x 64 edge, figure and shadow. Prints one PASS/FAIL
+ * and 8x nearest zooms of the edge, both people, the sails and the shadow. Prints one PASS/FAIL
  * line per check and exits 1 on any failure.
  */
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
@@ -55,7 +55,8 @@ try {
   const still = await pixels();
   const fill = still.reduce((n, v, i) => (i % 4 === 0 && Math.min(v, still[i + 1], still[i + 2]) < 245 ? n + 1 : n), 0) / (still.length / 4);
   check("fill: the scene covers enough of the frame", fill > .25 && fill < .9, +fill.toFixed(3));
-  check("frame: internal resolution is 360 x 280", meta.w === 360 && meta.h === 280, [meta.w, meta.h]);
+  const frameOk = (meta.w === 360 && meta.h === 280) || (meta.w === 480 && meta.h === 360);
+  check("frame: internal resolution is 360 x 280 or 480 x 360", frameOk, [meta.w, meta.h]);
 
   const frames = [];
   for (const [k, f] of [["a", 0], ["b", .25], ["c", .5], ["d", .75]]) {
@@ -114,9 +115,9 @@ try {
     check("press: a tap brakes the scene and the next tap lets it go", diff(held, free) > .0005 && diff(released, free) < diff(held, free) * .25, { held: +diff(held, free).toFixed(4), released: +diff(released, free).toFixed(4) });
   }
 
-  const inks = await page.evaluate(() => ["#6e8c42", "#7a4634", "#c4b29a", "#b84332"].map((h) => ({ h, ...Dither.report(h) })));
+  const inks = await page.evaluate(() => ["#6f8f3c", "#c45c38", "#d9c7a4", "#b5523a"].map((h) => ({ h, ...Dither.report(h) })));
   report.inks = inks;
-  check("tones: five close inks, shadows toward violet and lights toward yellow", inks.every((r) => r.tones === 5 && r.maxGap <= .08 && r.shadowViolet > 0 && r.lightYellow > 0), inks);
+  check("tones: five close natural inks, a cool dark step and a warm light step", inks.every((r) => r.tones === 5 && r.maxGap <= .08 && r.shadowViolet < 36 && r.lightYellow > 0), inks);
 
   const scaleOf = () => page.evaluate(() => {
     const c = document.getElementById("stage");
@@ -134,22 +135,17 @@ try {
     const white = (d, p) => d[p] > 250 && d[p + 1] > 250 && d[p + 2] > 250;
     rt.hoverAt(5, 5);
     const now = grab(stillT);
-    const meadow = (d, p) => {
+    const lum = (d, p) => 0.2126 * d[p] + 0.7152 * d[p + 1] + 0.0722 * d[p + 2];
+    /* Grass and earth, including the darker cast of the same hue. Stone, cloth and the page stay out. */
+    const family = (d, p) => {
+      if (white(d, p)) return 0;
       const r = d[p], g = d[p + 1], b = d[p + 2];
-      if (g > 90 && g + 28 >= r && g > b + 12 && r < 220 && b < g) return true;
-      return g > r + 4 && g > b && g > 55;
+      if (g + 4 >= r && g > b + 8 && g > 38 && r < 200 && b < 165) return 1;
+      if (r > g + 6 && g > b + 2 && r < 210 && g > 36 && r - g < 78 && b < 155) return 2;
+      return 0;
     };
-    const ground = (d, p) => {
-      if (meadow(d, p)) return true;
-      const r = d[p], g = d[p + 1], b = d[p + 2];
-      return b > r + 6 && b > g + 6 && g > 30;
-    };
-    const meadowish = (d, p) => {
-      if (white(d, p)) return false;
-      const r = d[p], g = d[p + 1], b = d[p + 2];
-      if (r > g + 22 && r > b) return false;
-      return (g + 8 >= r && g > 48) || (b > r && g > 40);
-    };
+    const meadow = (d, p) => family(d, p) === 1;
+    const ground = (d, p) => family(d, p) > 0;
     let edge = null;
     for (let y = Math.floor(H * .5); y <= H - 64; y += 4) for (let x = 0; x <= W - 64; x += 4) {
       let n = 0, w = 0, gr = 0, colored = 0;
@@ -165,50 +161,52 @@ try {
       const score = gr - Math.abs(f - .42) * n;
       if (!edge || score > edge.score) edge = { x, y, score };
     }
-    const hot = rt.parts.hot || [], miller = hot.findIndex((h) => (h.name || "") === "miller");
-    let fig = { x: 40, y: 40 };
-    if (miller >= 0) {
+    function folkBox(name) {
+      const hot = rt.parts.hot || [], idx = hot.findIndex((h) => (h.name || "") === name);
+      if (idx < 0) return { x: 8, y: 8 };
       let hit = null;
-      for (let y = .9; y > -.9 && !hit; y -= .02) for (let x = -.9; x < .9; x += .02) if (rt.hoverAt(x, y) === hot[miller]) hit = [x, y];
+      for (let y = .9; y > -.9 && !hit; y -= .02) for (let x = -.9; x < .9; x += .02) if (rt.hoverAt(x, y) === hot[idx]) hit = [x, y];
       rt.hoverAt(5, 5);
-      if (hit) fig = { x: Math.round((hit[0] + 1) / 2 * W - 32), y: Math.round((hit[1] + 1) / 2 * H - 48) };
+      if (!hit) return { x: 8, y: 8 };
+      return { x: Math.round((hit[0] + 1) / 2 * W - 32), y: Math.round((hit[1] + 1) / 2 * H - 46) };
     }
-    const lum = (d, p) => 0.2126 * d[p] + 0.7152 * d[p + 1] + 0.0722 * d[p + 2];
-    const isInk = (d, p) => {
-      const r = d[p], g = d[p + 1], b = d[p + 2], L = lum(d, p);
-      return L < 70 && b > r + 15 && b > g + 12 && r < 85;
+    const fig = folkBox("miller"), carterBox = folkBox("carter");
+    const linen = (d, p) => {
+      const r = d[p], g = d[p + 1], b = d[p + 2];
+      return r > 145 && g > 120 && r < 240 && b > 70 && Math.abs(r - g) < 48 && r > b + 10 && g > b + 4;
     };
+    let sail = { x: 40, y: 8 }, sailTop = H;
+    for (let y = 0; y < Math.floor(H * .5); y++) for (let x = 0; x < W; x++) {
+      if (!linen(now, (y * W + x) * 4) || y >= sailTop) continue;
+      sailTop = y; sail = { x: x - 28, y: y - 6 };
+    }
+    /* Shadow pixels are ground only. Each family is compared with its own lit tone, so a darker path is not counted as shade. */
     function measure(d) {
+      const buckets = { 1: [], 2: [] };
+      for (let y = 0; y < H; y++) for (let x = 0; x < Math.floor(W * .42); x++) {
+        const p = (y * W + x) * 4, f = family(d, p);
+        if (f) buckets[f].push(lum(d, p));
+      }
+      const ref = {};
+      for (const k of [1, 2]) {
+        const a = buckets[k].sort((p, q) => p - q);
+        ref[k] = a.length ? a[Math.min(a.length - 1, Math.floor(a.length * .7))] : 130;
+      }
       const ink = new Uint8Array(W * H);
-      let n = 0, sx = 0, sy = 0, sl = 0, gn = 0, gl = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
+      let n = 0, sx = 0, sy = 0, gap = 0, sl = 0, sl2 = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const i = y * W + x, p = i * 4, L = lum(d, p);
-        if (isInk(d, p)) {
-          ink[i] = 1; n++; sx += x; sy += y; sl += L;
-          if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-        } else if (L > 115 && d[p + 1] + 18 >= d[p] && d[p + 1] > d[p + 2] + 10 && d[p + 1] > 90) { gn++; gl += L; }
+        const i = y * W + x, p = i * 4, f = family(d, p);
+        if (!f) continue;
+        const L = lum(d, p);
+        if (L > ref[f] - 20) continue;
+        ink[i] = 1; n++; sx += x; sy += y; gap += ref[f] - L; sl += L; sl2 += L * L;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
       }
-      const widths = [];
-      for (let y = 1; y < H - 1; y += 2) for (let x = 1; x < W - 1; x += 2) {
-        if (!ink[y * W + x]) continue;
-        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-        for (let k = 0; k < 4; k++) {
-          const dx = dirs[k][0], dy = dirs[k][1];
-          if (ink[(y + dy) * W + (x + dx)]) continue;
-          let w = 0, xx = x + dx, yy = y + dy;
-          for (let s = 0; s < 6 && xx >= 0 && yy >= 0 && xx < W && yy < H; s++) {
-            const p = (yy * W + xx) * 4;
-            if (isInk(d, p)) break;
-            if (lum(d, p) > 115 && d[p + 1] > d[p + 2] + 8) { widths.push(w); break; }
-            w++; xx += dx; yy += dy;
-          }
-        }
-      }
-      widths.sort((a, b) => a - b);
+      const mean = n ? sl / n : 0;
+      const variance = n ? Math.max(0, sl2 / n - mean * mean) : 0;
       return {
-        n, cx: n ? sx / n : 0, lum: n ? sl / n : 0, grass: gn ? gl / gn : 0,
-        contrast: n && gn ? gl / gn - sl / n : 0,
-        edge: widths.length ? widths[widths.length >> 1] : 99,
+        n, cx: n ? sx / n : 0, lum: mean, lit: ref[1],
+        contrast: n ? gap / n : 0, std: Math.sqrt(variance),
         w: n ? x1 - x0 + 1 : 0, h: n ? y1 - y0 + 1 : 0, x1: n ? x1 : 0, ink
       };
     }
@@ -283,20 +281,21 @@ try {
       const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(tiny, 0, 0, tw * 8, th * 8);
       return { w: tw, h: th, url: big.toDataURL("image/png") };
     };
-    const brief = (m) => ({ n: m.n, contrast: +m.contrast.toFixed(1), edge: m.edge, w: m.w, h: m.h, cx: +m.cx.toFixed(1), x1: m.x1 });
+    const brief = (m) => ({ n: m.n, contrast: +m.contrast.toFixed(1), std: +m.std.toFixed(2), lit: m.lit, w: m.w, h: m.h, cx: +m.cx.toFixed(1), x1: m.x1 });
     return {
-      edge: zoom(edge || { x: 0, y: 0 }), figure: zoom(fig), shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(),
+      edge: zoom(edge || { x: 0, y: 0 }), figure: zoom(fig), carter: zoom(carterBox), sail: zoom(sail || { x: 40, y: 20 }),
+      shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(),
       shadowReport: { at0: brief(at0), at8: brief(at8), at4: brief(at4), shape }
     };
   }, meta.still);
-  for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
+  for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-carter", zooms.carter], ["zoom-sail", zooms.sail], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
     const path = join(outdir, `${name}-${label}.png`);
     writeFileSync(path, Buffer.from(url.split(",")[1], "base64"));
     report.images.push(path);
   }
   const sh = zooms.shadowReport;
-  const arm = (m) => m && m.n >= 900 && m.contrast >= 40 && m.edge <= 2 && m.w >= 80 && m.x1 > meta.w * .62;
-  check("shadow: a hard sail shadow points across the meadow and changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 500), sh);
+  const arm = (m) => m && m.n >= 450 && m.contrast >= 18 && m.std >= 3.5 && m.w >= 48 && m.x1 > meta.w * .58;
+  check("shadow: ground only, darker than the grass, textured, long to the right, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 280), sh);
 
   const bench = async () => page.evaluate(() => {
     const rt = window.__dither.runtime, ts = [];

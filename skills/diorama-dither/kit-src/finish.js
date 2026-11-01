@@ -4,7 +4,7 @@
    field empty: 360 x 280, Bayer 4 x 4, hard shadows, a warm rim, wind at
    8 frames per second, and a darker contact underfoot. */
 var Dither = (function () {
-  var VIOLET = [92, 62, 148], YELLOW = [255, 210, 112];
+  var COOL = [78, 88, 102], WARM = [255, 220, 160];
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function rgb(h) {
@@ -20,9 +20,10 @@ var Dither = (function () {
     return '#' + c.map(function (v) { return ('0' + clamp(Math.round(v), 0, 255).toString(16)).slice(-2); }).join('');
   }
 
-  /* Five close tones around one colour. Index 0 leans violet, index 4 leans
-     yellow. Adjacent steps stay between about 3.4 and 7.5 percent luminance
-     so the 4 x 4 Bayer pattern does not read as a checker of distant inks. */
+  /* Five close tones around one colour. Index 0 is a touch cooler, index 4 a
+     touch warmer. The lit colour stays itself: violet is reserved for the
+     shadow veil. Adjacent steps stay between about 3.4 and 7.5 percent
+     luminance so the 4 x 4 Bayer pattern does not read as a checker. */
   function targetsFor(L) {
     var t = [-.12, -.06, 0, .05, .1].map(function (d) { return clamp(L + d, .15, .8); }), i, over;
     for (i = 1; i < t.length; i++) {
@@ -42,8 +43,8 @@ var Dither = (function () {
   }
   function ramp(color) {
     var c = rgb(color), goal = targetsFor(lum(c));
-    var seeds = [mix(c, VIOLET, .72), mix(c, VIOLET, .4), c, mix(c, YELLOW, .42), mix(c, YELLOW, .68)];
-    var tint = [VIOLET, VIOLET, null, YELLOW, YELLOW], amt = [.2, .1, 0, .1, .2];
+    var seeds = [mix(c, COOL, .16), mix(c, COOL, .05), c, mix(c, WARM, .22), mix(c, WARM, .4)];
+    var tint = [COOL, null, null, WARM, WARM], amt = [.06, 0, 0, .06, .1];
     return seeds.map(function (s, i) { return hex(tone(s, goal[i], tint[i], amt[i])); });
   }
 
@@ -52,27 +53,42 @@ var Dither = (function () {
   function wear(color) { return { ramp: ramp(color), figure: true, tex: 'plain', dither: 0 }; }
 
   var PRESETS = {
-    meadow: { hex: '#6e8c42', tex: 'grass', ground: true },
-    moss: { hex: '#55783a', tex: 'plain', rough: .55 },
-    track: { hex: '#b08a56', tex: 'dirt', ground: true },
-    stone: { hex: '#c4b29a', tex: 'plain', rough: .7 },
-    timber: { hex: '#8d5c36', tex: 'plain', rough: .45 },
-    beam: { hex: '#4e3426', tex: 'plain', rough: .3 },
-    sail: { hex: '#7a4634', tex: 'plain', rough: .35 },
-    cloth: { hex: '#c24b36', tex: 'plain', rough: .3 },
-    sack: { hex: '#c6a15c', tex: 'plain', rough: .55 },
-    iron: { hex: '#5a6068', tex: 'plain', rough: .2 },
-    leaf: { hex: '#3e6b34', tex: 'leaf' },
-    cart: { hex: '#a56b3c', tex: 'plain', rough: .4 }
+    meadow: { hex: '#6f8f3c', tex: 'grass', ground: true },
+    earth: { hex: '#a67c4a', tex: 'dirt', ground: true },
+    moss: { hex: '#5d7a3e', tex: 'grass', rough: .6 },
+    stone: { hex: '#d9c7a4', tex: 'stone', size: .34, rough: .85 },
+    tile: { hex: '#c45c38', tex: 'thatch', grain: 'x', rough: .7 },
+    timber: { hex: '#8d5a34', tex: 'wood', plank: .16, grain: 'x', rough: .5 },
+    beam: { hex: '#5a3a28', tex: 'wood', plank: .12, grain: 'x', rough: .35 },
+    sail: { hex: '#cbb892', tex: 'cloth', rough: .45 },
+    sack: { hex: '#c6a15c', tex: 'cloth', rough: .6 },
+    iron: { hex: '#5c636c', tex: 'plain', rough: .25 },
+    leaf: { hex: '#3f6b34', tex: 'leaf' },
+    cart: { hex: '#a56b3c', tex: 'wood', plank: .14, grain: 'x', rough: .45 },
+    lantern: { hex: '#e6c56a', tex: 'plain', rough: .15, glow: .92 }
   };
   function mat(name, extra) {
     var p = PRESETS[name] || { hex: name, tex: 'plain', rough: .4 };
     var m = { ramp: ramp(p.hex), tex: p.tex };
     if (p.ground) m.ground = true;
-    if (p.grain) m.grain = p.grain;
-    if (p.rough != null) m.rough = p.rough;
+    ['grain', 'rough', 'size', 'plank', 'glow', 'dither'].forEach(function (k) { if (p[k] != null) m[k] = p[k]; });
     if (extra) Object.keys(extra).forEach(function (k) { m[k] = extra[k]; });
     return m;
+  }
+
+  /* A small person: hat or hair, two or three cloth colours, a name for the pointer. */
+  function folk(P, x, z, opt) {
+    opt = opt || {};
+    var shirt = opt.shirt || '#b5523a';
+    var who = P.person(x, z, opt.parent || null, {
+      h: opt.h == null ? .5 : opt.h, yaw: opt.yaw || 0, figure: true,
+      shirt: wear(shirt), pants: wear(opt.pants || '#3e4c66'), skin: wear(opt.skin || '#e4b48c'),
+      hair: opt.hair === false ? false : wear(opt.hair || '#3a2a22'),
+      hat: opt.hat ? wear(opt.hat) : undefined,
+      shoes: wear(opt.shoes || '#2a2420'), sleeve: wear(opt.sleeve || shirt)
+    });
+    who.root.name = opt.name || '';
+    return who;
   }
 
   /* Plants step by whole pixels. spec.wind (8) quantises t; snap() quantises
@@ -110,7 +126,7 @@ var Dither = (function () {
     return 0;
   }
 
-  /* Tones, gaps and the two hue tests (shadow toward violet, light toward yellow). */
+  /* Tones, gaps, how cool the darkest step is (b - r) and how warm the lightest is. */
   function report(color) {
     var row = ramp(color), L = row.map(function (h) { return lum(rgb(h)); }), gaps = [], i;
     for (i = 1; i < L.length; i++) gaps.push(L[i] - L[i - 1]);
@@ -130,5 +146,5 @@ var Dither = (function () {
     return prev(spec, canvas, opts);
   };
 
-  return { ramp: ramp, wear: wear, mat: mat, sway: sway, carry: carry, sun: sun, report: report };
+  return { ramp: ramp, wear: wear, mat: mat, folk: folk, sway: sway, carry: carry, sun: sun, report: report };
 })();
