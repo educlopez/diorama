@@ -42,6 +42,7 @@ try {
   check("?still: the clock stays paused", await page.evaluate(() => window.__dither.runtime.stats().running === false));
   const meta = await page.evaluate(() => ({
     duration: window.__dither.spec.duration, still: window.__dither.spec.still || 0,
+    scene: window.__dither.spec.name || "",
     hint: window.__dither.spec.hint || "", fps: window.__dither.spec.fps == null ? 12 : window.__dither.spec.fps,
     w: document.getElementById("stage").width, h: document.getElementById("stage").height
   }));
@@ -52,8 +53,19 @@ try {
     report.images.push(path);
   };
   await page.evaluate((t) => window.__dither.runtime.renderAt(t), meta.still);
-  const support = await page.evaluate(supportAudit);
-  check("support: every declared piece meets its surface", support.fails.length === 0, support.fails.map((f) => f.why));
+  const supportStill = await page.evaluate(supportAudit);
+  const moveAt = meta.still + meta.duration / 2 >= meta.duration ? meta.duration / 8 : meta.still + meta.duration / 2;
+  await page.evaluate((t) => window.__dither.runtime.renderAt(t), moveAt);
+  const supportMove = await page.evaluate(supportAudit);
+  await page.evaluate((t) => window.__dither.runtime.renderAt(t), meta.still);
+  const supportFails = [];
+  const supportSeen = new Set();
+  for (const fail of [...supportStill.fails, ...supportMove.fails]) {
+    if (supportSeen.has(fail.why)) continue;
+    supportSeen.add(fail.why);
+    supportFails.push(fail.why);
+  }
+  check("support: every declared piece meets its surface", supportFails.length === 0, supportFails);
   await shot("still");
   const still = await pixels();
   const fill = still.reduce((n, v, i) => (i % 4 === 0 && Math.min(v, still[i + 1], still[i + 2]) < 245 ? n + 1 : n), 0) / (still.length / 4);
@@ -328,7 +340,7 @@ try {
   }
   const sh = zooms.shadowReport;
   const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > meta.w * .52 && m.x1 < meta.w * .84 && m.beyond >= 200;
-  if (name === "windmill") {
+  if (meta.scene === "windmill") {
     check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 100), sh);
   } else {
     const patch = (m) => m && m.n >= 280 && m.contrast >= 12 && m.w >= 10 && m.w < meta.w * .85;
@@ -531,7 +543,7 @@ check("size: built page under 70 KB", bytes < 70 * 1024, bytes);
 check("no browser errors", report.errors.length === 0, report.errors);
 check("offline: no network request", report.network.length === 0, report.network);
 writeFileSync(join(outdir, `${name}-look.json`), JSON.stringify(report, null, 2) + "\n");
-console.log(`${name}: ${bytes} bytes, median ${report.render?.medianMs} ms, throttle4 ${report.renderThrottle4?.medianMs} ms, budget ${report.render?.budgetMs} ms`);
+console.log(`${name}: ${bytes} bytes, median ${report.render?.medianMs} ms, p95 ${report.render?.p95Ms} ms, throttle4 ${report.renderThrottle4?.medianMs} ms, throttle4 p95 ${report.renderThrottle4?.p95Ms} ms, budget ${report.render?.budgetMs} ms`);
 for (const c of report.checks) console.log(`${c.pass ? "PASS" : "FAIL"} ${c.label}${c.pass ? "" : " (" + JSON.stringify(c.detail) + ")"}`);
 console.log(`report: ${join(outdir, `${name}-look.json`)}`);
 if (report.checks.some((c) => !c.pass)) process.exitCode = 1;

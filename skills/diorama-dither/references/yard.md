@@ -72,7 +72,7 @@ Smoke is three or four boxes on a loop `(q + i / n) % 1`, rising from the stack 
 
 ## Support
 
-Every solid group sets `support` through `Dither.seat` or `Dither.afloat`. The check allows one voxel (`P.px`, `1 / camera.scale`).
+Every solid mesh sets `support` through `Dither.seat` or `Dither.afloat`, or sits inside a group that does. A mesh with neither fails. The check allows one voxel (`P.px`, `1 / camera.scale`).
 
 ```js
 Dither.seat(plinth, 'plinth');
@@ -88,7 +88,7 @@ Dither.afloat(sack, 'sack', 'carried');
 - `seat(node, name, 'ground', other)` — on the ground and against that solid. Wheels.
 - `seat(node, name, 'water')` — the plane cuts the body. A hull stays cut even when the bob is at its highest.
 - `seat(node, name, 'surface')` — bottom on the water, and the spot is water.
-- `afloat(node, name, reason)` — the only float. Reason required.
+- `afloat(node, name, reason)` — the only float. A blank reason fails as `floats without a reason`.
 
 `folk` seats the person. Helpers for walls, gates, fences, lamps, trees, bushes and grass seat themselves. A lamp shade sits on the post. The cap sits on the shade.
 
@@ -96,12 +96,12 @@ Wheels use 10 sides and `rotation.x = π/2`, with the centre at `y = radius`, so
 
 Checklist:
 
-- Every group declares `seat` or `afloat`.
+- Every solid mesh declares `seat` or `afloat`, or sits in a group that does.
 - Wheels, legs and feet contact. The axle contacts the box.
 - The hull is partly under the water. Foam sits on the surface.
 - Nothing floats without a named reason.
 
-`node scripts/support.mjs examples/<name>.js` prints `ok` or `FAIL` and the group name, and exits 1 on a miss. `node scripts/support.mjs --negative` lifts one `cart-wheel` by `0.25` and must fail on that name. The look runs the same check at the still frame.
+`npm run support` audits the four yards at the still and one moving frame, then `--negative` and `--water`. A miss exits 1 and names the group. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. Feet with `NaN` or a missing coordinate must fail as `has no place to stand`. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same two-frame check. The windmill shadow keys off the scene name.
 
 ## Shadow check
 

@@ -7,7 +7,8 @@
     "build": "node scripts/build.mjs",
     "validate": "node scripts/validate.mjs",
     "look": "node scripts/look.mjs",
-    "record": "node scripts/record.mjs"
+    "record": "node scripts/record.mjs",
+    "support": "node scripts/support.mjs examples/windmill.js examples/lighthouse.js examples/tea-house.js examples/forge.js && node scripts/support.mjs --negative && node scripts/support.mjs --water"
   },
   "devDependencies": {
     "playwright-core": "1.64.1"

@@ -34,6 +34,7 @@ Pixel.scene({
 
     var mill = P.group(-1.2, 0, .48);
     mill.rotation.y = .74;
+    Dither.seat(mill, 'mill');
     var plinth = P.box(1.75, .18, 1.75, 'stone', 0, .09, 0, mill);
     Dither.seat(plinth, 'plinth');
     var tower = P.cyl(.68, .82, 1.72, 'stone', 0, 1.02, 0, mill, 8);
@@ -55,6 +56,7 @@ Pixel.scene({
     cart.rotation.y = .35;
     cart.name = 'cart';
     parts.cart = cart;
+    Dither.seat(cart, 'cart');
     var r = .16, axle = null;
     [-.32, .3].forEach(function (x) {
       axle = P.box(.08, .06, .84, 'timber', x, r, 0, cart);

@@ -56,26 +56,26 @@ These live on `Dither` and do not run for a pixel scene:
 - `tree`, `bush`, `fringe`, `fence`, `lamp`. `lamp` is a post, a paper box and a cap. Pass `shade: 'lantern'` or `'paper'`. Never a glow.
 - `rotor(P, parent, { y, z, face, len })` four equal sails. Yaw the parent so local `+Z` points toward the camera (about `0.7` at azimuth 45). The cap front is a disk in that plane: a cylinder with `rotation.x` of `π/2`, centred on the same `y`, radius larger than the sails. `face` is that disk's front along `Z`. `z` sits just past it, and `x` stays `0`, so the hub is on the axis. The cloth reaches about `0.9 * len` from the hub, so `len` stays inside the disk or a blade leaves the cap and crosses the roof. Spin `rotation.z` only.
 - `sway(P, node, base, t, amp, phase)` for plants. `carry(q)` for a lift that rests at both ends of the loop.
-- `seat(node, name, on, join)` and `afloat(node, name, reason)`. Every solid group declares one of them. See Support.
+- `seat(node, name, on, join)` and `afloat(node, name, reason)`. Every solid mesh declares one, or sits inside a group that does. See Support.
 
 Every hot group has a `.name`. `parts.hot` lists them. The `hint` says what to hover and names the tap target with the words `tap the <name>`.
 
 ## Support
 
-A piece either meets a surface or names why it does not. `node scripts/support.mjs` and the look both check this and exit 1 with the group's name.
+A piece either meets a surface or names why it does not. `npm run support` and the look both check the still and one moving frame, and exit 1 with the group's name. A mesh with neither its own support nor a supported ancestor fails as `has no support`.
 
 - `Dither.seat(node, name)` rests on the ground. The bottom face is within one voxel of `y = 0` (`P.px`). Sitting slightly in the ground passes. Floating above it fails. `folk`, `wall`, `gate`, `fence`, `lamp`, `tree`, `bush` and `fringe` already do this.
 - `Dither.seat(node, name, otherNode)` — the two solids meet within one voxel. A bed on an axle, a sail on the cap, a leg into the body, a screen on the floor, a shade on its post.
-- The fourth argument is a second solid. A wheel uses both: `Dither.seat(wheel, 'cart-wheel', 'ground', axle)`.
+- The fourth argument is a second solid. A wheel uses both: `Dither.seat(wheel, 'cart-wheel', 'ground', axle)`. If the wheel already fails the ground, the axle line is not repeated.
 - `Dither.seat(node, name, 'water')` — the water plane cuts the body (hull, fish). The bottom stays under `y = 0` at the highest point of a bob.
 - `Dither.seat(node, name, 'surface')` — foam whose bottom sits on the water, in a water zone.
-- `Dither.afloat(node, name, reason)` is the only leave-the-ground. The reason is a non-empty string: a carried sack, a ray, a spark, smoke, an hour mark. An empty reason fails.
+- `Dither.afloat(node, name, reason)` is the only leave-the-ground. The reason is a non-empty string: a carried sack, a ray, a spark, smoke, an hour mark. A blank reason fails as `floats without a reason`.
 
-A figure on the ground must not stand in a water zone. Feet go on meadow, earth, sand, rock, a pier deck, or inside a boat. Never on open water. A wheel is a cylinder with `rotation.x` of `π/2` and 10 sides, so a vertex sits at the bottom. Its centre `y` equals the radius, the axle passes through that hub, and the bed sits on the axle.
+A figure on the ground must not stand in a water zone. Feet are the figure's `x` and `z`. A missing or non-finite foot fails as `has no place to stand` before the zone is asked. Feet go on meadow, earth, sand, rock, a pier deck, or inside a boat. Never on open water. A wheel is a cylinder with `rotation.x` of `π/2` and 10 sides, so a vertex sits at the bottom. Its centre `y` equals the radius, the axle passes through that hub, and the bed sits on the axle.
 
 Checklist before the first render:
 
-- Every group has `seat` or `afloat`.
+- Every solid mesh has `seat` or `afloat`, or sits in a group that does.
 - Wheels, legs and feet touch. The axle touches the box. Hooves and shoes touch a solid surface.
 - A boat's hull is partly under the water. A bridge's piles stand on the banks. Posts reach the ground.
 - Nothing floats unless `afloat` names the reason.
@@ -93,8 +93,8 @@ Reduced motion and `?still` hold the clock. Do not start your own timer.
 From `skills/diorama-dither`:
 
 1. `node scripts/validate.mjs examples/<name>.js`
-2. `node scripts/support.mjs examples/<name>.js` — every declared support meets its surface. `node scripts/support.mjs --negative` lifts a windmill wheel and must fail, naming `cart-wheel`.
-3. `node scripts/look.mjs examples/<name>.js <outdir>` — the look runs the same support check.
+2. `npm run support` — the four yards, then a lifted `cart-wheel` that must fail once, then the water cases. A host in the tea pond must fail. A figure in the lighthouse's open water must fail. A figure on the lighthouse rock must pass. A bad foot coordinate must fail. A mesh with no support must fail. A blank float reason must fail.
+3. `node scripts/look.mjs examples/<name>.js <outdir>` — the look runs the same support check on the still and one moving frame. The windmill shadow uses the scene name, not the file name.
 4. Open the still, one moving frame, the hover, the press, the mobile shot and the figure zooms. Look at the wheels, the feet and anything that should meet a neighbour.
 
 The look checks fill, the loop seam, picking, hover, the tap, reduced motion, a hidden tab, off-screen pause, and a median frame at or under `83.3` ms, including CPU throttle 4. A pass is not a picture. Judge the still yourself: the action, the materials, the shadow, and whether the front of the structure is still readable.

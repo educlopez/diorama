@@ -360,7 +360,10 @@ var Pixel = (function () {
     /* optional finish. Every default below is the value the original picture used.
        bayer is only 8 (the original matrix) or 4. Any other value is a mistake, not a silent 4. */
     var bayerN = spec.bayer == null ? 8 : spec.bayer, shadowMode = spec.shadow || 'soft', rimOn = !!spec.rim, windFps = spec.wind || 0, contactK = spec.contact == null ? .32 : spec.contact;
-    if (bayerN !== 8 && bayerN !== 4) throw new Error("Pixel: bayer must be 4 or 8 (got " + JSON.stringify(spec.bayer) + ")");
+    var bayerShown = spec.bayer;
+    if (typeof bayerShown === "number" && bayerShown !== bayerShown) bayerShown = "NaN";
+    else if (bayerShown === Infinity || bayerShown === -Infinity) bayerShown = String(bayerShown);
+    if (bayerN !== 8 && bayerN !== 4) throw new Error("Pixel: bayer must be 4 or 8 (got " + JSON.stringify(bayerShown) + ")");
     P.px = 1 / S;
     P.snap = function (v) { return Math.round(v * S) / S; };
     P.wind = function (t, period, offset) { var qt = windFps > 0 ? Math.floor(t * windFps + 1e-8) / windFps : t; return wave(qt, period, offset); };

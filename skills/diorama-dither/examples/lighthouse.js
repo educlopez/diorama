@@ -28,6 +28,7 @@ Pixel.scene({
   build: function (P) {
     var parts = { plants: [] }, tower = P.group(-.15, 0, -.1);
     tower.rotation.y = .4;
+    Dither.seat(tower, 'station');
     var islet = P.cyl(.72, .86, .34, 'rock', 0, .17, 0, tower, 8);
     Dither.seat(islet, 'islet');
     var shaft = P.cyl(.4, .48, 1.85, 'plaster', 0, 1.22, 0, tower, 8);

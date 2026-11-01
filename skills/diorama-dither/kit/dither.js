@@ -1,7 +1,7 @@
 /* GENERATED, do not edit.
    sources:
-   skills/diorama-pixel/kit/pixel.js e1ae2ae4ad209c545e283f39ae6ac005c69cb2d3da467b6014c7365c53d9fa96
-   skills/diorama-dither/kit-src/finish.js f36f5b05e78985e0f9657252c7c78d1ba43022eb3aa3a67c7b73085e9edee244
+   skills/diorama-pixel/kit/pixel.js b09c660802b92eed77da10f1c0fbed3902f0c504b4295fe65aa6587c502f17e6
+   skills/diorama-dither/kit-src/finish.js e6db2ece266f390fbf5e547febc77f9aed31c6b5390be2245ccbb67db2be77a1
 */
 /* ============================================================================
    Diorama Pixel kernel · one global `Pixel`, no dependency: a software
@@ -365,7 +365,10 @@ var Pixel = (function () {
     /* optional finish. Every default below is the value the original picture used.
        bayer is only 8 (the original matrix) or 4. Any other value is a mistake, not a silent 4. */
     var bayerN = spec.bayer == null ? 8 : spec.bayer, shadowMode = spec.shadow || 'soft', rimOn = !!spec.rim, windFps = spec.wind || 0, contactK = spec.contact == null ? .32 : spec.contact;
-    if (bayerN !== 8 && bayerN !== 4) throw new Error("Pixel: bayer must be 4 or 8 (got " + JSON.stringify(spec.bayer) + ")");
+    var bayerShown = spec.bayer;
+    if (typeof bayerShown === "number" && bayerShown !== bayerShown) bayerShown = "NaN";
+    else if (bayerShown === Infinity || bayerShown === -Infinity) bayerShown = String(bayerShown);
+    if (bayerN !== 8 && bayerN !== 4) throw new Error("Pixel: bayer must be 4 or 8 (got " + JSON.stringify(bayerShown) + ")");
     P.px = 1 / S;
     P.snap = function (v) { return Math.round(v * S) / S; };
     P.wind = function (t, period, offset) { var qt = windFps > 0 ? Math.floor(t * windFps + 1e-8) / windFps : t; return wave(qt, period, offset); };
@@ -714,7 +717,7 @@ var Dither = (function () {
     return node;
   }
   function afloat(node, name, why) {
-    node.support = { name: name || 'piece', float: why || 'lifted' };
+    node.support = { name: name || 'piece', float: why && String(why).trim() ? String(why) : '' };
     return node;
   }
 

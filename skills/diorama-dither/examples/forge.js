@@ -101,6 +101,7 @@ Pixel.scene({
 
     var cart = P.group(2.25, 0, 1.4);
     cart.rotation.y = -.4;
+    S(cart, 'cart');
     var cr = .16, axle = P.box(.07, .06, .7, 'timber', .12, cr, 0, cart);
     [-.28, .28].forEach(function (z) {
       var w = P.cyl(cr, cr, .08, 'iron', .12, cr, z, cart, 10);

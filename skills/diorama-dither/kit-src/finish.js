@@ -88,7 +88,7 @@ var Dither = (function () {
     return node;
   }
   function afloat(node, name, why) {
-    node.support = { name: name || 'piece', float: why || 'lifted' };
+    node.support = { name: name || 'piece', float: why && String(why).trim() ? String(why) : '' };
     return node;
   }
 
