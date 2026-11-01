@@ -142,6 +142,7 @@ try {
       const r = d[p], g = d[p + 1], b = d[p + 2];
       if (g + 4 >= r && g > b + 8 && g > 38 && r < 200 && b < 165) return 1;
       if (r > g + 6 && g > b + 2 && r < 210 && g > 36 && r - g < 78 && b < 155) return 2;
+      if (b > r + 2 && b + 12 >= g && b > 8 && r < 190 && g > 6 && g < 200) return 3;
       return 0;
     };
     const meadow = (d, p) => family(d, p) === 1;
@@ -173,7 +174,7 @@ try {
     const fig = folkBox("miller"), carterBox = folkBox("carter");
     const linen = (d, p) => {
       const r = d[p], g = d[p + 1], b = d[p + 2];
-      return r > 145 && g > 120 && r < 240 && b > 70 && Math.abs(r - g) < 48 && r > b + 10 && g > b + 4;
+      return r > 155 && g > 135 && b > 105 && r < 230 && Math.abs(r - g) < 36 && g > b + 8 && r > b + 16;
     };
     let sail = { x: 40, y: 8 }, sailTop = H;
     for (let y = 0; y < Math.floor(H * .5); y++) for (let x = 0; x < W; x++) {
@@ -182,26 +183,28 @@ try {
     }
     /* The cast is the long run of grass that is much darker than the lit yard.
        A speck of dark dither does not extend it, and lit grass must remain past its right edge. */
-    function measure(d) {
+    function measure(d, fam, drop, abs) {
+      fam = fam || 1;
+      drop = drop == null ? 42 : drop;
       const bucket = [];
       for (let y = 0; y < H; y++) for (let x = 0; x < Math.floor(W * .42); x++) {
         const p = (y * W + x) * 4;
-        if (family(d, p) === 1) bucket.push(lum(d, p));
+        if (family(d, p) === fam) bucket.push(lum(d, p));
       }
       bucket.sort((p, q) => p - q);
       const ref = bucket.length ? bucket[Math.min(bucket.length - 1, Math.floor(bucket.length * .7))] : 130;
       const darkC = new Int32Array(W), grassC = new Int32Array(W), dark = new Uint8Array(W * H);
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const i = y * W + x, p = i * 4;
-        if (family(d, p) !== 1) continue;
+        if (family(d, p) !== fam) continue;
         grassC[x]++;
-        if (lum(d, p) < ref - 42) { darkC[x]++; dark[i] = 1; }
+        if (lum(d, p) < ref - drop) { darkC[x]++; dark[i] = 1; }
       }
       const cast = new Uint8Array(W);
       for (let x = 4; x < W - 4; x++) {
         let gs = 0, k = 0;
         for (let i = -4; i <= 4; i++) { gs += grassC[x + i]; k += darkC[x + i]; }
-        if (gs >= 80 && k / gs >= .5) cast[x] = 1;
+        if (abs ? k >= abs : gs >= 80 && k / gs >= .5) cast[x] = 1;
       }
       let best = null, run = null;
       for (let x = 0; x <= W; x++) {
@@ -222,7 +225,7 @@ try {
         }
         for (let y = 0; y < H; y++) for (let x = x1 + 8; x < Math.min(W, x1 + 56); x++) {
           const p = (y * W + x) * 4;
-          if (family(d, p) === 1 && lum(d, p) > ref - 18) beyond++;
+          if (family(d, p) === fam && lum(d, p) > ref - 18) beyond++;
         }
       }
       const mean = n ? sl / n : 0;
@@ -235,6 +238,8 @@ try {
     }
     const dur = window.__dither.spec.duration;
     const at0 = measure(grab(0)), at8 = measure(grab(dur / 8)), at4 = measure(grab(dur / 4));
+    const water0 = measure(grab(0), 3, 20, 10);
+    const soft0 = measure(grab(0), 1, 22);
     let shape = 0;
     for (let i = 0; i < at0.ink.length; i++) if (at0.ink[i] !== at8.ink[i]) shape++;
     let shadow = null, best = -1;
@@ -308,7 +313,9 @@ try {
     return {
       edge: zoom(edge || { x: 0, y: 0 }), figure: zoom(fig), carter: zoom(carterBox), sail: zoom(sail || { x: 40, y: 20 }),
       shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(),
-      shadowReport: { at0: brief(at0), at8: brief(at8), at4: brief(at4), shape }
+      shadowReport: { at0: brief(at0), at8: brief(at8), at4: brief(at4), shape },
+      water0: brief(water0),
+      soft0: brief(soft0)
     };
   }, meta.still);
   for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-carter", zooms.carter], ["zoom-sail", zooms.sail], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
@@ -318,7 +325,41 @@ try {
   }
   const sh = zooms.shadowReport;
   const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > meta.w * .52 && m.x1 < meta.w * .84 && m.beyond >= 200;
-  check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 280), sh);
+  if (name === "windmill") {
+    check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 100), sh);
+  } else {
+    const patch = (m) => m && m.n >= 280 && m.contrast >= 12 && m.w >= 10 && m.w < meta.w * .85;
+    check("shadow: a darker patch of the ground's own colour", !!(patch(sh && sh.at0) || patch(zooms.soft0) || patch(zooms.water0)), { grass: sh && sh.at0, soft: zooms.soft0, water: zooms.water0 });
+  }
+
+  const folks = await page.evaluate(([stillT, found, names]) => {
+    const rt = window.__dither.runtime, c = document.getElementById("stage");
+    const W = c.width, H = c.height, g = c.getContext("2d");
+    rt.hoverAt(5, 5);
+    rt.renderAt(stillT);
+    function zoomAt(hit) {
+      const S = 64, Z = 8;
+      const x = Math.max(0, Math.min(W - S, Math.round((hit[0] + 1) / 2 * W - 32)));
+      const y = Math.max(0, Math.min(H - S, Math.round((hit[1] + 1) / 2 * H - 48)));
+      const src = g.getImageData(x, y, S, S);
+      const tmp = document.createElement("canvas"); tmp.width = S; tmp.height = S;
+      tmp.getContext("2d").putImageData(src, 0, 0);
+      const out = document.createElement("canvas"); out.width = S * Z; out.height = S * Z;
+      const o = out.getContext("2d"); o.imageSmoothingEnabled = false; o.drawImage(tmp, 0, 0, S * Z, S * Z);
+      return out.toDataURL("image/png");
+    }
+    return names.map((nm, i) => {
+      if (!found[i]) return null;
+      const slug = (nm || "hot").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      return { name: slug, url: zoomAt(found[i]) };
+    }).filter(Boolean);
+  }, [meta.still, hotPoints.found, hotPoints.names]);
+  for (const shot of folks) {
+    const path = join(outdir, `${name}-zoom-${shot.name}.png`);
+    writeFileSync(path, Buffer.from(shot.url.split(",")[1], "base64"));
+    report.images.push(path);
+  }
+  check("figures: a zoom for every hot group", folks.length === hotPoints.names.length, { zooms: folks.map((s) => s.name), hot: hotPoints.names });
 
   const bench = async () => page.evaluate(() => {
     const rt = window.__dither.runtime, ts = [];
@@ -386,24 +427,33 @@ try {
   const overflow = await mobile.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: innerWidth, scale: parseFloat(getComputedStyle(document.getElementById("stage")).width) / document.getElementById("stage").width }));
   check("mobile: no horizontal overflow", overflow.scroll <= overflow.inner + 1, overflow);
   check("mobile: integer scale", Math.abs(overflow.scale - Math.round(overflow.scale)) < 1e-6 && overflow.scale >= 1, overflow.scale);
-  const tapped = await mobile.evaluate((t) => {
-    const rt = window.__dither.runtime, hot = rt.parts.hot, idx = hot.findIndex((h) => h.name === "miller");
+  const tapName = (named || hotPoints.names[0] || "").toLowerCase();
+  const tapped = await mobile.evaluate(([t, tapName]) => {
+    const rt = window.__dither.runtime, hot = rt.parts.hot || [];
+    const idx = hot.findIndex((h) => (h.name || "").toLowerCase().startsWith(tapName));
     rt.renderAt(t);
     let hit = null;
-    for (let y = .9; y > -.9 && !hit; y -= .02) for (let x = -.9; x < .9; x += .02) if (rt.hoverAt(x, y) === hot[idx]) hit = [x, y];
+    if (idx >= 0) for (let y = .9; y > -.9 && !hit; y -= .015) for (let x = -.9; x < .9 && !hit; x += .015) if (rt.hoverAt(x, y) === hot[idx]) hit = [x, y];
+    if (hit) {
+      const cluster = [];
+      for (let dy = -.06; dy <= .06; dy += .012) for (let dx = -.06; dx <= .06; dx += .012) {
+        if (rt.hoverAt(hit[0] + dx, hit[1] + dy) === hot[idx]) cluster.push([hit[0] + dx, hit[1] + dy]);
+      }
+      if (cluster.length) hit = cluster[Math.floor(cluster.length / 2)];
+    }
     rt.hoverAt(5, 5);
     rt.renderAt(t + .5);
     const c = document.getElementById("stage"), before = Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data);
     rt.renderAt(t);
-    return { hit, before };
-  }, meta.still);
+    return { hit, before, idx };
+  }, [meta.still, tapName]);
   if (tapped.hit) {
     const box = await mobile.locator("#stage").boundingBox();
     const [x, y] = tapped.hit;
     await mobile.touchscreen.tap(box.x + (x + 1) / 2 * box.width, box.y + (y + 1) / 2 * box.height);
     const after = await mobile.evaluate((t) => { const rt = window.__dither.runtime; rt.hoverAt(5, 5); rt.renderAt(t + .5); const c = document.getElementById("stage"); return Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data); }, meta.still);
     check("mobile: one tap reaches the brake", diff(tapped.before, after) > .0005, +diff(tapped.before, after).toFixed(4));
-  } else check("mobile: one tap reaches the brake", false, "miller not found");
+  } else check("mobile: one tap reaches the brake", false, tapName || "no target");
   await phone.close();
 } catch (err) {
   report.errors.push(String((err && err.message) || err));

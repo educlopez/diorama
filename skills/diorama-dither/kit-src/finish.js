@@ -65,13 +65,26 @@ var Dither = (function () {
     iron: { hex: '#5c636c', tex: 'plain', rough: .25 },
     leaf: { hex: '#3f6b34', tex: 'leaf' },
     cart: { hex: '#a56b3c', tex: 'wood', plank: .14, grain: 'x', rough: .45 },
-    lantern: { hex: '#e6c56a', tex: 'plain', rough: .15, glow: .92 }
+    lantern: { hex: '#e6c56a', tex: 'plain', rough: .2 },
+    water: { hex: '#4e86a0', tex: 'water', water: true, ground: true },
+    pond: { hex: '#3e7594', tex: 'water', water: true, ground: true },
+    sand: { hex: '#d2c09a', tex: 'sand', ground: true },
+    rock: { hex: '#8d8982', tex: 'stone', size: .28, rough: .9 },
+    plaster: { hex: '#efe6d2', tex: 'plain', rough: .35 },
+    paper: { hex: '#f3ead4', tex: 'cloth', rough: .25 },
+    ink: { hex: '#2a241c', tex: 'wood', plank: .1, grain: 'x', rough: .3 },
+    ember: { hex: '#d2652e', tex: 'plain', rough: .15, dither: .35 },
+    coal: { hex: '#3a3836', tex: 'plain', rough: .4 },
+    smoke: { hex: '#c4beb4', tex: 'plain', rough: .25, dither: .45 },
+    ray: { hex: '#f3e6b0', tex: 'plain', rough: 0, dither: 0 },
+    koi: { hex: '#e2723a', tex: 'plain', rough: .2, dither: .2 },
+    hide: { hex: '#8d6a48', tex: 'plain', rough: .35 }
   };
   function mat(name, extra) {
     var p = PRESETS[name] || { hex: name, tex: 'plain', rough: .4 };
     var m = { ramp: ramp(p.hex), tex: p.tex };
     if (p.ground) m.ground = true;
-    ['grain', 'rough', 'size', 'plank', 'glow', 'dither'].forEach(function (k) { if (p[k] != null) m[k] = p[k]; });
+    ['grain', 'rough', 'size', 'plank', 'dither', 'water', 'flat'].forEach(function (k) { if (p[k] != null) m[k] = p[k]; });
     if (extra) Object.keys(extra).forEach(function (k) { m[k] = extra[k]; });
     return m;
   }
@@ -89,6 +102,100 @@ var Dither = (function () {
     });
     who.root.name = opt.name || '';
     return who;
+  }
+
+  /* A stone run with a timber coping. len is along local X. The coping is
+     slightly wider so the top edge reads as a separate course. */
+  function wall(P, x, z, len, yaw, opt) {
+    opt = opt || {};
+    var h = opt.h == null ? .34 : opt.h, d = opt.d == null ? .26 : opt.d;
+    var g = P.group(x, 0, z); g.rotation.y = yaw || 0;
+    P.box(len, h, d, opt.stone || 'stone', 0, h / 2, 0, g);
+    P.box(len + .08, .07, d + .08, opt.cap || 'timber', 0, h + .035, 0, g);
+    return g;
+  }
+
+  function gate(P, x, z, yaw) {
+    var g = P.group(x, 0, z); g.rotation.y = yaw || 0;
+    P.box(.1, .66, .1, 'timber', -.48, .33, 0, g);
+    P.box(.1, .66, .1, 'timber', .48, .33, 0, g);
+    P.box(1.06, .07, .08, 'timber', 0, .62, 0, g);
+    return g;
+  }
+
+  function fence(P, x, z, yaw, n) {
+    var g = P.group(x, 0, z), i, span;
+    g.rotation.y = yaw || 0;
+    n = n || 4;
+    span = (n - 1) * .36;
+    for (i = 0; i < n; i++) P.box(.06, .42, .06, 'timber', -span / 2 + i * .36, .21, 0, g);
+    P.box(span + .08, .05, .05, 'beam', 0, .32, 0, g);
+    P.box(span + .08, .05, .05, 'beam', 0, .16, 0, g);
+    return g;
+  }
+
+  /* A post and a paper box. No bright halo: the shade is a flat warm face. */
+  function lamp(P, x, z, opt) {
+    opt = opt || {};
+    var h = opt.h == null ? .64 : opt.h, post = opt.post || 'beam', shade = opt.shade || 'lantern';
+    var g = P.group(x, 0, z);
+    P.box(.07, h, .07, post, 0, h / 2, 0, g);
+    P.box(.18, .22, .18, shade, 0, h + .08, 0, g);
+    P.box(.24, .05, .24, post, 0, h + .22, 0, g);
+    return g;
+  }
+
+  function tree(P, x, z, opt) {
+    opt = opt || {};
+    var g = P.tree(x, z, opt.parent || null, {
+      r: opt.r == null ? .48 : opt.r, h: opt.h == null ? .85 : opt.h,
+      clusters: opt.clusters == null ? 5 : opt.clusters, mat: opt.mat || 'leaf', trunk: opt.trunk || 'beam', seed: opt.seed == null ? 3 : opt.seed
+    });
+    g.base = [x, 0, z];
+    return g;
+  }
+
+  function bush(P, x, z, r) {
+    var g = P.bush(x, z, null, { r: r || .22, clusters: 4, mat: 'leaf' });
+    g.base = [x, 0, z];
+    return g;
+  }
+
+  /* Three blades of grass per spot. Returns the groups so a tick can sway them. */
+  function fringe(P, spots, matName) {
+    var out = [];
+    spots.forEach(function (p, n) {
+      var x = p[0], z = p[1], h = p[2] || (.18 + (n % 3) * .04), g = P.group(x, 0, z), k;
+      g.base = [x, 0, z];
+      for (k = 0; k < 3; k++) {
+        var a = k * 2.2 + x;
+        P.box(.08, h, .08, matName || 'moss', Math.cos(a) * .08, h / 2, Math.sin(a) * .08, g);
+      }
+      out.push(g);
+    });
+    return out;
+  }
+
+  /* Four sails on the front of a cap. The axle is the parent's +Z, so the
+     disk spins in the parent's XY and stays in front of the wall. face is
+     the cap surface along Z; z is the hub, past that face. */
+  function rotor(P, parent, opt) {
+    opt = opt || {};
+    var y = opt.y == null ? 2.6 : opt.y, z = opt.z == null ? 1.2 : opt.z, face = opt.face == null ? .8 : opt.face, len = opt.len == null ? .96 : opt.len;
+    var beam = opt.beam || 'beam', cloth = opt.sail || 'sail', iron = opt.hub || 'iron', neck = z - face, i;
+    if (neck > .05) P.box(.09, .09, neck, iron, 0, y, face + neck / 2, parent);
+    var sails = P.group(0, y, z, parent);
+    P.box(.2, .2, .14, iron, 0, 0, .03, sails);
+    for (i = 0; i < 4; i++) {
+      var spar = P.group(0, 0, 0, sails);
+      spar.rotation.z = i * Math.PI / 2;
+      P.box(len, .07, .05, beam, len * .52, 0, .02, spar);
+      P.box(.06, len * .34, .045, beam, len * .28, len * .16, .03, spar);
+      P.box(.06, len * .36, .045, beam, len * .78, len * .17, .03, spar);
+      P.box(len * .5, .05, .04, beam, len * .55, len * .32, .035, spar);
+      P.box(len * .62, len * .28, .03, cloth, len * .5, len * .15, .045, spar);
+    }
+    return sails;
   }
 
   /* Plants step by whole pixels. spec.wind (8) quantises t; snap() quantises
@@ -146,5 +253,8 @@ var Dither = (function () {
     return prev(spec, canvas, opts);
   };
 
-  return { ramp: ramp, wear: wear, mat: mat, folk: folk, sway: sway, carry: carry, sun: sun, report: report };
+  return {
+    ramp: ramp, wear: wear, mat: mat, folk: folk, sway: sway, carry: carry, sun: sun, report: report,
+    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor
+  };
 })();
