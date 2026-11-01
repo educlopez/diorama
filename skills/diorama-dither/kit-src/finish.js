@@ -87,10 +87,11 @@ var Dither = (function () {
     node.position.z = base[2] + P.snap(px * P.px * .6 * s);
   }
 
-  /* A sun whose shadows fall to screen-right for the usual isometric azimuth.
-     elevation is in degrees: 26 gives a shadow a little over twice the height.
-     turn swings the sun a few degrees so a sail facing the camera still has
-     a face to block, without sending the shadow off the side of the frame. */
+  /* A sun whose shadows fall toward screen-right for the usual isometric azimuth.
+     elevation is in degrees: lower throws a longer shadow. turn, in degrees,
+     swings the sun off that axis so a sail that faces the camera still blocks
+     a face, and the four blades stay apart on the ground instead of stacking
+     into one bar. */
   function sun(cameraAz, elevation, turn) {
     var az = cameraAz == null ? 45 : cameraAz, el = elevation == null ? 24 : elevation;
     var rad = Math.PI / 180;

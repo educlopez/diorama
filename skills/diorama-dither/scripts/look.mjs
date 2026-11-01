@@ -32,6 +32,7 @@ try {
   const context = await browser.newContext({ viewport: { width: 1100, height: 900 }, deviceScaleFactor: 1 });
   await context.route(/^https?:/, (r) => { report.network.push(r.request().url()); return r.abort(); });
   const page = await context.newPage();
+  page.setDefaultTimeout(12000);
   page.on("pageerror", (e) => report.errors.push(String(e.message)));
   page.on("console", (m) => { if (m.type() === "error") report.errors.push(m.text()); });
   const url = pathToFileURL(file).href;
@@ -172,16 +173,59 @@ try {
       rt.hoverAt(5, 5);
       if (hit) fig = { x: Math.round((hit[0] + 1) / 2 * W - 32), y: Math.round((hit[1] + 1) / 2 * H - 48) };
     }
-    const later = grab(stillT + 1.3);
-    let shadow = null, best = -1;
-    for (let y = Math.floor(H * .52); y <= H - 64; y += 4) for (let x = Math.floor(W * .35); x <= W - 64; x += 4) {
-      let changed = 0;
-      for (let j = 0; j < 64; j += 2) for (let i = 0; i < 64; i += 2) {
-        const p = ((y + j) * W + x + i) * 4;
-        if (!meadowish(now, p) || !meadowish(later, p)) continue;
-        if (now[p] !== later[p] || now[p + 1] !== later[p + 1] || now[p + 2] !== later[p + 2]) changed++;
+    const lum = (d, p) => 0.2126 * d[p] + 0.7152 * d[p + 1] + 0.0722 * d[p + 2];
+    const isInk = (d, p) => {
+      const r = d[p], g = d[p + 1], b = d[p + 2], L = lum(d, p);
+      return L < 70 && b > r + 15 && b > g + 12 && r < 85;
+    };
+    function measure(d) {
+      const ink = new Uint8Array(W * H);
+      let n = 0, sx = 0, sy = 0, sl = 0, gn = 0, gl = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = y * W + x, p = i * 4, L = lum(d, p);
+        if (isInk(d, p)) {
+          ink[i] = 1; n++; sx += x; sy += y; sl += L;
+          if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        } else if (L > 115 && d[p + 1] + 18 >= d[p] && d[p + 1] > d[p + 2] + 10 && d[p + 1] > 90) { gn++; gl += L; }
       }
-      if (changed > best) { best = changed; shadow = { x, y, changed }; }
+      const widths = [];
+      for (let y = 1; y < H - 1; y += 2) for (let x = 1; x < W - 1; x += 2) {
+        if (!ink[y * W + x]) continue;
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        for (let k = 0; k < 4; k++) {
+          const dx = dirs[k][0], dy = dirs[k][1];
+          if (ink[(y + dy) * W + (x + dx)]) continue;
+          let w = 0, xx = x + dx, yy = y + dy;
+          for (let s = 0; s < 6 && xx >= 0 && yy >= 0 && xx < W && yy < H; s++) {
+            const p = (yy * W + xx) * 4;
+            if (isInk(d, p)) break;
+            if (lum(d, p) > 115 && d[p + 1] > d[p + 2] + 8) { widths.push(w); break; }
+            w++; xx += dx; yy += dy;
+          }
+        }
+      }
+      widths.sort((a, b) => a - b);
+      return {
+        n, cx: n ? sx / n : 0, lum: n ? sl / n : 0, grass: gn ? gl / gn : 0,
+        contrast: n && gn ? gl / gn - sl / n : 0,
+        edge: widths.length ? widths[widths.length >> 1] : 99,
+        w: n ? x1 - x0 + 1 : 0, h: n ? y1 - y0 + 1 : 0, x1: n ? x1 : 0, ink
+      };
+    }
+    const dur = window.__dither.spec.duration;
+    const at0 = measure(grab(0)), at8 = measure(grab(dur / 8)), at4 = measure(grab(dur / 4));
+    let shape = 0;
+    for (let i = 0; i < at0.ink.length; i++) if (at0.ink[i] !== at8.ink[i]) shape++;
+    let shadow = null, best = -1;
+    const mark = at4.ink;
+    for (let y = 0; y <= H - 64; y += 4) for (let x = Math.floor(W * .3); x <= W - 64; x += 4) {
+      let inkN = 0, openN = 0;
+      for (let j = 0; j < 64; j += 2) for (let i = 0; i < 64; i += 2) {
+        if (mark[(y + j) * W + (x + i)]) inkN++; else openN++;
+      }
+      if (inkN < 30 || openN < 40) continue;
+      const score = inkN + x * .05;
+      if (score > best) { best = score; shadow = { x, y, inkN }; }
     }
     rt.renderAt(stillT);
     function zoom(box) {
@@ -239,14 +283,20 @@ try {
       const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(tiny, 0, 0, tw * 8, th * 8);
       return { w: tw, h: th, url: big.toDataURL("image/png") };
     };
-    return { edge: zoom(edge || { x: 0, y: 0 }), figure: zoom(fig), shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(), shadowChanged: shadow && shadow.changed };
+    const brief = (m) => ({ n: m.n, contrast: +m.contrast.toFixed(1), edge: m.edge, w: m.w, h: m.h, cx: +m.cx.toFixed(1), x1: m.x1 });
+    return {
+      edge: zoom(edge || { x: 0, y: 0 }), figure: zoom(fig), shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(),
+      shadowReport: { at0: brief(at0), at8: brief(at8), at4: brief(at4), shape }
+    };
   }, meta.still);
   for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
     const path = join(outdir, `${name}-${label}.png`);
     writeFileSync(path, Buffer.from(url.split(",")[1], "base64"));
     report.images.push(path);
   }
-  check("shadow: the meadow changes as the sails turn", (zooms.shadowChanged || 0) > 20, zooms.shadowChanged);
+  const sh = zooms.shadowReport;
+  const arm = (m) => m && m.n >= 900 && m.contrast >= 40 && m.edge <= 2 && m.w >= 80 && m.x1 > meta.w * .62;
+  check("shadow: a hard sail shadow points across the meadow and changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 500), sh);
 
   const bench = async () => page.evaluate(() => {
     const rt = window.__dither.runtime, ts = [];
@@ -333,6 +383,8 @@ try {
     check("mobile: one tap reaches the brake", diff(tapped.before, after) > .0005, +diff(tapped.before, after).toFixed(4));
   } else check("mobile: one tap reaches the brake", false, "miller not found");
   await phone.close();
+} catch (err) {
+  report.errors.push(String((err && err.message) || err));
 } finally {
   await browser.close();
 }

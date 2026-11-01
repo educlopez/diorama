@@ -18,6 +18,10 @@ const read = (p) => readFileSync(p, "utf8").replace(/\r\n/g, "\n").trim();
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 
 export function generate() {
+  if (!existsSync(finishPath)) {
+    console.error("FAIL skills/diorama-dither/kit-src/finish.js is missing.");
+    process.exit(1);
+  }
   const pixel = read(pixelPath), finish = read(finishPath);
   const header = [
     "/* GENERATED, do not edit.",

@@ -7,13 +7,13 @@ Pixel.scene({
   means: 'A miller lifts a sack onto a cart while the sails turn and their long shadow crosses the meadow.',
   hint: 'Hover the miller or the cart; tap the miller to brake the sails.',
   width: 360, height: 280, duration: 8, still: 2, fps: 12,
-  bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .72,
-  camera: { az: 45, el: 30, height: 4.8 },
-  sun: Dither.sun(45, 20, -34),
+  bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .45,
+  camera: { az: 45, el: 30, height: 5.2 },
+  sun: Dither.sun(45, 34, 8),
   ground: {
-    rx: 4.5, rz: 3.7, wobble: .7, fade: .62,
+    rx: 7.2, rz: 6.0, wobble: .5, fade: .45,
     zone: function (x, z) {
-      if (Math.abs(x * .35 + z - .15) < .5 && x > -.2 && x < 2.5) return 'track';
+      if (Math.abs(x + 2.3) < 1.15 && z > 1.7 && z < 3.5) return 'track';
       return 'meadow';
     }
   },
@@ -25,24 +25,24 @@ Pixel.scene({
   },
   build: function (P) {
     var parts = { plants: [] }, i;
-    var mill = P.group(-.35, 0, .25);
-    mill.rotation.y = .78;
-    P.box(1.55, .34, 1.55, 'stone', 0, .17, 0, mill);
-    P.cyl(.56, .72, 2.2, 'stone', 0, 1.32, 0, mill, 8);
-    P.box(.28, .52, .12, 'beam', .06, .5, .8, mill);
-    P.box(.16, .18, .12, 'iron', -.1, 1.45, .68, mill);
-    P.cyl(.72, .48, .4, 'beam', 0, 2.55, 0, mill, 8);
-    P.cone(.24, .42, 'beam', 0, 2.92, 0, mill, 7);
-    var sails = P.group(0, 2.58, .86, mill);
+    var mill = P.group(-1.7, 0, 1.35);
+    mill.rotation.y = -.15;
+    P.box(.95, .22, .95, 'stone', 0, .11, 0, mill);
+    P.cyl(.4, .52, 2.15, 'stone', 0, 1.22, 0, mill, 8);
+    P.box(.26, .48, .1, 'beam', .04, .46, .62, mill);
+    P.box(.14, .16, .1, 'iron', -.08, 1.35, .52, mill);
+    P.cyl(.58, .42, .36, 'beam', 0, 2.42, 0, mill, 8);
+    P.cone(.2, .36, 'beam', 0, 2.76, 0, mill, 7);
+    var sails = P.group(0, 2.72, .62, mill);
     parts.sails = sails;
-    P.box(.26, .26, .22, 'iron', 0, 0, .08, sails);
+    P.box(.22, .22, .18, 'iron', 0, 0, .06, sails);
     for (i = 0; i < 4; i++) {
       var spar = P.group(0, 0, 0, sails);
       spar.rotation.z = i * Math.PI / 2;
-      P.box(1.9, .18, .1, 'beam', 1.02, 0, 0, spar);
-      P.box(1.25, .52, .06, 'sail', .78, .26, .07, spar);
+      P.box(2.55, .12, .07, 'beam', 1.38, 0, .03, spar);
+      P.box(1.9, .3, .06, 'sail', 1.05, .18, .05, spar);
     }
-    var cart = P.group(1.75, 0, -1.2);
+    var cart = P.group(-2.15, 0, 2.85);
     cart.rotation.y = -.4;
     cart.name = 'cart';
     parts.cart = cart;
@@ -56,7 +56,7 @@ Pixel.scene({
         w.rotation.x = Math.PI / 2;
       });
     });
-    var who = P.person(.72, .05, null, {
+    var who = P.person(-2.55, 2.35, null, {
       h: 1.7, yaw: 2.15, figure: true,
       shirt: Dither.wear('#b84332'), pants: Dither.wear('#3a4860'), skin: Dither.wear('#e0b08a'),
       hair: Dither.wear('#3a2a22'), shoes: Dither.wear('#2a2422'), sleeve: Dither.wear('#8e3428'),
@@ -76,21 +76,21 @@ Pixel.scene({
       }
       parts.plants.push(g);
     }
-    [[-2.6, 1.7], [2.4, .9], [-2.2, -1.7], [.2, 1.9], [2.6, -1.7], [-.4, -2.0]].forEach(function (p, n) {
+    [[-4.2, 2.4], [3.2, 2.6], [-3.6, -1.2], [1.4, 3.4], [3.8, -.4], [-.6, -2.6]].forEach(function (p, n) {
       tuft(p[0], p[1], .26 + (n % 3) * .06);
     });
-    var tree = P.tree(-3.15, 1.55, null, { r: .62, h: 1.05, mat: 'leaf', trunk: 'beam', seed: 4 });
-    tree.base = [-3.15, 0, 1.55];
+    var tree = P.tree(-4.6, -.2, null, { r: .55, h: .9, mat: 'leaf', trunk: 'beam', seed: 4 });
+    tree.base = [-4.6, 0, -.2];
     parts.plants.push(tree);
-    var bush = P.bush(2.2, 1.4, null, { r: .34, mat: 'leaf' });
-    bush.base = [2.2, 0, 1.4];
+    var bush = P.bush(2.8, 3.2, null, { r: .3, mat: 'leaf' });
+    bush.base = [2.8, 0, 3.2];
     parts.plants.push(bush);
-    var bush2 = P.bush(-1.65, 1.2, null, { r: .28, mat: 'leaf' });
-    bush2.base = [-1.65, 0, 1.2];
+    var bush2 = P.bush(-1.2, -2.8, null, { r: .26, mat: 'leaf' });
+    bush2.base = [-1.2, 0, -2.8];
     parts.plants.push(bush2);
     parts.hot = [who.root, cart];
-    parts.sackA = [.95, .18, -.15];
-    parts.sackB = [1.55, .72, -1.05];
+    parts.sackA = [-2.35, .18, 2.15];
+    parts.sackB = [-2.05, .72, 2.95];
     return parts;
   },
   tick: function (c) {
