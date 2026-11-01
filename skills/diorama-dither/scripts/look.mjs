@@ -180,34 +180,57 @@ try {
       if (!linen(now, (y * W + x) * 4) || y >= sailTop) continue;
       sailTop = y; sail = { x: x - 28, y: y - 6 };
     }
-    /* Shadow pixels are ground only. Each family is compared with its own lit tone, so a darker path is not counted as shade. */
+    /* The cast is the long run of grass that is much darker than the lit yard.
+       A speck of dark dither does not extend it, and lit grass must remain past its right edge. */
     function measure(d) {
-      const buckets = { 1: [], 2: [] };
+      const bucket = [];
       for (let y = 0; y < H; y++) for (let x = 0; x < Math.floor(W * .42); x++) {
-        const p = (y * W + x) * 4, f = family(d, p);
-        if (f) buckets[f].push(lum(d, p));
+        const p = (y * W + x) * 4;
+        if (family(d, p) === 1) bucket.push(lum(d, p));
       }
-      const ref = {};
-      for (const k of [1, 2]) {
-        const a = buckets[k].sort((p, q) => p - q);
-        ref[k] = a.length ? a[Math.min(a.length - 1, Math.floor(a.length * .7))] : 130;
+      bucket.sort((p, q) => p - q);
+      const ref = bucket.length ? bucket[Math.min(bucket.length - 1, Math.floor(bucket.length * .7))] : 130;
+      const darkC = new Int32Array(W), grassC = new Int32Array(W), dark = new Uint8Array(W * H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = y * W + x, p = i * 4;
+        if (family(d, p) !== 1) continue;
+        grassC[x]++;
+        if (lum(d, p) < ref - 42) { darkC[x]++; dark[i] = 1; }
+      }
+      const cast = new Uint8Array(W);
+      for (let x = 4; x < W - 4; x++) {
+        let gs = 0, k = 0;
+        for (let i = -4; i <= 4; i++) { gs += grassC[x + i]; k += darkC[x + i]; }
+        if (gs >= 80 && k / gs >= .5) cast[x] = 1;
+      }
+      let best = null, run = null;
+      for (let x = 0; x <= W; x++) {
+        if (x < W && cast[x]) { if (!run) run = { x0: x, x1: x }; else run.x1 = x; }
+        else if (run) { if (!best || run.x1 - run.x0 > best.x1 - best.x0) best = run; run = null; }
       }
       const ink = new Uint8Array(W * H);
-      let n = 0, sx = 0, sy = 0, gap = 0, sl = 0, sl2 = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const i = y * W + x, p = i * 4, f = family(d, p);
-        if (!f) continue;
-        const L = lum(d, p);
-        if (L > ref[f] - 20) continue;
-        ink[i] = 1; n++; sx += x; sy += y; gap += ref[f] - L; sl += L; sl2 += L * L;
-        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      let n = 0, sx = 0, sy = 0, gap = 0, sl = 0, sl2 = 0, y0 = H, y1 = 0, beyond = 0;
+      const x0 = best ? best.x0 : 0, x1 = best ? best.x1 : 0;
+      if (best) {
+        for (let y = 0; y < H; y++) for (let x = x0; x <= x1; x++) {
+          const i = y * W + x;
+          if (!dark[i]) continue;
+          ink[i] = 1; n++; sx += x; sy += y;
+          const L = lum(d, i * 4);
+          gap += ref - L; sl += L; sl2 += L * L;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+        for (let y = 0; y < H; y++) for (let x = x1 + 8; x < Math.min(W, x1 + 56); x++) {
+          const p = (y * W + x) * 4;
+          if (family(d, p) === 1 && lum(d, p) > ref - 18) beyond++;
+        }
       }
       const mean = n ? sl / n : 0;
       const variance = n ? Math.max(0, sl2 / n - mean * mean) : 0;
       return {
-        n, cx: n ? sx / n : 0, lum: mean, lit: ref[1],
+        n, cx: n ? sx / n : 0, lum: mean, lit: ref, beyond,
         contrast: n ? gap / n : 0, std: Math.sqrt(variance),
-        w: n ? x1 - x0 + 1 : 0, h: n ? y1 - y0 + 1 : 0, x1: n ? x1 : 0, ink
+        w: best ? x1 - x0 + 1 : 0, h: n ? y1 - y0 + 1 : 0, x1, ink
       };
     }
     const dur = window.__dither.spec.duration;
@@ -281,7 +304,7 @@ try {
       const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(tiny, 0, 0, tw * 8, th * 8);
       return { w: tw, h: th, url: big.toDataURL("image/png") };
     };
-    const brief = (m) => ({ n: m.n, contrast: +m.contrast.toFixed(1), std: +m.std.toFixed(2), lit: m.lit, w: m.w, h: m.h, cx: +m.cx.toFixed(1), x1: m.x1 });
+    const brief = (m) => ({ n: m.n, contrast: +m.contrast.toFixed(1), std: +m.std.toFixed(2), lit: +m.lit.toFixed(1), w: m.w, h: m.h, cx: +m.cx.toFixed(1), x1: m.x1, beyond: m.beyond });
     return {
       edge: zoom(edge || { x: 0, y: 0 }), figure: zoom(fig), carter: zoom(carterBox), sail: zoom(sail || { x: 40, y: 20 }),
       shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(),
@@ -294,8 +317,8 @@ try {
     report.images.push(path);
   }
   const sh = zooms.shadowReport;
-  const arm = (m) => m && m.n >= 450 && m.contrast >= 18 && m.std >= 3.5 && m.w >= 48 && m.x1 > meta.w * .58;
-  check("shadow: ground only, darker than the grass, textured, long to the right, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 280), sh);
+  const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > meta.w * .52 && m.x1 < meta.w * .84 && m.beyond >= 200;
+  check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 280), sh);
 
   const bench = async () => page.evaluate(() => {
     const rt = window.__dither.runtime, ts = [];
