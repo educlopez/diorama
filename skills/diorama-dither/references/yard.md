@@ -46,21 +46,29 @@ Pose after `P.pose(person, 'work')` or `'hold'`:
 
 Two people need open ground between them. A cart wheel, a bush or a sail across a torso hides the action even when the pixels are technically in front.
 
-## Rotors and other spinning parts
+## Rotors
 
-The axle is the parent group's local `+Z`. Yaw the parent so that axis points out of the front of the cap, not along the wall.
+The axle is the parent group's local `+Z`. Yaw the parent toward the camera, about `0.74` when the camera azimuth is 45, so the cap face is the face we see.
+
+The cap front is a cylinder turned on its side (`rotation.x = π/2`) so the round end faces `+Z`. Centre it on the hub's `y`. Its radius is the limit of the sails. A cone behind that disk, smaller than the disk, stays hidden. A cone that sticks past the disk puts the upper blade across the tiles.
 
 `Dither.rotor(P, parent, { y, z, face, len })`:
 
-- `y` on the cap. For a tower whose shaft ends near `2.35` and whose cone is centred near `2.86`, use `y` `2.6` to `2.75`.
-- `face` is the cap radius at that height.
-- `z` is `face + 0.4` or more. The helper draws the neck. A hub with `z` near the shaft radius leaves a blade on the stone.
-- `len` `0.85` to `1.0`. The downward tip is `y - len`. Keep that tip in the upper third of the shaft so the door and the lower courses stay clear. The disk still reads because it sits in front of the cap, not because it is huge.
+- `y` is the centre of the cap face, not a point on the shaft.
+- The disk's `z` has to clear the tower radius. A face at `z` `0.3` sits inside a shaft of radius `0.8`, and the lower blade paints the stone. Put the face near `z` `0.95` and the hub just past it (`face` `1.02`, `z` `1.12`). The hub's `x` stays `0`.
+- The cloth reaches about `0.9 * len` from the hub. Keep that inside the disk radius. On a face of radius `0.88`, `len` `0.68` leaves a tile rim and the canvas still reads.
+- The four spars are the same boxes, turned by `i * π/2`. Do not scale one of them.
 - Spin `sails.rotation.z = q * TAU`. Braking stores `P.phase(pressedAt, duration)`.
 
-A lighthouse ray is not a rotor. It is a box about `0.11` by `0.1` by `3`, material `ray`, in a group whose `rotation.y` is `base + q * TAU`. Hide the group when the lamp is off. Do not scale it up into a wedge of light.
+## Rays, houses, animals
 
-Smoke is three or four boxes on a loop `(q + i / n) % 1`, rising from the stack and back. Sparks are boxes of size `0.04`, visible only near the hit. Both match at the loop seam because the phase wraps.
+A lighthouse ray is a run of boxes in one group, each shorter in width than the last, from about `0.08` at the lamp to under `0.02` at the tip. Alternate a solid `ray` and a darker dithered tone so the length breaks into steps. `scale.z` follows `1 + sin(q * TAU) * a small amount`, and the inner end stays put, so the length breathes and the loop matches. Hide the group when the lamp is off. No glow, and no wedge of light.
+
+A tea house needs two paper walls on the faces the camera sees, with an ink lattice, a floor of separate planks, and a soffit wider than the walls. One screen at the back of an open shed disappears under the roof. Carp swim an oval in the near water, clear of the bridge deck for the whole loop, including the still.
+
+A mule is a body, a neck tilted toward the head, a head and a muzzle, two ears, a mane, a tail, and four legs set wider than the body so they do not stack into one post. Yaw it so the side and a little of the front both show. Sparks are boxes around `0.07` to `0.11`, half of them a pale hard tone and half ember, visible only while a wrapped phase is under about `0.18`. They fly out and die inside that window.
+
+Smoke is three or four boxes on a loop `(q + i / n) % 1`, rising from the stack and back.
 
 ## Shadow check
 
@@ -81,14 +89,18 @@ The toggled state is `c.active === thatRoot`. At `still + 0.5` seconds the two s
 
 These are the misses from the first render of each place, after the yard rules above were already written. A later pass fixed the picture. The check did not catch all of them.
 
-- **Windmill rotor.** A hub set to the side of the shaft, or an axle yawed toward the side of the frame, draws the sails edge-on. The tower stays clear and the picture still looks wrong: the cross has no face. Yaw the cap so the axle comes toward the camera by about 50 degrees, with the hub on the axis and `z` past the cone. The downward blade may cross the eave. It must not paint the door.
+- **Windmill rotor.** A hub set to the side of the shaft, or an axle yawed toward the side of the frame, draws the sails edge-on. A long blade in front of a cone still crosses the roof edge. The cross has to sit inside a round face turned toward the camera, hub on the axis, every blade the same length. The downward blade may meet the top of the shaft. It must not leave the cap or paint the door.
 - **Windmill people.** The near wall and the gate post cover anyone standing on the path by the opening, even when their feet are inside the yard. The open grass left of the tower, and the path in front of the plinth but short of the gate, are the spots that stay whole. A lamp post in that path does the same thing.
-- **Windmill shadow.** A low sun makes the sail shadow thrash and the grass run breaks. The higher sun (`elevation` near 58, `turn` near 18) keeps one silhouette to the right of the tower and still changes it as the sails turn. A change of about a hundred pixels is the sail. Do not ask for the wide swing the long blades used to throw.
-- **Lighthouse.** The first tower, ray, boat and islet were the right picture. The keeper stood behind the parapet, and the crests were dark dashes. Pale foam boxes read as waves. The cast on the sea is a dark blue strip, not a column of grass, so a grass-shaped test counts it as nothing.
-- **Tea house.** The host stood behind the near lantern. One carp was under the bridge at the still frame. The dusk sun sat high in the empty page. The light direction is fixed when the page is built, so dusk is a swap of the paper, the lantern cores and one hard disk near the roof. It is not a new sun.
-- **Forge.** The mouth, the smoke, the mule and the cart read on the first try. The fence crossed the smith. The grass shadow is a narrow run at the right, real, and thinner than the mill's.
+- **Windmill shadow.** With the sails inside the cap face, a high sun (`elevation` near 58) leaves a thin run that merges with the right-hand wall. `Dither.sun(45, 38, 16)` throws one grass silhouette to the right of the tower, short of the wall, and it still changes shape as the cross turns. The cap face has to sit in front of the shaft (`z` past the tower radius) or the lower blade paints the stone and the shadow test sees the wall instead.
+- **Lighthouse.** A single box the same thickness for its whole length reads as a bar, even when it is thin. Segments that narrow, with a dithered tone on the alternate ones, read as a ray. The keeper stood behind the parapet in an earlier pass, and the crests were dark dashes. Pale foam boxes read as waves. The cast on the sea is a dark blue strip, not a column of grass, so a grass-shaped test counts it as nothing.
+- **Tea house.** A roof on four posts is a shed. Two shoji walls toward the camera, a plank floor and an eave make the house. One carp was under the bridge at the still frame when the oval crossed the deck. Keep both fish in the near water. The host stood behind the near lantern in an earlier pass. The dusk sun sat high in the empty page. The light direction is fixed when the page is built, so dusk is a swap of the paper, the lantern cores and one hard disk near the roof. It is not a new sun.
+- **Forge.** A mule built as one bar with a lump for a head does not read. Neck, muzzle, ears and legs wider than the body do. Sparks of a single pixel at the anvil disappear. A short burst of larger pale and ember pixels does not. The fence crossed the smith in an earlier pass. The grass shadow is a narrow run at the right, real, and thinner than the mill's.
 
 A phone tap lands on the first pixel the search finds, which is often the hat. Aim the tap at the middle of the figure or the touch misses and the picture does not change.
+
+## Framing
+
+`camera.height` moves the picture up and down. `camera.scale` changes the size. A tall `height` leaves white above the roof. Lower it until the roof is close to the top of the 280-pixel frame, and leave a few pixels so the ridge is not cut. These landed there: windmill `height` `1.62`, `scale` `56`; lighthouse `1.22` and `60`; tea house `0.22` and `62`; forge `1.62` and `56`. A mass that still touches the top after that is too tall for the frame. Shorten it. Do not push `height` until the ground is cut. The sun stays the one from `Dither.sun`. A closer frame does not get a new light.
 
 ## Frame budget
 

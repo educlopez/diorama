@@ -1,5 +1,6 @@
-/* A rocky islet in a dithered sea. The lamp throws one hard ray, a few
-   pixels thick, with no halo. Tap the keeper and the ray goes out. */
+/* A rocky islet in a dithered sea. The lamp throws one hard ray that
+   thins toward the tip, stepped by dither, with no halo. Tap the keeper
+   and the ray goes out. */
 Pixel.scene({
   name: 'lighthouse',
   title: 'The lighthouse',
@@ -7,7 +8,7 @@ Pixel.scene({
   hint: 'Hover the keeper or the boat; tap the keeper to toggle the beam.',
   width: 360, height: 280, duration: 8, still: 2, fps: 12,
   bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .36,
-  camera: { az: 45, el: 30, height: 3.05, scale: 50 },
+  camera: { az: 45, el: 30, height: 1.22, scale: 60 },
   sun: Dither.sun(45, 42, 16),
   ground: {
     rx: 4.15, rz: 3.15, wobble: .42, fade: .34,
@@ -23,6 +24,7 @@ Pixel.scene({
     plaster: Dither.mat('plaster'), tile: Dither.mat('tile'), beam: Dither.mat('beam'),
     iron: Dither.mat('iron'), ray: Dither.mat('ray'), timber: Dither.mat('timber'),
     lantern: Dither.mat('lantern'),
+    rayd: Dither.mat('#a89058', { tex: 'plain', rough: .2, dither: .7 }),
     foam: Dither.mat('#d7e6ec', { tex: 'plain', rough: .15, dither: .35 })
   },
   build: function (P) {
@@ -41,9 +43,19 @@ Pixel.scene({
     P.box(.2, .22, .2, 'lantern', 0, 2.4, 0, tower);
     P.cone(.36, .32, 'tile', 0, 2.78, 0, tower, 8);
     P.cyl(.035, .04, .18, 'iron', 0, 3.02, 0, tower, 5);
-    parts.beam = P.group(0, 2.42, .28, tower);
-    P.box(.11, .1, 3.1, 'ray', 0, -.04, 1.6, parts.beam);
-    P.box(.05, .05, 3.1, 'ray', 0, .02, 1.6, parts.beam);
+    /* Six hard segments, thinner toward the tip. Odd ones use a dithered tone
+       so the ray reads as steps, not one bar. No second light, no halo. */
+    parts.beam = P.group(0, 2.42, .3, tower);
+    parts.rays = [];
+    var reach = .12, i, w0 = .078;
+    for (i = 0; i < 6; i++) {
+      var w = w0 * (1 - i / 6.6), d = .58 - i * .06, z = reach + d / 2;
+      var b = P.box(w, w * .72, d, i % 2 ? 'rayd' : 'ray', 0, 0, z, parts.beam);
+      b.inner = reach;
+      b.depth = d;
+      parts.rays.push(b);
+      reach += d;
+    }
 
     [[.55, .7, .42, .22], [-.95, .15, .5, .28], [-.75, -.7, .36, .16], [.35, -.65, .4, .2], [-.2, .85, .3, .14]].forEach(function (r) {
       P.box(r[2], r[3], r[2] * .8, 'rock', r[0], r[3] / 2, r[1]);
@@ -52,7 +64,7 @@ Pixel.scene({
     Dither.wall(P, -.85, -.35, .9, 1.2, { h: .2, stone: 'rock', cap: 'rock' });
 
     var keeper = Dither.folk(P, 1.05, 1.45, {
-      h: .48, yaw: -2.4, name: 'keeper',
+      h: .4, yaw: -2.4, name: 'keeper',
       shirt: '#1e3a5c', pants: '#1a1c22', sleeve: '#16304c', hat: '#2a241c', hair: '#1a140f'
     });
     parts.keeper = keeper;
@@ -80,6 +92,12 @@ Pixel.scene({
     var q = c.q, p = c.parts, P = c.P, on = c.active !== p.keeper.root;
     p.beam.visible = on;
     p.beam.rotation.y = .05 + q * P.TAU;
+    var pulse = Math.sin(q * P.TAU);
+    p.rays.forEach(function (b, i) {
+      var s = 1 + pulse * (0.04 + i * 0.02);
+      b.scale.z = s;
+      b.position.z = b.inner + b.depth * s / 2;
+    });
     var bob = Math.sin(q * P.TAU);
     p.boat.position.y = bob * .025;
     p.boat.rotation.z = bob * .05;

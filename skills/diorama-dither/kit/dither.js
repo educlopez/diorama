@@ -1,7 +1,7 @@
 /* GENERATED, do not edit.
    sources:
    skills/diorama-pixel/kit/pixel.js e1ae2ae4ad209c545e283f39ae6ac005c69cb2d3da467b6014c7365c53d9fa96
-   skills/diorama-dither/kit-src/finish.js c3b3841a7c8ac3099bdbdf7ab21cfd4edc2cf2f969e89210e59679ae8975649c
+   skills/diorama-dither/kit-src/finish.js a23b6e0c8935609d410a5feec63ea477c2a24ff7b53665ba92cf1e850ecc9056
 */
 /* ============================================================================
    Diorama Pixel kernel · one global `Pixel`, no dependency: a software
@@ -802,24 +802,26 @@ var Dither = (function () {
     return out;
   }
 
-  /* Four sails on the front of a cap. The axle is the parent's +Z, so the
-     disk spins in the parent's XY and stays in front of the wall. face is
-     the cap surface along Z; z is the hub, past that face. */
+  /* Four equal sails on the front of a cap. The axle is the parent's +Z, so
+     the disk spins in the parent's XY. y is the cap centre. face is the cap
+     surface along Z; z is the hub, just past that face, on the axis (x = 0).
+     len is the spar. Keep the whole cross inside the cap face: the cloth
+     reaches about 0.9 * len from the hub, so len stays under the face radius. */
   function rotor(P, parent, opt) {
     opt = opt || {};
     var y = opt.y == null ? 2.6 : opt.y, z = opt.z == null ? 1.2 : opt.z, face = opt.face == null ? .8 : opt.face, len = opt.len == null ? .96 : opt.len;
     var beam = opt.beam || 'beam', cloth = opt.sail || 'sail', iron = opt.hub || 'iron', neck = z - face, i;
-    if (neck > .05) P.box(.09, .09, neck, iron, 0, y, face + neck / 2, parent);
+    if (neck > .02) P.box(.08, .08, neck, iron, 0, y, face + neck / 2, parent);
     var sails = P.group(0, y, z, parent);
-    P.box(.2, .2, .14, iron, 0, 0, .03, sails);
+    P.box(.18, .18, .1, iron, 0, 0, .02, sails);
     for (i = 0; i < 4; i++) {
       var spar = P.group(0, 0, 0, sails);
       spar.rotation.z = i * Math.PI / 2;
-      P.box(len, .07, .05, beam, len * .52, 0, .02, spar);
-      P.box(.06, len * .34, .045, beam, len * .28, len * .16, .03, spar);
-      P.box(.06, len * .36, .045, beam, len * .78, len * .17, .03, spar);
-      P.box(len * .5, .05, .04, beam, len * .55, len * .32, .035, spar);
-      P.box(len * .62, len * .28, .03, cloth, len * .5, len * .15, .045, spar);
+      P.box(len * .86, .06, .045, beam, len * .46, 0, .02, spar);
+      P.box(.05, len * .3, .04, beam, len * .24, len * .14, .03, spar);
+      P.box(.05, len * .3, .04, beam, len * .66, len * .14, .03, spar);
+      P.box(len * .44, .045, .035, beam, len * .48, len * .28, .032, spar);
+      P.box(len * .66, len * .32, .028, cloth, len * .46, len * .15, .04, spar);
     }
     return sails;
   }

@@ -1,20 +1,21 @@
-/* A timber tea house, a koi pond and a plank bridge. Paper screens and
-   lanterns shift from day to dusk as flat colour, with no halo. Tap the host. */
+/* A timber tea house with two shoji walls, a plank floor and a roof that
+   overhangs. Carp stay in the near water, clear of the bridge. Tap the host
+   and the paper shifts from day to dusk. No halo. */
 Pixel.scene({
   name: 'tea-house',
   title: 'The tea house',
-  means: 'A timber tea house by a koi pond. Carp circle under a plank bridge, and a tap shifts the hour from day to dusk.',
+  means: 'A timber tea house by a koi pond. Carp circle in the near water, and a tap shifts the hour from day to dusk.',
   hint: 'Hover the host or a lantern; tap the host to change the hour.',
   width: 360, height: 280, duration: 8, still: 2, fps: 12,
   bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .4,
-  camera: { az: 45, el: 30, height: 2.35, scale: 54 },
+  camera: { az: 45, el: 30, height: .22, scale: 62 },
   sun: Dither.sun(45, 40, 14),
   ground: {
     rx: 3.7, rz: 2.8, wobble: .34, fade: .3,
     zone: function (x, z) {
-      var dx = (x - .15) / 1.15, dz = (z - .15) / .72;
+      var dx = (x - .05) / 1.3, dz = (z - .05) / 1.05;
       if (dx * dx + dz * dz < 1) return 'pond';
-      if (x > .8 && z > .7) return 'sand';
+      if (x > .9 && z > .85) return 'sand';
       return 'moss';
     }
   },
@@ -28,23 +29,44 @@ Pixel.scene({
   },
   build: function (P) {
     var parts = { plants: [] };
-    var house = P.group(-1.25, 0, -.55);
-    house.rotation.y = .25;
-    P.box(1.7, .16, 1.25, 'timber', 0, .16, 0, house);
-    [[-.7, -.5], [.7, -.5], [-.7, .5], [.7, .5]].forEach(function (p) {
-      P.box(.08, .85, .08, 'ink', p[0], .58, p[1], house);
+    /* Near corner toward the camera: a plank floor, a front shoji, a side
+       shoji, and a roof that overhangs both. */
+    var house = P.group(-1.2, 0, -.3);
+    house.rotation.y = .48;
+    var pi;
+    for (pi = 0; pi < 8; pi++) P.box(1.95, .08, .11, pi % 2 ? 'timber' : 'beam', .05, .1, -.72 + pi * .18, house);
+    [[-.72, -.42], [.72, -.42], [-.72, .42], [.72, .42]].forEach(function (p) {
+      P.box(.08, .9, .08, 'ink', p[0], .55, p[1], house);
     });
-    P.box(1.45, .62, .04, 'paper', 0, .62, -.52, house);
-    P.box(1.45, .05, .06, 'ink', 0, .32, -.54, house);
-    P.box(1.45, .05, .06, 'ink', 0, .92, -.54, house);
-    P.box(.05, .66, .06, 'ink', -.5, .62, -.54, house);
-    P.box(.05, .66, .06, 'ink', .5, .62, -.54, house);
+    function sheet(parent, x, z, w, yaw, mat) {
+      var g = P.group(x, 0, z, parent);
+      g.rotation.y = yaw;
+      P.box(w, .7, .03, mat, 0, .58, 0, g);
+    }
+    function lattice(x, z, w, yaw) {
+      var g = P.group(x, 0, z, house);
+      g.rotation.y = yaw;
+      P.box(w, .04, .045, 'ink', 0, .4, .04, g);
+      P.box(w, .04, .045, 'ink', 0, .64, .04, g);
+      P.box(w, .04, .045, 'ink', 0, .88, .04, g);
+      P.box(.04, .74, .045, 'ink', -w * .25, .58, .04, g);
+      P.box(.04, .74, .045, 'ink', w * .25, .58, .04, g);
+      P.box(w + .06, .05, .06, 'ink', 0, .26, .03, g);
+      P.box(w + .06, .05, .06, 'ink', 0, .94, .03, g);
+    }
     parts.day = P.group(0, 0, 0, house);
     parts.dusk = P.group(0, 0, 0, house);
-    P.box(.7, .55, .03, 'paper', .72, .6, .05, parts.day);
-    P.box(.7, .55, .03, 'dusk', .72, .6, .08, parts.dusk);
-    P.wedge(1.95, .48, 1.55, 'tile', 0, 1.02, 0, house);
-    P.box(2.05, .06, 1.65, 'ink', 0, 1.0, 0, house);
+    sheet(parts.day, -.38, .46, .58, 0, 'paper');
+    sheet(parts.day, .38, .46, .58, 0, 'paper');
+    sheet(parts.day, .76, 0, .78, Math.PI / 2, 'paper');
+    sheet(parts.dusk, -.38, .48, .58, 0, 'dusk');
+    sheet(parts.dusk, .38, .48, .58, 0, 'dusk');
+    sheet(parts.dusk, .78, 0, .78, Math.PI / 2, 'dusk');
+    lattice(-.38, .5, .58, 0);
+    lattice(.38, .5, .58, 0);
+    lattice(.8, 0, .78, Math.PI / 2);
+    P.box(2.2, .06, 1.7, 'ink', 0, 1.02, 0, house);
+    P.wedge(2.05, .42, 1.52, 'tile', 0, 1.04, 0, house);
 
     var bridge = P.group(.15, 0, .15);
     bridge.rotation.y = .15;
@@ -59,7 +81,7 @@ Pixel.scene({
     [[-1.9, .85], [.95, -1.15], [-.2, 1.55]].forEach(function (p) {
       P.box(.1, .12, .1, 'ember', p[0], .86, p[1], parts.cores);
     });
-    parts.sun = P.cyl(.18, .18, .05, 'ember', -2.35, 1.55, -.85, null, 8);
+    parts.sun = P.cyl(.16, .16, .05, 'ember', -1.85, 1.85, -.15, null, 8);
 
     function fish(scale, name) {
       var g = P.group(0, .07, 0); g.name = name;
@@ -68,12 +90,13 @@ Pixel.scene({
       P.box(.1, .07, .02, 'koi', -.18 * scale, 0, 0, g).rotation.y = .5;
       return g;
     }
-    parts.koi = [fish(1, ''), fish(.8, '')];
-    parts.koi[0].spot = [.15, .15, .62, .38, 0];
-    parts.koi[1].spot = [.15, .15, .48, .42, Math.PI];
+    parts.koi = [fish(1.3, ''), fish(1.1, '')];
+    /* Two ovals in the near water, one each side of the bridge, clear of the deck. */
+    parts.koi[0].spot = [.62, .78, .2, .1, .3];
+    parts.koi[1].spot = [-.58, .82, .18, .1, 2.1];
 
-    var host = Dither.folk(P, 1.95, .4, {
-      h: .48, yaw: 2.15, name: 'host',
+    var host = Dither.folk(P, 1.85, .55, {
+      h: .38, yaw: 2.15, name: 'host',
       shirt: '#24344a', pants: '#24344a', sleeve: '#8d2e32', hair: '#1a140f', shoes: '#1a140f'
     });
     parts.host = host;

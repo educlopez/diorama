@@ -1,8 +1,6 @@
-/* A walled grass yard. The mill is a wide stone tower under a tile roof.
-   The rotor sits on the cap's front face: the axle points out along the
-   cap, and the sails turn in the plane in front of the stone. The miller
-   lifts a sack and the carter leans into the cart. Tap the miller and the
-   sails hold still. */
+/* A walled grass yard. The cap's front is a round tile face turned toward
+   the camera. The four sails sit on that face, centred on the axle, and
+   stay inside the rim. The miller lifts a sack. Tap the miller to brake. */
 Pixel.scene({
   name: 'windmill',
   title: 'The windmill',
@@ -10,8 +8,8 @@ Pixel.scene({
   hint: 'Hover the miller or the carter; tap the miller to brake the sails.',
   width: 360, height: 280, duration: 8, still: 2, fps: 12,
   bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .42,
-  camera: { az: 45, el: 30, height: 2.7, scale: 48 },
-  sun: Dither.sun(45, 58, 18),
+  camera: { az: 45, el: 30, height: 1.62, scale: 56 },
+  sun: Dither.sun(45, 38, 16),
   ground: {
     rx: 3.5, rz: 2.65, wobble: .36, fade: .32, rect: true,
     zone: function (x, z) {
@@ -36,20 +34,21 @@ Pixel.scene({
     Dither.wall(P, 1.92, iz, 1.65, 0);
     Dither.gate(P, .55, iz, 0);
 
-    /* The cap's axis is local +Z. The hub is on that axis, past the cone,
-       so the disk is in front of the wall and the shaft stays readable. */
-    var mill = P.group(-.55, 0, .2);
-    mill.rotation.y = -.08;
-    P.box(1.9, .2, 1.9, 'stone', 0, .1, 0, mill);
-    P.cyl(.74, .88, 2.15, 'stone', 0, 1.275, 0, mill, 8);
-    P.box(.32, .52, .1, 'beam', .78, .48, .02, mill);
-    P.box(.18, .3, .06, 'iron', .82, .46, .08, mill);
-    P.box(.14, .16, .08, 'iron', .55, 1.35, .28, mill);
-    P.box(.14, .18, .08, 'iron', .5, 1.72, .22, mill);
-    P.cyl(1.08, .82, .18, 'tile', 0, 2.44, 0, mill, 8);
-    P.cone(.94, .66, 'tile', 0, 2.86, 0, mill, 8);
-    P.cyl(.07, .08, .2, 'beam', 0, 3.26, 0, mill, 6);
-    parts.sails = Dither.rotor(P, mill, { y: 2.68, z: 1.32, face: .7, len: .98 });
+    /* Local +Z is the axle, yawed toward the camera. The round face is the
+       front of the cap. The hub is on its centre and the sails stay inside it. */
+    var mill = P.group(-1.2, 0, .48);
+    mill.rotation.y = .74;
+    P.box(1.75, .18, 1.75, 'stone', 0, .09, 0, mill);
+    P.cyl(.68, .82, 1.72, 'stone', 0, 1.02, 0, mill, 8);
+    P.box(.26, .48, .08, 'beam', .72, .42, .02, mill);
+    P.box(.14, .22, .05, 'iron', .76, .4, .08, mill);
+    P.box(.12, .14, .05, 'iron', .3, 1.1, .38, mill);
+    var cap = P.cyl(.88, .88, .12, 'tile', 0, 2.05, .95, mill, 8);
+    cap.rotation.x = Math.PI / 2;
+    var rim = P.cyl(.96, .96, .07, 'beam', 0, 2.05, .78, mill, 8);
+    rim.rotation.x = Math.PI / 2;
+    P.cone(.5, .36, 'tile', 0, 2.2, .15, mill, 8);
+    parts.sails = Dither.rotor(P, mill, { y: 2.05, z: 1.12, face: 1.02, len: .68 });
 
     var cart = P.group(-2.25, 0, .15);
     cart.rotation.y = .35;
@@ -71,12 +70,12 @@ Pixel.scene({
     });
     P.box(.28, .2, .2, 'sack', -.12, .62, .04, cart);
 
-    var miller = Dither.folk(P, 1.05, .65, {
-      h: .48, yaw: -2.4, name: 'miller',
+    var miller = Dither.folk(P, 1.15, .55, {
+      h: .4, yaw: -2.4, name: 'miller',
       shirt: '#f6e6c0', pants: '#152038', sleeve: '#c9a15a', hat: '#6e3b28', hair: '#2a2018'
     });
-    var carter = Dither.folk(P, -1.7, 1.2, {
-      h: .48, yaw: -2.45, name: 'carter',
+    var carter = Dither.folk(P, -2.05, 1.2, {
+      h: .4, yaw: -2.45, name: 'carter',
       shirt: '#f04a38', pants: '#1c1612', sleeve: '#b43328', hair: '#1a1410', shoes: '#14110e'
     });
     parts.miller = miller;

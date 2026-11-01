@@ -26,7 +26,7 @@ If a person, a door or the front of the structure would sit behind a post, a whe
 ## 2. Frame
 
 - `width: 360, height: 280`, `fps: 12`, `duration: 8`, `still: 2`, `bayer: 4`, `shadow: 'hard'`, `rim: true`, `wind: 8`.
-- Camera `{ az: 45, el: 30, scale: 46 to 52 }`. Set `height` to the top of the tallest mass so the fit includes it. `scale` is explicit, so a taller `height` recenters rather than zooming out.
+- Camera `{ az: 45, el: 30, scale: 54 to 62 }`. `height` recenters and does not zoom: it is the top of the fitted box. Set it near the top of the tallest mass. A band of white above that mass means `height` is too high; lower it until the mass sits close to the top. Too low and the roof is cut. Stop while a few pixels of sky remain.
 - Ground `rx` about `3.4` to `4.2`, `rz` about `2.6` to `3.2`, `wobble` `0.3` to `0.4`, `fade` `0.3` to `0.36`. Use `rect: true` for a walled yard. The coloured ground should cover roughly a third to four fifths of the frame. A wide white margin means the yard is too small or the scale is too low.
 - `sun: Dither.sun(45, elevation, turn)`. Elevation `36` to `58` degrees. `turn` of `14` to `20` degrees spreads a rotor's shadow so the blades do not stack into one bar. Shadows fall to screen-right. Leave lit ground past the shadow, short of the right-hand wall.
 
@@ -43,7 +43,7 @@ Call `Dither.mat(name)` and put the result on `materials`. The names already car
 | Planks, posts, cart | `timber`, `beam`, `cart` | Grain along the long axis |
 | Sail, sack, paper screen | `sail`, `sack`, `paper` | Cloth, flat, no dither extreme |
 | Sea, pond | `water`, `pond` | The texture already moves and sparks. A crest is a short box, not a soft band |
-| Lamp, ember, ray | `lantern`, `ember`, `ray` | Solid faces. `ray` has dither `0` so a beam stays a hard stripe |
+| Lamp, ember, ray | `lantern`, `ember`, `ray` | Solid faces. `ray` has dither `0`. A second, darker dithered tone on alternate segments keeps a ray from reading as one bar |
 
 `Dither.report(hex)` must come back with five tones, a max gap of `0.08` or less, a cool dark step and a warm light step. Do not hand-build a ramp unless a preset cannot say the hue.
 
@@ -52,9 +52,9 @@ Call `Dither.mat(name)` and put the result on `materials`. The names already car
 These live on `Dither` and do not run for a pixel scene:
 
 - `wall(P, x, z, len, yaw, opt)` stone run plus a wider coping. `gate` for the opening. A yard is four runs and one gate, inside `rx` and `rz`.
-- `folk(P, x, z, { h, yaw, name, shirt, pants, sleeve, hat })` a person the pointer can name. `h` is `0.44` to `0.48` at scale `48`, which lands near 14 to 16 pixels. Shirt, pants and sleeve are the three colours. After `P.pose`, set the arms so the forearms leave the torso: a `work` or `hold` pose, elbows bent, hands out. If the hands hold something, that object has its own colour.
+- `folk(P, x, z, { h, yaw, name, shirt, pants, sleeve, hat })` a person the pointer can name. `h` is `0.44` to `0.48` at scale `48`, which lands near 14 to 16 pixels. At scale `56` to `62`, drop `h` toward `0.38` to `0.42` so the figure stays that tall. Shirt, pants and sleeve are the three colours. After `P.pose`, set the arms so the forearms leave the torso: a `work` or `hold` pose, elbows bent, hands out. If the hands hold something, that object has its own colour.
 - `tree`, `bush`, `fringe`, `fence`, `lamp`. `lamp` is a post, a paper box and a cap. Pass `shade: 'lantern'` or `'paper'`. Never a glow.
-- `rotor(P, parent, { y, z, face, len })` four sails. The parent's local `+Z` is the axle and must point out of the cap, away from the tower. `y` is on the cap, not on the shaft. `face` is the cap surface along `Z`. `z` is at least `0.35` past `face`, so the disk is in front of the stone and the neck reads. `len` stays under `1.0` when the tower radius is about `0.8`: long enough to read as sails, short enough that the downward blade ends in the upper third of the shaft. Spin `rotation.z` only. The blade plane is then perpendicular to the axle.
+- `rotor(P, parent, { y, z, face, len })` four equal sails. Yaw the parent so local `+Z` points toward the camera (about `0.7` at azimuth 45). The cap front is a disk in that plane: a cylinder with `rotation.x` of `π/2`, centred on the same `y`, radius larger than the sails. `face` is that disk's front along `Z`. `z` sits just past it, and `x` stays `0`, so the hub is on the axis. The cloth reaches about `0.9 * len` from the hub, so `len` stays inside the disk or a blade leaves the cap and crosses the roof. Spin `rotation.z` only.
 - `sway(P, node, base, t, amp, phase)` for plants. `carry(q)` for a lift that rests at both ends of the loop.
 
 Every hot group has a `.name`. `parts.hot` lists them. The `hint` says what to hover and names the tap target with the words `tap the <name>`.
@@ -85,12 +85,12 @@ The look checks fill, the loop seam, picking, hover, the tap, reduced motion, a 
 
 Walk this list. Each line is a failure that already shipped once:
 
-- A rotor whose hub is beside the shaft, so one blade paints the door. Hub on the cap axis, disk in front of the face.
+- A rotor whose hub is beside the shaft, or a blade that crosses the tile edge. Hub on the cap axis, the whole cross inside the front disk.
 - A sail, cart, bush, lamp or gate post crossing the person. People stand on open ground, at least `0.8` inside the near wall. The coping is closer to the camera than the path and it covers anyone standing in the opening.
-- A shadow that is a flat grey bar, or that runs through the right-hand wall. Hard veil, blades separated, lit ground beyond.
-- A figure under about 14 pixels, or one colour, so the pose does not read. `h` `0.44` to `0.48`, two or three colours, forearms out.
-- A yard that leaves a wide white margin. Raise `scale` or enlarge `rx` and `rz` until the ground fills the frame and still fades at the edge.
-- A lamp or a beam with `glow`, or a cone of soft light. Paper, ember and a thin hard box only.
+- A shadow that is a flat grey bar, or that runs through the right-hand wall. Hard veil, one sun, lit ground beyond. Do not add a second light for a lamp, a ray or dusk.
+- A figure under about 14 pixels, or one colour, so the pose does not read. Scale `h` with the camera so the figure stays near 16 pixels. Two or three colours, forearms out.
+- A yard that leaves a wide white band above the roof. Lower `height` until the mass nearly touches the top. Stop before the roof is cut.
+- A lamp or a beam with `glow`, or one thick box that reads as a bar. A ray is several segments, thinner toward the tip, one of them a darker dithered tone. Paper and ember stay flat.
 - A tap whose only change is one joint. Hide or swap a mass the size of a door, a screen or a ray.
 - A dusk or a lamp that tries to move the sun. The light is fixed when the page is built. Swap faces, hide a hard box, or show a hard disk. Never a halo.
 
