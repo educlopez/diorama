@@ -10,7 +10,7 @@ You are making one small place, drawn at 360 x 280 and enlarged with nearest-nei
 
 The pixel kernel (`skills/diorama-pixel/kit/pixel.js`) is fixed. A change there shifts the three pixel scenes. Put new helpers in `kit-src/finish.js`, then run `node scripts/sync-dither-kit.mjs` from the repo root. Never set `glow` on a material: it forces a face up to a flat brightness and reads as a bloom. A lamp is a paper box. A beam is a thin box of hard pixels.
 
-Write the scene as `skills/diorama-dither/examples/<name>.js`. One `Pixel.scene({ ... })`. `means` is one sentence, at most 140 characters. The scene file stays at or under 260 lines.
+Write the scene as `skills/diorama-dither/examples/<name>.js`. One `Pixel.scene({ ... })`. `means` is one sentence, at most 140 characters. The scene file stays at or under 260 lines, and the built page at or under 70 KB. Both limits live in `scripts/validate.mjs`.
 
 ## 1. Decide the picture before the code
 
@@ -26,7 +26,7 @@ If a person, a door or the front of the structure would sit behind a post, a whe
 ## 2. Frame
 
 - `width: 360, height: 280`, `fps: 12`, `duration: 8`, `still: 2`, `bayer: 4`, `shadow: 'hard'`, `rim: true`, `wind: 8`.
-- Camera `{ az: 45, el: 30, scale: 54 to 62 }`. `height` recenters and does not zoom: it is the top of the fitted box. Set it near the top of the tallest mass. A band of white above that mass means `height` is too high; lower it until the mass sits close to the top. Too low and the roof is cut. Stop while a few pixels of sky remain.
+- Camera `{ az: 45, el: 30, scale: 54 to 62 }`. `height` recenters and does not zoom, and it is not the summit. The fit reserves the yard edge. Start near `0.6` times the tallest point and correct from the still. A band of white above the mass means it is still too high. Too low and the roof is cut.
 - Ground `rx` about `3.4` to `4.2`, `rz` about `2.6` to `3.2`, `wobble` `0.3` to `0.4`, `fade` `0.3` to `0.36`. Use `rect: true` for a walled yard. The coloured ground should cover roughly a third to four fifths of the frame. A wide white margin means the yard is too small or the scale is too low.
 - `sun: Dither.sun(45, elevation, turn)`. Elevation `36` to `58` degrees. `turn` of `14` to `20` degrees spreads a rotor's shadow so the blades do not stack into one bar. Shadows fall to screen-right. Leave lit ground past the shadow, short of the right-hand wall.
 
@@ -72,6 +72,8 @@ A piece either meets a surface or names why it does not. `npm run support` and t
 - `Dither.seat(node, name, 'surface')` — foam whose bottom sits on the water, in a water zone.
 - `Dither.afloat(node, name, reason)` is the only leave-the-ground. The reason is a non-empty string: a carried sack, a ray, a spark, smoke, an hour mark. A blank reason fails as `floats without a reason`.
 
+A figure whose body passes through a solid that is not the ground fails as `stands inside`. To stand on a plinth, raise the root to the top face and call `Dither.seat(root, name, plinth)` again.
+
 A figure on the ground must not stand in a water zone. Feet are the figure's `x` and `z`. The kernel's `place` turns a missing or `NaN` coordinate into `0`, so `Dither.folk` checks `x` and `z` before that call and the support check reads the requested pair. A non-finite foot fails as `has no place to stand`. It does not stand at the origin and pass. Feet go on meadow, earth, sand, rock, a pier deck, or inside a boat. Never on open water. A wheel is a cylinder with `rotation.x` of `π/2` and 10 sides, so a vertex sits at the bottom. Its centre `y` equals the radius, the axle passes through that hub, and the bed sits on the axle.
 
 Checklist before the first render:
@@ -94,7 +96,7 @@ Reduced motion and `?still` hold the clock. Do not start your own timer.
 From `skills/diorama-dither`:
 
 1. `node scripts/validate.mjs examples/<name>.js`
-2. `npm run support` — the four yards, then a lifted `cart-wheel`, then a box at `y = 4.5` inside the mill. Both must fail. The line is `ok negative` and the reason. It does not print `FAIL` for a miss that was required. Then the water cases. A host in the tea pond must fail. A figure in the lighthouse's open water must fail. A figure on the lighthouse rock must pass. A bad foot coordinate must fail. `folk(NaN)` and `folk(undefined)` must fail. A mesh with no support must fail. A blank float reason must fail.
+2. `npm run support` audits every file in `examples/`. One scene: `node scripts/support.mjs examples/<name>.js`. Then a lifted `cart-wheel`, a box at `y = 4.5` inside the mill, and a figure standing in the tower. Each must fail. The line is `ok negative` and the reason. It does not print `FAIL` for a miss that was required. Then the water cases. A host in the tea pond must fail. A figure in the lighthouse's open water must fail. A figure on the lighthouse rock must pass. A bad foot coordinate must fail. `folk(NaN)` and `folk(undefined)` must fail. A mesh with no support must fail. A blank float reason must fail.
 3. `node scripts/look.mjs examples/<name>.js <outdir>` — the look runs the same support check on those frames. `shadow` must be `hard`. `soft` or `none` fails. A grass silhouette takes the strong cast check. A hard cast on earth or water takes the sharp threshold. The scene name does not choose it.
 4. Open the still, one moving frame, the hover, the press, the mobile shot and the figure zooms. Look at the wheels, the feet and anything that should meet a neighbour.
 
@@ -110,10 +112,10 @@ Walk this list. Each line is a failure that already shipped once:
 
 - A rotor drawn on the roof, or a flat disk wider than the tower. The cap is a cone with a small overhang and a visible slope. The shaft and the four sails sit on the front face, tilted down toward the camera, and a person stands on the ground at the door with the sack in the hand.
 - A wheel, a hoof, a foot or a post with daylight under it. The axle meets the box. A person stands on ground, rock, a pier or in a boat, never on open water. A hull sits in the water, not on it. Anything else that leaves the ground has `afloat` and a reason.
-- A sail, cart, bush, lamp or gate post crossing the person. People stand on open ground, at least `0.8` inside the near wall. The coping is closer to the camera than the path and it covers anyone standing in the opening.
+- A sail, cart, bush, lamp or gate post crossing the person. With a step in the yard, feet go on meadow or earth, at least `1.2` inside the near wall and `0.4` clear of a step or a slab. The coping covers anyone standing in the opening.
 - A shadow that is a flat grey bar, or that runs through the right-hand wall. Hard veil, one sun, lit ground beyond. Do not add a second light for a lamp, a ray or dusk.
 - A figure under about 14 pixels, or one colour, so the pose does not read. Scale `h` with the camera so the figure stays near 16 pixels. Two or three colours, forearms out.
-- A yard that leaves a wide white band above the roof. Lower `height` until the mass nearly touches the top. Stop before the roof is cut.
+- A yard that leaves a wide white band above the roof. `height` is not the summit: start near `0.6` times the tallest point and correct from the still.
 - A lamp or a beam with `glow`, or one thick box that reads as a bar. A ray is several segments, thinner toward the tip, one of them a darker dithered tone. Paper and ember stay flat.
 - A tap whose only change is one joint. Hide or swap a mass the size of a door, a screen or a ray.
 - A dusk or a lamp that tries to move the sun. The light is fixed when the page is built. Swap faces, hide a hard box, or show a hard disk. Never a halo.

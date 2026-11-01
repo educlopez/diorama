@@ -48,7 +48,7 @@ Two people need open ground between them. A cart wheel, a bush or a sail across 
 
 ## Rotors
 
-The shaft is the parent group's local `+Z`. Yaw the parent toward the camera, about `0.74` when the camera azimuth is 45, so the cap's front is the face we see.
+The shaft is the parent group's local `+Z`. Yaw the parent toward the camera, about `0.74` when the camera azimuth is 45, so the cap's front is the face we see. A sail wants that face. A tube does not: local `+Z` toward the camera shows the end, and the tube reads as a point. Yaw a tube about `0.9` to `1.2` radians off `0.74` so the length shows. If an opening has to read, lift one hatch. Two boxes split on local `X` close into a wall.
 
 `Dither.cap(P, tower, { y, r, over, h })` is an upright cone. `y` is the top of the tower, `r` is that top's radius, `over` is about `0.1`, and `h` is long enough that the slope reads. A thin beam ring marks the eave. A cylinder with `rotation.x` of `π/2` is a lid seen from above, wider than the tower and with no slope. That is not a cap.
 
@@ -60,6 +60,10 @@ The shaft is the parent group's local `+Z`. Yaw the parent toward the camera, ab
 - The four spars are the same boxes, turned by `i * π/2`. Do not scale one of them. The cloth sits on the spar, in front of the hub.
 - Spin `sails.rotation.z = q * TAU`. Braking stores `P.phase(pressedAt, duration)`. Do not write `rotation.x` again in the tick or the shaft stands up.
 - A person stands on the ground at the door, or in the doorway. The sack is in the hand. A sack on a world arc at the still frame hangs on the wall.
+
+A dome is `P.ball`, centred on the top of the drum, with a radius about `0.7` of the drum's top radius. The equator then sits inside the lip. A ball the full radius of the drum leaves the equator proud of the cap.
+
+`lantern` seen face-on reads as a light even when glow is off. Brass on a fitting is a thin ring, the thin axis toward the camera, not a face.
 
 ## Rays, houses, animals
 
@@ -102,7 +106,9 @@ Checklist:
 - The hull is partly under the water. Foam sits on the surface.
 - Nothing floats without a named reason.
 
-`npm run support` audits the four yards at `t = 2, 4, 6` and `8`, then `--negative` and `--water`. A real miss exits 1 and names the group. An expected miss prints `ok negative` or `ok water` with the reason, and does not print `FAIL`. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. It also parks an undeclared box named `childfloat` at `y = 4.5` inside the mill, and that must fail as floating apart from the nearest mesh. An unnamed box in the same place must fail as `mill child` apart from that mesh. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. A mesh vertex of `NaN` must fail as `has no place to stand`. `folk(NaN)` and `folk(undefined)` must fail the same way: the kernel would have placed them at `0`, and the helper does not let that pass. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same frames. `shadow: 'soft'` or `none` fails. A declared hard cast that reads as a grass silhouette takes that check, including the change of shape. A hard cast on earth or water has to clear the sharp threshold. The scene name is not what chooses it.
+`npm run support` audits every `examples/*.js` at `t = 2, 4, 6` and `8`, then `--negative` and `--water`. One scene is `node scripts/support.mjs examples/<name>.js`. A real miss exits 1 and names the group. An expected miss prints `ok negative` or `ok water` with the reason, and does not print `FAIL`. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. It also parks an undeclared box named `childfloat` at `y = 4.5` inside the mill, and that must fail as floating apart from the nearest mesh. An unnamed box in the same place must fail as `mill child` apart from that mesh. A figure stood in the tower must fail as `stands inside`. A figure against a seated step must fail as `stands against`, and one inside `1.2` of the near wall must fail as `stands in the opening`. A figure on sand, once a step is seated, must fail as `stands off the path`. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. A mesh vertex of `NaN` must fail as `has no place to stand`. `folk(NaN)` and `folk(undefined)` must fail the same way: the kernel would have placed them at `0`, and the helper does not let that pass. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same frames. `shadow: 'soft'` or `none` fails. A declared hard cast that reads as a grass silhouette takes that check, including the change of shape. A hard cast on earth or water has to clear the sharp threshold. The scene name is not what chooses it.
+
+A figure fails as `stands inside` when the centre of the body, or a point just above the feet, lies inside another mesh. A shared face does not count. Carried pieces are `afloat` and are not the body and not the solid. The `1.2` and `0.4` rules run only when some support name starts with `step`. The four yards have no step, and the miller stands closer than `1.2` to the near wall, so those yards are not moved to satisfy a rule they do not use. To stand on a plinth, raise the root to the top face and call `Dither.seat(root, name, plinth)` again. A root left on the ground, with the shins in the plinth, fails as `stands inside`.
 
 ## Shadow check
 
@@ -134,7 +140,7 @@ A phone tap lands on the first pixel the search finds, which is often the hat. A
 
 ## Framing
 
-`camera.height` moves the picture up and down. `camera.scale` changes the size. A tall `height` leaves white above the roof. Lower it until the roof is close to the top of the 280-pixel frame, and leave a few pixels so the ridge is not cut. These landed there: windmill `height` `1.08`, `scale` `56`; lighthouse `1.22` and `60`; tea house `0.22` and `62`; forge `1.62` and `56`. A mass that still touches the top after that is too tall for the frame. Shorten it. Do not push `height` until the ground is cut. The sun stays the one from `Dither.sun`. A closer frame does not get a new light.
+`camera.height` moves the picture up and down. `camera.scale` changes the size. `height` is not the summit. The fit reserves the yard edge, so a height set to the roof crops the near wall or leaves the mass low. Start near `0.6` times the tallest point and correct from the still. A tall `height` leaves white above the roof. These landed there: windmill `height` `1.08`, `scale` `56`; lighthouse `1.22` and `60`; tea house `0.22` and `62`; forge `1.62` and `56`. A mass that still touches the top after that is too tall for the frame. Shorten it. Do not push `height` until the ground is cut. The sun stays the one from `Dither.sun`. A closer frame does not get a new light.
 
 ## Frame budget
 

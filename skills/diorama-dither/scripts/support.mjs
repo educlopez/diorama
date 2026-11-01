@@ -1,21 +1,26 @@
 #!/usr/bin/env node
 /**
- * Checks supports: `node support.mjs examples/<name>.js [more]`.
+ * Checks supports: `node support.mjs [examples/<name>.js ...]`.
+ * With no files, every `examples/*.js` is audited.
  * Each solid meets its surface within one voxel, at the still and at t = duration/4,
  * duration/2, 3*duration/4 and duration. A mesh with no support fails. A mesh tucked
  * under a seated group still fails when the nearest mesh is more than one voxel
  * away and its bottom is above the ground. The group's box is not the test.
+ * A figure whose body passes through a solid that is not the ground fails as `stands inside`.
  * A figure on the ground must not stand in a water zone. Feet are [x, z].
+ * When a step is seated, a ground figure must stand on meadow or earth, at least 1.2
+ * inside the near wall, and 0.4 clear of a step, slab, plinth or terrace.
  * The kernel's place turns NaN into 0, so folk records the requested x,z and the check
  * reads that before trusting the placed origin. A bad coordinate fails by name.
  * Prints FAIL and the group name, and exits 1 on any miss. An expected negative prints
  * `ok negative` with the reason, and does not print FAIL. The html in /tmp is removed.
  *
- * `--negative` lifts a windmill wheel, and parks an undeclared box at y = 4.5 inside the mill.
- * Both must fail. `--water` requires a figure in the tea-house pond to fail, a figure in the
+ * `--negative` lifts a windmill wheel, parks an undeclared box at y = 4.5 inside the mill,
+ * stands a figure in the tower, and stands figures on a step's edge and in the opening.
+ * Those must fail. `--water` requires a figure in the tea-house pond to fail, a figure in the
  * lighthouse's open water to fail, and a figure on lighthouse rock to pass.
  */
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { build } from "./build.mjs";
@@ -116,7 +121,7 @@ export function supportAudit() {
     if (s && s.name && s.name !== "piece") return s.name;
     return who(node);
   }
-  var seen = [];
+  var seen = [], sceneRoot = null, hasStep = false;
   function covered(node) {
     var p = node;
     while (p) { if (p.support) return true; p = p.parent; }
@@ -153,6 +158,120 @@ export function supportAudit() {
     var ch = cur.children || [], i;
     for (i = 0; i < ch.length; i++) walkAll(ch[i]);
   }
+  function localOf(node, x, y, z) {
+    var m = node.m, dx = x - m[3], dy = y - m[7], dz = z - m[11];
+    var a = m[0], b = m[1], c = m[2], d = m[4], e = m[5], f = m[6], g = m[8], h = m[9], k = m[10];
+    var det = a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g);
+    if (!det) return null;
+    var i = 1 / det;
+    return [
+      i * ((e * k - f * h) * dx + (c * h - b * k) * dy + (b * f - c * e) * dz),
+      i * ((f * g - d * k) * dx + (a * k - c * g) * dy + (c * d - a * f) * dz),
+      i * ((d * h - e * g) * dx + (b * g - a * h) * dy + (a * e - b * d) * dz)
+    ];
+  }
+  function holds(node, x, y, z) {
+    var p = localOf(node, x, y, z), v, i, min, max, pad = .02;
+    if (!p || !node.geo || !node.geo.v) return false;
+    v = node.geo.v; min = [1e9, 1e9, 1e9]; max = [-1e9, -1e9, -1e9];
+    for (i = 0; i < v.length; i += 3) {
+      if (v[i] < min[0]) min[0] = v[i]; if (v[i] > max[0]) max[0] = v[i];
+      if (v[i + 1] < min[1]) min[1] = v[i + 1]; if (v[i + 1] > max[1]) max[1] = v[i + 1];
+      if (v[i + 2] < min[2]) min[2] = v[i + 2]; if (v[i + 2] > max[2]) max[2] = v[i + 2];
+    }
+    return p[0] > min[0] + pad && p[0] < max[0] - pad && p[1] > min[1] + pad && p[1] < max[1] - pad && p[2] > min[2] + pad && p[2] < max[2] - pad;
+  }
+  function bodyPoints(node, full) {
+    var cut = full.min[1] + .42 * (full.max[1] - full.min[1]);
+    var acc = [0, 0, 0], n = 0, pts = [];
+    function walk(cur, af) {
+      if (!cur) return;
+      var skip = af || (cur !== node && cur.support && cur.support.float != null);
+      if (!skip && cur.geo && cur.geo.v) {
+        var v = cur.geo.v, i, p;
+        for (i = 0; i < v.length; i += 3) {
+          p = cur.worldPoint(v[i], v[i + 1], v[i + 2]);
+          if (!finite(p[0]) || !finite(p[1]) || !finite(p[2]) || p[1] <= cut) continue;
+          acc[0] += p[0]; acc[1] += p[1]; acc[2] += p[2]; n++;
+        }
+      }
+      var ch = cur.children || [], k;
+      for (k = 0; k < ch.length; k++) walk(ch[k], skip);
+    }
+    walk(node, false);
+    if (n) pts.push([acc[0] / n, acc[1] / n, acc[2] / n]);
+    var f = feet(node, full);
+    if (f && finite(f[0]) && finite(f[1])) pts.push([f[0], full.min[1] + .08, f[1]]);
+    return pts;
+  }
+  function under(node, fig) {
+    var p = node;
+    while (p) { if (p === fig) return true; p = p.parent; }
+    return false;
+  }
+  function adrift(node) {
+    var p = node;
+    while (p) { if (p.support && p.support.float != null) return true; p = p.parent; }
+    return false;
+  }
+  function bury(fig, box, name) {
+    var pts = bodyPoints(fig, box), hit = null, pi;
+    if (!pts.length || !sceneRoot) return;
+    (function scan(n) {
+      if (!n || hit || under(n, fig) || adrift(n)) return;
+      if (n.geo && n.geo.v) {
+        for (pi = 0; pi < pts.length; pi++) if (holds(n, pts[pi][0], pts[pi][1], pts[pi][2])) { hit = n; break; }
+      }
+      if (hit) return;
+      var ch = n.children || [], i;
+      for (i = 0; i < ch.length; i++) scan(ch[i]);
+    })(sceneRoot);
+    if (hit) fails.push({ name: name, why: name + " stands inside " + label(hit) });
+  }
+  function xzGap(x, z, box) {
+    var dx = Math.max(box.min[0] - x, x - box.max[0], 0);
+    var dz = Math.max(box.min[2] - z, z - box.max[2], 0);
+    return Math.sqrt(dx * dx + dz * dz);
+  }
+  function facingInside(x, z) {
+    var az = spec.camera && spec.camera.az != null ? spec.camera.az : 45;
+    var rad = az * Math.PI / 180, vx = Math.sin(rad), vz = Math.cos(rad), best = 1e9;
+    (function scan(n) {
+      if (!n) return;
+      if (n.support && n.support.name === "wall") {
+        var yaw = (n.rotation && n.rotation.y) || 0, nx = Math.sin(yaw), nz = Math.cos(yaw);
+        if (nx * vx + nz * vz > .3) {
+          var inside = ((n.position.x || 0) - x) * nx + ((n.position.z || 0) - z) * nz;
+          if (inside > 0 && inside < best) best = inside;
+        }
+      }
+      var ch = n.children || [], i;
+      for (i = 0; i < ch.length; i++) scan(ch[i]);
+    })(sceneRoot);
+    return best;
+  }
+  function footRule(f, name) {
+    var zone = spec.ground && spec.ground.zone, zn = zone ? zone(f[0], f[1], P) : "", hit = null, gap = 1e9;
+    if (zn !== "meadow" && zn !== "earth") fails.push({ name: name, why: name + " stands off the path" });
+    if (facingInside(f[0], f[1]) < 1.2) fails.push({ name: name, why: name + " stands in the opening" });
+    (function scan(n) {
+      if (!n) return;
+      var sn = n.support && n.support.name;
+      if (sn && /^(step|slab|plinth|terrace)/.test(sn)) {
+        var ob = bounds(n), g = ob && !ob.bad ? xzGap(f[0], f[1], ob) : 1e9;
+        if (g < gap) { gap = g; hit = n; }
+      }
+      var ch = n.children || [], i;
+      for (i = 0; i < ch.length; i++) scan(ch[i]);
+    })(sceneRoot);
+    if (hit && gap < .4) fails.push({ name: name, why: name + " stands against " + label(hit) });
+  }
+  function seekStep(n) {
+    if (!n) return;
+    if (n.support && typeof n.support.name === "string" && n.support.name.indexOf("step") === 0) hasStep = true;
+    var ch = n.children || [], i;
+    for (i = 0; i < ch.length; i++) seekStep(ch[i]);
+  }
   function check(node) {
     var s = node.support, name = (s.name && s.name !== "piece") ? s.name : who(node), box, gap, f, before;
     if (node.figure && node.stand && (!finite(node.stand[0]) || !finite(node.stand[1]))) {
@@ -177,6 +296,7 @@ export function supportAudit() {
       if (node.figure) {
         f = place(node, box, name);
         if (f && wet(f[0], f[1])) fails.push({ name: name, why: name + " stands on water" });
+        if (f && hasStep && (s.on === "ground" || s.on == null)) footRule(f, name);
       }
     } else if (s.on === "water") {
       if (!(finite(box.min[1]) && finite(box.max[1]) && box.min[1] < -px && box.max[1] > px)) fails.push({ name: name, why: name + " is not in the water (bottom " + (finite(box.min[1]) ? box.min[1].toFixed(3) : "NaN") + ", top " + (finite(box.max[1]) ? box.max[1].toFixed(3) : "NaN") + ")" });
@@ -192,12 +312,14 @@ export function supportAudit() {
       gap = sep(box, bounds(s.join, node));
       if (gap > px) fails.push({ name: name, why: name + " misses " + label(s.join) + " by " + gap.toFixed(3) + " (1 voxel is " + px.toFixed(3) + ")" });
     }
+    if (node.figure) bury(node, box, name);
   }
   var start = (rt.parts.hot && rt.parts.hot[0]) || null;
   if (!start) { var keys = Object.keys(rt.parts || {}); for (var ki = 0; ki < keys.length && !start; ki++) { var v = rt.parts[keys[ki]]; if (v && v.parent) start = v; if (v && v.root) start = v.root; } }
   var root = start;
   while (root && root.parent) root = root.parent;
-  if (root) walkAll(root);
+  sceneRoot = root;
+  if (root) { seekStep(root); walkAll(root); }
   return { px: px, fails: fails };
 }
 
@@ -370,6 +492,97 @@ async function runUnnamed() {
   } finally { await close(opened); }
 }
 
+async function runInside() {
+  const opened = await open(join(here(".."), "examples", "windmill.js"));
+  try {
+    const before = await auditPage(opened.page);
+    if (before.fails.length) {
+      console.log("FAIL negative: the windmill already misses a support, so a figure in the tower is not a clean test");
+      printFails(before.fails);
+      process.exitCode = 1; return;
+    }
+    const planted = await opened.page.evaluate(() => {
+      var who = Dither.folk(window.__dither.runtime.P, -1.2, .48, { h: .4, name: "intruder" });
+      who.root.position.y = .2;
+      return who.root.support && who.root.support.name;
+    });
+    if (planted !== "intruder") { console.log("FAIL negative: could not stand a figure in the tower"); process.exitCode = 1; return; }
+    const after = await opened.page.evaluate(supportAudit);
+    const named = unique(after.fails.filter((f) => f.name === "intruder" && f.why.indexOf("stands inside") >= 0));
+    if (!named.length) {
+      console.log("FAIL negative: a figure in the tower did not fail");
+      printFails(after.fails);
+      process.exitCode = 1; return;
+    }
+    okBecause("negative", "stands inside", named);
+  } finally { await close(opened); }
+}
+
+async function runStep() {
+  const opened = await open(join(here(".."), "examples", "windmill.js"));
+  try {
+    const before = await auditPage(opened.page);
+    if (before.fails.length) {
+      console.log("FAIL negative: the windmill already misses a support, so the step is not a clean test");
+      printFails(before.fails);
+      process.exitCode = 1; return;
+    }
+    const planted = await opened.page.evaluate(() => {
+      var P = window.__dither.runtime.P;
+      var step = P.box(.5, .12, .4, "stone", .2, .06, -1.2);
+      Dither.seat(step, "step");
+      var climber = Dither.folk(P, .2, -.7, { h: .4, name: "climber" });
+      var crowder = Dither.folk(P, .55, 1.7, { h: .4, name: "crowder" });
+      return { climber: climber.root.support && climber.root.support.name, crowder: crowder.root.support && crowder.root.support.name };
+    });
+    if (planted.climber !== "climber" || planted.crowder !== "crowder") {
+      console.log("FAIL negative: could not stand the step figures");
+      process.exitCode = 1; return;
+    }
+    const after = await opened.page.evaluate(supportAudit);
+    const climb = unique(after.fails.filter((f) => f.name === "climber" && f.why.indexOf("stands against") >= 0));
+    const crowd = unique(after.fails.filter((f) => f.name === "crowder" && f.why.indexOf("stands in the opening") >= 0));
+    if (!climb.length) {
+      console.log("FAIL negative: a figure against a step did not fail");
+      printFails(after.fails.filter((f) => f.name === "climber"));
+      process.exitCode = 1; return;
+    }
+    if (!crowd.length) {
+      console.log("FAIL negative: a figure in the opening did not fail");
+      printFails(after.fails.filter((f) => f.name === "crowder"));
+      process.exitCode = 1; return;
+    }
+    okBecause("negative", "step clearance", climb.concat(crowd));
+  } finally { await close(opened); }
+}
+
+async function runOffPath() {
+  const opened = await open(join(here(".."), "examples", "lighthouse.js"));
+  try {
+    const before = await auditPage(opened.page);
+    if (before.fails.length) {
+      console.log("FAIL negative: the lighthouse already misses a support, so the path is not a clean test");
+      printFails(before.fails);
+      process.exitCode = 1; return;
+    }
+    const planted = await opened.page.evaluate(() => {
+      var P = window.__dither.runtime.P;
+      Dither.seat(P.box(.4, .12, .3, "stone", -2.4, .06, 2.2), "step");
+      var who = Dither.folk(P, .85, .05, { h: .4, name: "offpath" });
+      return who.root.support && who.root.support.name;
+    });
+    if (planted !== "offpath") { console.log("FAIL negative: could not stand a figure off the path"); process.exitCode = 1; return; }
+    const after = await opened.page.evaluate(supportAudit);
+    const named = unique(after.fails.filter((f) => f.name === "offpath" && f.why.indexOf("stands off the path") >= 0));
+    if (!named.length) {
+      console.log("FAIL negative: a figure off meadow and earth did not fail");
+      printFails(after.fails.filter((f) => f.name === "offpath"));
+      process.exitCode = 1; return;
+    }
+    okBecause("negative", "off the path", named);
+  } finally { await close(opened); }
+}
+
 async function expectWater(src, place, label) {
   const opened = await open(join(here(".."), "examples", src));
   try {
@@ -414,7 +627,15 @@ async function runWater() {
       process.exitCode = 1;
     } else {
       const planted = await dry.page.evaluate(() => {
-        var who = Dither.folk(window.__dither.runtime.P, -.3, .05, { h: .4, name: "dry" });
+        var P = window.__dither.runtime.P, root = window.__dither.runtime.parts.hot[0], islet = null;
+        while (root && root.parent) root = root.parent;
+        (function walk(cur) {
+          if (islet || !cur) return;
+          if (cur.support && cur.support.name === "islet") islet = cur;
+          (cur.children || []).forEach(walk);
+        })(root);
+        var who = Dither.folk(P, .5, -.1, { h: .4, name: "dry" });
+        if (islet) { who.root.position.y = .34; Dither.seat(who.root, "dry", islet); }
         return who.root.support && who.root.support.name;
       });
       const after = await dry.page.evaluate(supportAudit);
@@ -482,6 +703,11 @@ async function runWater() {
   if (process.exitCode) process.exit(process.exitCode);
 }
 
+function exampleFiles() {
+  const dir = join(here(".."), "examples");
+  return readdirSync(dir).filter((n) => n.endsWith(".js")).sort().map((n) => join(dir, n));
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === resolve(here("./support.mjs"))) {
   if (negative) {
     await runNegative();
@@ -490,13 +716,19 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(here("./support.mjs"
     if (process.exitCode) process.exit(process.exitCode);
     await runUnnamed();
     if (process.exitCode) process.exit(process.exitCode);
+    await runInside();
+    if (process.exitCode) process.exit(process.exitCode);
+    await runStep();
+    if (process.exitCode) process.exit(process.exitCode);
+    await runOffPath();
+    if (process.exitCode) process.exit(process.exitCode);
   }
   else if (water) await runWater();
   else {
-    if (!files.length) { console.error("usage: node support.mjs examples/<name>.js [more] | --negative | --water"); process.exit(2); }
+    const list = files.length ? files.map((f) => resolve(f)) : exampleFiles();
     let ok = true;
-    for (const f of files) {
-      const report = await auditFile(resolve(f));
+    for (const f of list) {
+      const report = await auditFile(f);
       if (!report.fails.length) console.log("ok " + report.name + " (1 voxel " + report.px.toFixed(3) + ", frames " + report.times.map((t) => t.toFixed(2)).join(" ") + ")");
       else {
         ok = false;
