@@ -191,21 +191,36 @@ var Dither = (function () {
     return out;
   }
 
+  /* Upright cone. The base sits at opt.y and overhangs the tower top by opt.over.
+     A flat disk turned toward the camera reads as a lid, so this stays a slope. */
+  function cap(P, tower, opt) {
+    opt = opt || {};
+    var r = opt.r == null ? .4 : opt.r, over = opt.over == null ? .1 : opt.over, h = opt.h == null ? .46 : opt.h;
+    var y = opt.y == null ? 0 : opt.y, parent = opt.parent || (tower && tower.parent);
+    var cone = P.cone(r + over, h, opt.mat || 'tile', 0, y + h / 2, 0, parent, opt.seg || 8);
+    seat(P.cyl(r + over + .02, r + over + .02, .05, opt.lip || 'beam', 0, y + .025, 0, parent, opt.seg || 8), 'eave', cone);
+    return seat(cone, opt.name || 'cap', tower);
+  }
+
+  /* Four equal sails on a shaft along local +Z. The parent yaw points +Z at the camera.
+     rotation.x tilts that shaft down toward the camera. Spin rotation.z only.
+     face is where the shaft meets the cap, behind the hub, so the neck is inside the cone. */
   function rotor(P, parent, opt) {
     opt = opt || {};
-    var y = opt.y == null ? 2.6 : opt.y, z = opt.z == null ? 1.2 : opt.z, face = opt.face == null ? .8 : opt.face, len = opt.len == null ? .96 : opt.len;
-    var beam = opt.beam || 'beam', cloth = opt.sail || 'sail', iron = opt.hub || 'iron', neck = z - face, i;
-    if (neck > .02) P.box(.08, .08, neck, iron, 0, y, face + neck / 2, parent);
+    var y = opt.y == null ? 1.7 : opt.y, z = opt.z == null ? .62 : opt.z, face = opt.face == null ? z - .36 : opt.face;
+    var len = opt.len == null ? .68 : opt.len, tilt = opt.tilt == null ? .16 : opt.tilt, i;
+    var beam = opt.beam || 'beam', cloth = opt.sail || 'sail', iron = opt.hub || 'iron';
+    var reach = z - face; if (reach < .14) reach = .14;
     var sails = P.group(0, y, z, parent);
-    P.box(.18, .18, .1, iron, 0, 0, .02, sails);
+    sails.rotation.x = tilt;
+    var hub = P.box(.14, .14, .12, iron, 0, 0, .02, sails);
+    seat(P.box(.06, .06, reach, iron, 0, 0, -reach / 2, sails), 'shaft', hub);
     for (i = 0; i < 4; i++) {
       var spar = P.group(0, 0, 0, sails);
       spar.rotation.z = i * Math.PI / 2;
-      P.box(len * .86, .06, .045, beam, len * .46, 0, .02, spar);
-      P.box(.05, len * .3, .04, beam, len * .24, len * .14, .03, spar);
-      P.box(.05, len * .3, .04, beam, len * .66, len * .14, .03, spar);
-      P.box(len * .44, .045, .035, beam, len * .48, len * .28, .032, spar);
-      P.box(len * .66, len * .32, .028, cloth, len * .46, len * .15, .04, spar);
+      var arm = P.box(len * .9, .05, .04, beam, len * .4, 0, .02, spar);
+      seat(arm, 'sail-spar', hub);
+      seat(P.box(len * .7, len * .4, .02, cloth, len * .32, 0, .03, spar), 'sail', arm);
     }
     return sails;
   }
@@ -255,7 +270,7 @@ var Dither = (function () {
 
   return {
     ramp: ramp, wear: wear, mat: mat, folk: folk, sway: sway, carry: carry, sun: sun, report: report,
-    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor,
+    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor, cap: cap,
     seat: seat, afloat: afloat
   };
 })();

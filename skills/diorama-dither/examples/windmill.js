@@ -1,12 +1,12 @@
-/* A walled grass yard. The sails sit on the cap face. Tap the miller to brake. */
+/* A walled grass yard. The sails turn on a shaft in the cap's front. Tap the miller to brake. */
 Pixel.scene({
   name: 'windmill',
   title: 'The windmill',
-  means: 'A wide stone mill under a tile roof. The sails turn on the front of the cap while the miller lifts a sack.',
+  means: 'A stone mill under a conical tile cap. The sails turn on the front shaft while the miller holds a sack.',
   hint: 'Hover the miller or the carter; tap the miller to brake the sails.',
   width: 360, height: 280, duration: 8, still: 2, fps: 12,
   bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .42,
-  camera: { az: 45, el: 30, height: 1.62, scale: 56 },
+  camera: { az: 45, el: 30, height: 1.08, scale: 56 },
   sun: Dither.sun(45, 38, 16),
   ground: {
     rx: 3.5, rz: 2.65, wobble: .36, fade: .32, rect: true,
@@ -35,25 +35,22 @@ Pixel.scene({
     var mill = P.group(-1.2, 0, .48);
     mill.rotation.y = .74;
     Dither.seat(mill, 'mill');
-    var plinth = P.box(1.75, .18, 1.75, 'stone', 0, .09, 0, mill);
+    var plinth = P.box(1.38, .16, 1.38, 'stone', 0, .08, 0, mill);
     Dither.seat(plinth, 'plinth');
-    var tower = P.cyl(.68, .82, 1.72, 'stone', 0, 1.02, 0, mill, 8);
+    var rTop = .4, th = 1.56, base = .16, top = base + th;
+    var tower = P.cyl(rTop, .62, th, 'stone', 0, base + th / 2, 0, mill, 8);
     Dither.seat(tower, 'tower', plinth);
-    P.box(.26, .48, .08, 'beam', .72, .42, .02, mill);
-    P.box(.14, .22, .05, 'iron', .76, .4, .08, mill);
-    P.box(.12, .14, .05, 'iron', .3, 1.1, .38, mill);
-    var cap = P.cyl(.88, .88, .12, 'tile', 0, 2.02, .74, mill, 8);
-    cap.rotation.x = Math.PI / 2;
-    Dither.seat(cap, 'cap', tower);
-    var rim = P.cyl(.96, .96, .08, 'beam', 0, 2.02, .74, mill, 8);
-    rim.rotation.x = Math.PI / 2;
-    Dither.seat(rim, 'rim', cap);
-    Dither.seat(P.cone(.48, .28, 'tile', 0, 2.02, -.1, mill, 8), 'cone', tower);
-    parts.sails = Dither.rotor(P, mill, { y: 2.02, z: .84, face: .8, len: .68 });
-    Dither.seat(parts.sails, 'sails', cap);
+    var door = P.box(.28, .52, .1, 'timber', 0, base + .26, .54, mill);
+    Dither.seat(door, 'door', tower);
+    Dither.seat(P.box(.32, .06, .06, 'beam', 0, base + .54, .56, mill), 'lintel', door);
+    Dither.seat(P.box(.1, .12, .05, 'beam', -.22, base + .88, .38, mill), 'window', tower);
+    Dither.seat(P.box(.1, .12, .05, 'beam', .26, base + .58, .4, mill), 'window', tower);
+    var cone = Dither.cap(P, tower, { y: top, r: rTop, over: .1, h: .46 });
+    parts.sails = Dither.rotor(P, mill, { y: top + .12, z: .78, face: 0, len: .72, tilt: .32 });
+    Dither.seat(parts.sails, 'sails', cone);
 
-    var cart = P.group(-2.25, 0, .15);
-    cart.rotation.y = .35;
+    var cart = P.group(1.15, 0, .72);
+    cart.rotation.y = .85;
     cart.name = 'cart';
     parts.cart = cart;
     Dither.seat(cart, 'cart');
@@ -75,23 +72,21 @@ Pixel.scene({
     Dither.seat(P.box(.4, .06, .06, 'timber', .7, r + .02, 0, cart), 'cart-tongue', floor);
     Dither.seat(P.box(.26, .18, .18, 'sack', -.08, r + .2, 0, cart), 'cart-sack', floor);
 
-    var miller = Dither.folk(P, 1.15, .55, {
-      h: .4, yaw: -2.4, name: 'miller',
+    var miller = Dither.folk(P, .04, 1.02, {
+      h: .4, yaw: Math.PI, name: 'miller', parent: mill,
       shirt: '#f6e6c0', pants: '#152038', sleeve: '#c9a15a', hat: '#6e3b28', hair: '#2a2018'
     });
-    var carter = Dither.folk(P, -2.05, 1.2, {
-      h: .4, yaw: -2.45, name: 'carter',
+    var carter = Dither.folk(P, .58, 1.16, {
+      h: .4, yaw: 2.25, name: 'carter',
       shirt: '#f04a38', pants: '#1c1612', sleeve: '#b43328', hair: '#1a1410', shoes: '#14110e'
     });
     parts.miller = miller;
     parts.carter = carter;
 
-    parts.sack = P.group(0, 0, 0);
-    P.box(.4, .3, .28, 'sack', 0, .15, 0, parts.sack);
-    P.box(.12, .08, .1, 'beam', 0, .32, 0, parts.sack);
+    parts.sack = P.group(0, .16, -.05, miller.root);
+    P.box(.1, .09, .07, 'sack', 0, 0, 0, parts.sack);
     Dither.afloat(parts.sack, 'sack', 'carried');
-    Dither.seat(P.box(.3, .22, .22, 'sack', -.85, .11, 1.05), 'sack');
-    Dither.seat(P.box(.26, .18, .2, 'sack', -1.95, .09, 1.7), 'sack');
+    Dither.seat(P.box(.18, .12, .14, 'sack', .2, .06, .62), 'sack');
 
     parts.plants = Dither.fringe(P, [[2.2, 1.35], [-2.35, -1.35], [1.85, -1.4], [2.35, -.2]]);
     parts.plants.push(Dither.tree(P, 1.7, -1.25, { r: .48, h: .85, clusters: 6, seed: 5 }));
@@ -106,35 +101,30 @@ Pixel.scene({
     Dither.lamp(P, 2.05, -.55);
 
     parts.hot = [miller.root, carter.root, cart];
-    parts.sackA = [.85, .28, .5];
-    parts.sackB = [-1.5, .62, .35];
     return parts;
   },
   tick: function (c) {
-    var t = c.t, q = c.q, p = c.parts, P = c.P, u = Dither.carry(q);
-    var brake = c.active === p.miller.root;
+    var t = c.t, q = c.q, p = c.parts, P = c.P, u = Dither.carry((q + .75) % 1);
+    var brake = c.active === p.miller.root, lean = Math.sin(q * P.TAU);
     p.sails.rotation.z = brake ? P.phase(c.pressedAt < 0 ? 0 : c.pressedAt, 8) * P.TAU : q * P.TAU;
-    var a = p.sackA, b = p.sackB, arc = Math.sin(u * Math.PI) * .55;
-    p.sack.position.set(P.lerp(a[0], b[0], u), P.lerp(a[1], b[1], u) + arc, P.lerp(a[2], b[2], u));
-    P.pose(p.miller, u > .55 ? 'hold' : 'work');
-    var k = p.miller.k, lean = Math.sin(q * P.TAU);
-    p.miller.hips.position.y = (.34 - .07 * (1 - u)) * k;
-    p.miller.body.rotation.x = P.lerp(1.15, .18, u);
-    p.miller.head.rotation.x = P.lerp(.6, .12, u);
-    p.miller.armL.rotation.x = P.lerp(-1.85, -.35, u);
-    p.miller.armR.rotation.x = P.lerp(-1.8, -.45, u);
-    p.miller.elbowL.rotation.x = P.lerp(-.25, -1.2, u);
-    p.miller.elbowR.rotation.x = P.lerp(-.2, -1.1, u);
-    p.miller.armL.rotation.z = -.35;
-    p.miller.armR.rotation.z = .38;
+    p.sack.position.set(P.lerp(0, .03, u), P.lerp(.16, .24, u), P.lerp(-.05, -.03, u));
+    P.pose(p.miller, 'hold');
+    p.miller.body.rotation.x = P.lerp(.12, .06, u);
+    p.miller.head.rotation.x = .08;
+    p.miller.armL.rotation.x = P.lerp(-.35, -.2, u);
+    p.miller.armR.rotation.x = P.lerp(-.45, -1.15, u);
+    p.miller.elbowL.rotation.x = -.7;
+    p.miller.elbowR.rotation.x = P.lerp(-.85, -.4, u);
+    p.miller.armL.rotation.z = -.2;
+    p.miller.armR.rotation.z = .28;
     P.pose(p.carter, 'work');
-    p.carter.body.rotation.x = 1.05 + lean * .03;
-    p.carter.head.rotation.x = .45;
-    p.carter.armL.rotation.x = -1.55;
-    p.carter.armR.rotation.x = -1.4 + lean * .04;
-    p.carter.elbowL.rotation.x = -.3;
-    p.carter.elbowR.rotation.x = -.35;
-    p.carter.armL.rotation.z = -.15;
+    p.carter.body.rotation.x = .48 + lean * .03;
+    p.carter.head.rotation.x = .28;
+    p.carter.armL.rotation.x = -1.05;
+    p.carter.armR.rotation.x = -1.15 + lean * .04;
+    p.carter.elbowL.rotation.x = -.85;
+    p.carter.elbowR.rotation.x = -.9;
+    p.carter.armL.rotation.z = -.16;
     p.carter.armR.rotation.z = .18;
     p.plants.forEach(function (g, i) { Dither.sway(P, g, g.base, t, i > 4 ? 1.4 : 2.2, i * .17); });
     c.read = brake ? 'miller · brake on' : '';

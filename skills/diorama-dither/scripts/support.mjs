@@ -3,7 +3,8 @@
  * Checks supports: `node support.mjs examples/<name>.js [more]`.
  * Each solid meets its surface within one voxel, at the still and at t = duration/4,
  * duration/2, 3*duration/4 and duration. A mesh with no support fails. A mesh tucked
- * under a seated group still fails when it floats clear of that group and above the ground.
+ * under a seated group still fails when the nearest mesh is more than one voxel
+ * away and its bottom is above the ground. The group's box is not the test.
  * A figure on the ground must not stand in a water zone. Feet are [x, z].
  * The kernel's place turns NaN into 0, so folk records the requested x,z and the check
  * reads that before trusting the placed origin. A bad coordinate fails by name.
@@ -36,7 +37,7 @@ export function supportAudit() {
   var rt = window.__dither.runtime, spec = window.__dither.spec, P = rt.P;
   P.update();
   var px = P.px || 0.02, fails = [];
-  function bounds(node, skip) {
+  function bounds(node, skip, own) {
     var min = [1e9, 1e9, 1e9], max = [-1e9, -1e9, -1e9], n = 0, bad = false;
     function walk(cur) {
       if (!cur || cur === skip) return;
@@ -52,6 +53,7 @@ export function supportAudit() {
           n++;
         }
       }
+      if (own) return;
       var ch = cur.children || [], k;
       for (k = 0; k < ch.length; k++) walk(ch[k]);
     }
@@ -128,10 +130,22 @@ export function supportAudit() {
       var a = cur.parent;
       while (a && !a.support) a = a.parent;
       if (a && a.support.float == null) {
-        var bc = bounds(cur), g = sep(bc, bounds(a, cur));
-        if (g > px && bc && bc.min[1] > px) {
-          var nm = cur.name || who(cur);
-          fails.push({ name: nm, why: nm + " floats " + g.toFixed(3) + " apart from " + label(a) });
+        var bc = bounds(cur, null, true);
+        if (bc && !bc.bad && bc.min[1] > px) {
+          var best = 1e9, hit = null;
+          (function scan(n) {
+            if (!n || n === cur) return;
+            if (n.geo && n.geo.v) {
+              var ob = bounds(n, null, true), g = sep(bc, ob);
+              if (ob && !ob.bad && g < best) { best = g; hit = n; }
+            }
+            var ch = n.children || [], i;
+            for (i = 0; i < ch.length; i++) scan(ch[i]);
+          })(a);
+          if (hit && best > px) {
+            var nm = cur.name || who(cur);
+            fails.push({ name: nm, why: nm + " floats " + best.toFixed(3) + " apart from " + label(hit) });
+          }
         }
       }
     }
@@ -346,7 +360,7 @@ async function runUnnamed() {
     });
     if (!planted) { console.log("FAIL negative: no mill for an unnamed child"); process.exitCode = 1; return; }
     const after = await opened.page.evaluate(supportAudit);
-    const unnamed = unique(after.fails.filter((f) => f.why.indexOf("mill child ") === 0 && f.why.indexOf("apart from mill") >= 0));
+    const unnamed = unique(after.fails.filter((f) => f.why.indexOf("mill child ") === 0 && f.why.indexOf("apart from") >= 0));
     if (!unnamed.length) {
       console.log("FAIL negative: an unnamed child was not named from its parent");
       printFails(after.fails);

@@ -54,7 +54,8 @@ These live on `Dither` and do not run for a pixel scene:
 - `wall(P, x, z, len, yaw, opt)` stone run plus a wider coping. `gate` for the opening. A yard is four runs and one gate, inside `rx` and `rz`.
 - `folk(P, x, z, { h, yaw, name, shirt, pants, sleeve, hat })` a person the pointer can name. `h` is `0.44` to `0.48` at scale `48`, which lands near 14 to 16 pixels. At scale `56` to `62`, drop `h` toward `0.38` to `0.42` so the figure stays that tall. Shirt, pants and sleeve are the three colours. After `P.pose`, set the arms so the forearms leave the torso: a `work` or `hold` pose, elbows bent, hands out. If the hands hold something, that object has its own colour.
 - `tree`, `bush`, `fringe`, `fence`, `lamp`. `lamp` is a post, a paper box and a cap. Pass `shade: 'lantern'` or `'paper'`. Never a glow.
-- `rotor(P, parent, { y, z, face, len })` four equal sails. Yaw the parent so local `+Z` points toward the camera (about `0.7` at azimuth 45). The cap front is a disk in that plane: a cylinder with `rotation.x` of `π/2`, centred on the same `y`, radius larger than the sails. `face` is that disk's front along `Z`. `z` sits just past it, and `x` stays `0`, so the hub is on the axis. The cloth reaches about `0.9 * len` from the hub, so `len` stays inside the disk or a blade leaves the cap and crosses the roof. Spin `rotation.z` only.
+- `cap(P, tower, { y, r, over, h })` an upright cone. `y` is the tower top, `r` is that top's radius, `over` is the overhang (about `0.1`), `h` is the slope. A cylinder with `rotation.x` of `π/2` is a lid seen from above. Do not use one for a roof.
+- `rotor(P, parent, { y, z, face, len, tilt })` four equal sails on a shaft. Yaw the parent so local `+Z` points toward the camera (about `0.74` at azimuth 45). `y` and `z` are the hub on that front face. `face` is back inside the cone, so the neck meets the cap. `tilt` (about `0.3`) is `rotation.x`: the shaft drops toward the camera. The cloth stays in front of the stone. Spin `rotation.z` only. A cross drawn on the roof is the shaft left at `tilt` `0`.
 - `sway(P, node, base, t, amp, phase)` for plants. `carry(q)` for a lift that rests at both ends of the loop.
 - `seat(node, name, on, join)` and `afloat(node, name, reason)`. Every solid mesh declares one, or sits inside a group that does and actually meets it. See Support.
 
@@ -62,7 +63,7 @@ Every hot group has a `.name`. `parts.hot` lists them. The `hint` says what to h
 
 ## Support
 
-A piece either meets a surface or names why it does not. `npm run support` and the look both check the still and the frames at a quarter, a half, three quarters and the end of the loop, and exit 1 with the group's name. A mesh with no support fails as `has no support`. A mesh inside a seated group still fails when it floats clear of that group and its bottom is above the ground. An unnamed mesh is reported as its parent's name plus its child index.
+A piece either meets a surface or names why it does not. `npm run support` and the look both check the still and the frames at a quarter, a half, three quarters and the end of the loop, and exit 1 with the group's name. A mesh with no support fails as `has no support`. A mesh inside a seated group fails when the nearest mesh is more than one voxel away and the mesh's own bottom is above the ground. Sitting inside the group's box is not enough. A bottom within one voxel of the ground can pass, which is how a tuft or a crest stays. Two meshes that only meet each other still pass. An unnamed mesh is reported as its parent's name plus its child index.
 
 - `Dither.seat(node, name)` rests on the ground. The bottom face is within one voxel of `y = 0` (`P.px`). Sitting slightly in the ground passes. Floating above it fails. `folk`, `wall`, `gate`, `fence`, `lamp`, `tree`, `bush` and `fringe` already do this.
 - `Dither.seat(node, name, otherNode)` — the two solids meet within one voxel. A bed on an axle, a sail on the cap, a leg into the body, a screen on the floor, a shade on its post.
@@ -75,7 +76,7 @@ A figure on the ground must not stand in a water zone. Feet are the figure's `x`
 
 Checklist before the first render:
 
-- Every solid mesh has `seat` or `afloat`, or sits in a group that does and meets that group. A child parked in the air still fails.
+- Every solid mesh has `seat` or `afloat`, or sits in a group that does and meets the nearest mesh. A child parked in the air still fails when that mesh is more than one voxel away, even inside the group's box. A bottom within one voxel of the ground can pass.
 - Wheels, legs and feet touch. The axle touches the box. Hooves and shoes touch a solid surface.
 - A boat's hull is partly under the water. A bridge's piles stand on the banks. Posts reach the ground.
 - Nothing floats unless `afloat` names the reason.
@@ -107,7 +108,7 @@ The look checks fill, the loop seam, picking, hover, the tap, reduced motion, a 
 
 Walk this list. Each line is a failure that already shipped once:
 
-- A rotor whose hub is beside the shaft, or a blade that crosses the tile edge. Hub on the cap axis, the whole cross inside the front disk. The disk's back face meets the tower.
+- A rotor drawn on the roof, or a flat disk wider than the tower. The cap is a cone with a small overhang and a visible slope. The shaft and the four sails sit on the front face, tilted down toward the camera, and a person stands on the ground at the door with the sack in the hand.
 - A wheel, a hoof, a foot or a post with daylight under it. The axle meets the box. A person stands on ground, rock, a pier or in a boat, never on open water. A hull sits in the water, not on it. Anything else that leaves the ground has `afloat` and a reason.
 - A sail, cart, bush, lamp or gate post crossing the person. People stand on open ground, at least `0.8` inside the near wall. The coping is closer to the camera than the path and it covers anyone standing in the opening.
 - A shadow that is a flat grey bar, or that runs through the right-hand wall. Hard veil, one sun, lit ground beyond. Do not add a second light for a lamp, a ray or dusk.
