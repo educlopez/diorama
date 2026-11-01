@@ -81,7 +81,7 @@ Checklist before the first render:
 - Every solid mesh has `seat` or `afloat`, or sits in a group that does and meets the nearest mesh. A child parked in the air still fails when that mesh is more than one voxel away, even inside the group's box. A bottom within one voxel of the ground can pass.
 - Wheels, legs and feet touch. The axle touches the box. Hooves and shoes touch a solid surface.
 - A boat's hull is partly under the water. A bridge's piles stand on the banks. Posts reach the ground.
-- Nothing floats unless `afloat` names the reason.
+- Nothing floats unless `afloat` names the reason. The check covers a mesh with declared support, or a group that meets the nearest mesh. It does not cover a chain of loose pieces that only touch each other.
 
 ## 5. Motion and the tap
 

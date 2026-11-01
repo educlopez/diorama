@@ -17,7 +17,8 @@
  *
  * `--negative` lifts a windmill wheel, parks an undeclared box at y = 4.5 inside the mill,
  * stands a figure in the tower, and stands figures on a step's edge and in the opening.
- * Those must fail. `--water` requires a figure in the tea-house pond to fail, a figure in the
+ * Those must fail, and the tower figure must fail only as `stands inside`. A figure in the
+ * square corner of a cylinder, outside the round wall, must pass. `--water` requires a figure in the tea-house pond to fail, a figure in the
  * lighthouse's open water to fail, and a figure on lighthouse rock to pass.
  */
 import { existsSync, readdirSync, rmSync } from "node:fs";
@@ -179,7 +180,18 @@ export function supportAudit() {
       if (v[i + 1] < min[1]) min[1] = v[i + 1]; if (v[i + 1] > max[1]) max[1] = v[i + 1];
       if (v[i + 2] < min[2]) min[2] = v[i + 2]; if (v[i + 2] > max[2]) max[2] = v[i + 2];
     }
-    return p[0] > min[0] + pad && p[0] < max[0] - pad && p[1] > min[1] + pad && p[1] < max[1] - pad && p[2] > min[2] + pad && p[2] < max[2] - pad;
+    if (!(p[0] > min[0] + pad && p[0] < max[0] - pad && p[1] > min[1] + pad && p[1] < max[1] - pad && p[2] > min[2] + pad && p[2] < max[2] - pad)) return false;
+    var cx = (min[0] + max[0]) / 2, cz = (min[2] + max[2]) / 2, lo = 0, hi = 0, round = true, r;
+    for (i = 0; i < v.length && round; i += 3) {
+      r = Math.hypot(v[i] - cx, v[i + 2] - cz);
+      if (r < 1e-6) continue;
+      if (v[i + 1] <= min[1] + 1e-6) { if (lo && Math.abs(r - lo) > lo * .03) round = false; lo = lo || r; }
+      else if (v[i + 1] >= max[1] - 1e-6) { if (hi && Math.abs(r - hi) > hi * .03) round = false; hi = hi || r; }
+      else round = false;
+    }
+    if (!round || v.length < 36) return true;
+    var u = (p[1] - min[1]) / (max[1] - min[1]);
+    return Math.hypot(p[0] - cx, p[2] - cz) < lo + (hi - lo) * u - pad;
   }
   function bodyPoints(node, full) {
     var cut = full.min[1] + .42 * (full.max[1] - full.min[1]);
@@ -502,19 +514,88 @@ async function runInside() {
       process.exitCode = 1; return;
     }
     const planted = await opened.page.evaluate(() => {
-      var who = Dither.folk(window.__dither.runtime.P, -1.2, .48, { h: .4, name: "intruder" });
+      var P = window.__dither.runtime.P, root = window.__dither.runtime.parts.hot[0], tower = null;
+      while (root && root.parent) root = root.parent;
+      (function walk(cur) {
+        if (tower || !cur) return;
+        if (cur.support && cur.support.name === "tower") tower = cur;
+        (cur.children || []).forEach(walk);
+      })(root);
+      var who = Dither.folk(P, -1.2, .48, { h: .4, name: "intruder" });
+      if (!tower) return "";
       who.root.position.y = .2;
+      Dither.seat(who.root, "intruder", tower);
       return who.root.support && who.root.support.name;
     });
     if (planted !== "intruder") { console.log("FAIL negative: could not stand a figure in the tower"); process.exitCode = 1; return; }
     const after = await opened.page.evaluate(supportAudit);
-    const named = unique(after.fails.filter((f) => f.name === "intruder" && f.why.indexOf("stands inside") >= 0));
-    if (!named.length) {
-      console.log("FAIL negative: a figure in the tower did not fail");
-      printFails(after.fails);
+    const named = unique(after.fails.filter((f) => f.name === "intruder"));
+    if (named.length !== 1 || named[0].why.indexOf("stands inside tower") < 0) {
+      console.log("FAIL negative: a figure in the tower did not fail only as stands inside");
+      printFails(named.length ? named : after.fails);
       process.exitCode = 1; return;
     }
     okBecause("negative", "stands inside", named);
+  } finally { await close(opened); }
+}
+
+async function runRound() {
+  const opened = await open(join(here(".."), "examples", "windmill.js"));
+  try {
+    const before = await auditPage(opened.page);
+    if (before.fails.length) {
+      console.log("FAIL negative: the windmill already misses a support, so the cylinder is not a clean test");
+      printFails(before.fails);
+      process.exitCode = 1; return;
+    }
+    const planted = await opened.page.evaluate(() => {
+      var P = window.__dither.runtime.P;
+      var drum = P.cyl(.5, .5, 1.2, "stone", 4.2, .6, 4.2);
+      Dither.seat(drum, "drum");
+      var corner = Dither.folk(P, 4.65, 4.65, { h: .4, name: "T" });
+      var core = Dither.folk(P, 4.2, 4.2, { h: .4, name: "cored" });
+      var crate = P.box(1, 1.2, 1, "timber", -4.2, .6, 4.2);
+      Dither.seat(crate, "crate");
+      var packed = Dither.folk(P, -4.2, 4.2, { h: .4, name: "packed" });
+      var aside = Dither.folk(P, -3.65, 4.2, { h: .4, name: "aside" });
+      return {
+        T: corner.root.support && corner.root.support.name,
+        cored: core.root.support && core.root.support.name,
+        packed: packed.root.support && packed.root.support.name,
+        aside: aside.root.support && aside.root.support.name
+      };
+    });
+    if (planted.T !== "T" || planted.cored !== "cored" || planted.packed !== "packed" || planted.aside !== "aside") {
+      console.log("FAIL negative: could not place the cylinder and the crate");
+      process.exitCode = 1; return;
+    }
+    const after = await opened.page.evaluate(supportAudit);
+    const of = (name) => unique(after.fails.filter((f) => f.name === name));
+    const corner = of("T"), core = of("cored"), packed = of("packed"), aside = of("aside");
+    if (corner.length) {
+      console.log("FAIL negative: a figure in the square corner of a cylinder failed");
+      printFails(corner);
+      process.exitCode = 1; return;
+    }
+    if (aside.length) {
+      console.log("FAIL negative: a figure 0.55 from a crate failed");
+      printFails(aside);
+      process.exitCode = 1; return;
+    }
+    if (packed.length !== 1 || packed[0].why.indexOf("stands inside crate") < 0) {
+      console.log("FAIL negative: a figure inside a crate did not fail only as stands inside");
+      printFails(packed);
+      process.exitCode = 1; return;
+    }
+    if (core.length !== 1 || core[0].why.indexOf("stands inside drum") < 0) {
+      console.log("FAIL negative: a figure inside a cylinder did not fail only as stands inside");
+      printFails(core);
+      process.exitCode = 1; return;
+    }
+    console.log("ok negative: diagonal drum");
+    console.log("ok negative: crate at 0.55");
+    okBecause("negative", "inside crate", packed);
+    okBecause("negative", "inside drum", core);
   } finally { await close(opened); }
 }
 
@@ -717,6 +798,8 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(here("./support.mjs"
     await runUnnamed();
     if (process.exitCode) process.exit(process.exitCode);
     await runInside();
+    if (process.exitCode) process.exit(process.exitCode);
+    await runRound();
     if (process.exitCode) process.exit(process.exitCode);
     await runStep();
     if (process.exitCode) process.exit(process.exitCode);
