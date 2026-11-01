@@ -10,7 +10,7 @@ import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "./build.mjs";
-import { supportAudit } from "./support.mjs";
+import { supportAudit, frameTimes } from "./support.mjs";
 
 const args = process.argv.slice(2);
 const [src, outArg] = args.filter((a) => !a.startsWith("--"));
@@ -43,6 +43,7 @@ try {
   const meta = await page.evaluate(() => ({
     duration: window.__dither.spec.duration, still: window.__dither.spec.still || 0,
     scene: window.__dither.spec.name || "",
+    shadow: window.__dither.spec.shadow || "none",
     hint: window.__dither.spec.hint || "", fps: window.__dither.spec.fps == null ? 12 : window.__dither.spec.fps,
     w: document.getElementById("stage").width, h: document.getElementById("stage").height
   }));
@@ -52,19 +53,18 @@ try {
     await (locator || page.locator("#stage")).screenshot({ path });
     report.images.push(path);
   };
-  await page.evaluate((t) => window.__dither.runtime.renderAt(t), meta.still);
-  const supportStill = await page.evaluate(supportAudit);
-  const moveAt = meta.still + meta.duration / 2 >= meta.duration ? meta.duration / 8 : meta.still + meta.duration / 2;
-  await page.evaluate((t) => window.__dither.runtime.renderAt(t), moveAt);
-  const supportMove = await page.evaluate(supportAudit);
-  await page.evaluate((t) => window.__dither.runtime.renderAt(t), meta.still);
   const supportFails = [];
   const supportSeen = new Set();
-  for (const fail of [...supportStill.fails, ...supportMove.fails]) {
-    if (supportSeen.has(fail.why)) continue;
-    supportSeen.add(fail.why);
-    supportFails.push(fail.why);
+  for (const t of frameTimes(meta)) {
+    await page.evaluate((time) => window.__dither.runtime.renderAt(time), t);
+    const report = await page.evaluate(supportAudit);
+    for (const fail of report.fails) {
+      if (supportSeen.has(fail.why)) continue;
+      supportSeen.add(fail.why);
+      supportFails.push(fail.why);
+    }
   }
+  await page.evaluate((t) => window.__dither.runtime.renderAt(t), meta.still);
   check("support: every declared piece meets its surface", supportFails.length === 0, supportFails);
   await shot("still");
   const still = await pixels();
@@ -255,6 +255,8 @@ try {
     const at0 = measure(grab(0)), at8 = measure(grab(dur / 8)), at4 = measure(grab(dur / 4));
     const water0 = measure(grab(0), 3, 20, 10);
     const soft0 = measure(grab(0), 1, 22);
+    const earth0 = measure(grab(0), 2);
+    const waterHard = measure(grab(0), 3);
     let shape = 0;
     for (let i = 0; i < at0.ink.length; i++) if (at0.ink[i] !== at8.ink[i]) shape++;
     let shadow = null, best = -1;
@@ -330,7 +332,9 @@ try {
       shadow: zoom(shadow || { x: W - 80, y: H - 80 }), mini: mini(),
       shadowReport: { at0: brief(at0), at8: brief(at8), at4: brief(at4), shape },
       water0: brief(water0),
-      soft0: brief(soft0)
+      soft0: brief(soft0),
+      earth0: brief(earth0),
+      waterHard: brief(waterHard)
     };
   }, meta.still);
   for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-carter", zooms.carter], ["zoom-sail", zooms.sail], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
@@ -340,11 +344,13 @@ try {
   }
   const sh = zooms.shadowReport;
   const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > meta.w * .52 && m.x1 < meta.w * .84 && m.beyond >= 200;
-  if (meta.scene === "windmill") {
-    check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", !!(sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 100), sh);
+  const hardGround = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 4 && m.w >= 10 && m.w < meta.w * .85;
+  if (meta.shadow !== "hard") {
+    check("shadow: a hard cast is declared", false, meta.shadow);
+  } else if (sh && arm(sh.at0) && arm(sh.at8) && arm(sh.at4) && sh.shape >= 100) {
+    check("shadow: a textured grass silhouette to the right, short of the wall, and it changes shape", true, sh);
   } else {
-    const patch = (m) => m && m.n >= 280 && m.contrast >= 12 && m.w >= 10 && m.w < meta.w * .85;
-    check("shadow: a darker patch of the ground's own colour", !!(patch(sh && sh.at0) || patch(zooms.soft0) || patch(zooms.water0)), { grass: sh && sh.at0, soft: zooms.soft0, water: zooms.water0 });
+    check("shadow: a hard cast on the ground, textured and short of the edge", !!(hardGround(zooms.earth0) || hardGround(zooms.waterHard) || hardGround(sh && sh.at0)), { earth: zooms.earth0, water: zooms.waterHard, grass: sh && sh.at0 });
   }
 
   const folks = await page.evaluate(([stillT, found, names]) => {

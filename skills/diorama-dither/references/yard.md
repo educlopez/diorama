@@ -72,7 +72,7 @@ Smoke is three or four boxes on a loop `(q + i / n) % 1`, rising from the stack 
 
 ## Support
 
-Every solid mesh sets `support` through `Dither.seat` or `Dither.afloat`, or sits inside a group that does. A mesh with neither fails. The check allows one voxel (`P.px`, `1 / camera.scale`).
+Every solid mesh sets `support` through `Dither.seat` or `Dither.afloat`, or sits inside a group that does and meets that group. A mesh with neither fails. A child whose bottom is above the ground and whose bounds clear the group also fails. The check allows one voxel (`P.px`, `1 / camera.scale`). An unnamed mesh is named from its parent and its child index.
 
 ```js
 Dither.seat(plinth, 'plinth');
@@ -83,7 +83,7 @@ Dither.seat(crest, 'crest', 'surface');
 Dither.afloat(sack, 'sack', 'carried');
 ```
 
-- `seat(node, name)` — bottom on the ground. A figure here must not fall in a water zone.
+- `seat(node, name)` — bottom on the ground. A figure here must not fall in a water zone. `folk` rejects a non-finite `x` or `z` before the kernel turns it into `0`.
 - `seat(node, name, other)` — the two bounds meet. Pass an axle, a cap, a floor, a post.
 - `seat(node, name, 'ground', other)` — on the ground and against that solid. Wheels.
 - `seat(node, name, 'water')` — the plane cuts the body. A hull stays cut even when the bob is at its highest.
@@ -96,12 +96,12 @@ Wheels use 10 sides and `rotation.x = π/2`, with the centre at `y = radius`, so
 
 Checklist:
 
-- Every solid mesh declares `seat` or `afloat`, or sits in a group that does.
+- Every solid mesh declares `seat` or `afloat`, or sits in a group that does and meets it.
 - Wheels, legs and feet contact. The axle contacts the box.
 - The hull is partly under the water. Foam sits on the surface.
 - Nothing floats without a named reason.
 
-`npm run support` audits the four yards at the still and one moving frame, then `--negative` and `--water`. A miss exits 1 and names the group. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. Feet with `NaN` or a missing coordinate must fail as `has no place to stand`. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same two-frame check. The windmill shadow keys off the scene name.
+`npm run support` audits the four yards at `t = 2, 4, 6` and `8`, then `--negative` and `--water`. A real miss exits 1 and names the group. An expected miss prints `ok negative` or `ok water` with the reason, and does not print `FAIL`. `--negative` lifts one `cart-wheel` by `0.25` and must fail once on that name, without a second axle line. It also parks an undeclared box named `childfloat` at `y = 4.5` inside the mill, and that must fail as floating apart from the mill. `--water` plants a host in the tea pond and a figure in the lighthouse's open water, and both must fail as `stands on water`. A figure on the lighthouse rock must pass. A mesh vertex of `NaN` must fail as `has no place to stand`. `folk(NaN)` and `folk(undefined)` must fail the same way: the kernel would have placed them at `0`, and the helper does not let that pass. A mesh with no support must fail, and a blank float reason must fail as `floats without a reason`. The look runs the same frames. `shadow: 'soft'` or `none` fails. A declared hard cast that reads as a grass silhouette takes that check, including the change of shape. A hard cast on earth or water has to clear the sharp threshold. The scene name is not what chooses it.
 
 ## Shadow check
 

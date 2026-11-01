@@ -94,6 +94,17 @@ var Dither = (function () {
 
   function folk(P, x, z, opt) {
     opt = opt || {};
+    /* place() in the kernel treats a missing number as 0, and NaN is missing there,
+       so a call with NaN would stand at the origin and look seated. Refuse that here. */
+    var finite = function (n) { return typeof n === "number" && n === n && n !== Infinity && n !== -Infinity; };
+    if (!finite(x) || !finite(z)) {
+      var lost = P.group(0, 0, 0, opt.parent || null);
+      lost.name = opt.name || "";
+      lost.figure = true;
+      lost.stand = [x, z];
+      seat(lost, opt.name || "figure");
+      return { root: lost };
+    }
     var shirt = opt.shirt || '#b5523a';
     var who = P.person(x, z, opt.parent || null, {
       h: opt.h == null ? .5 : opt.h, yaw: opt.yaw || 0, figure: true,
@@ -104,6 +115,7 @@ var Dither = (function () {
     });
     who.root.name = opt.name || '';
     who.root.figure = true;
+    who.root.stand = [x, z];
     seat(who.root, opt.name || 'figure');
     return who;
   }

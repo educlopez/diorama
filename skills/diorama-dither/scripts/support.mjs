@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /**
  * Checks supports: `node support.mjs examples/<name>.js [more]`.
- * Each solid meets its surface within one voxel, at the still and at one moving frame.
- * A mesh with no support, and no supported ancestor, fails. A figure on the ground
- * must not stand in a water zone. Feet are [x, z]. A bad coordinate fails by name.
- * Prints FAIL and the group name, and exits 1 on any miss. The html in /tmp is removed.
+ * Each solid meets its surface within one voxel, at the still and at t = duration/4,
+ * duration/2, 3*duration/4 and duration. A mesh with no support fails. A mesh tucked
+ * under a seated group still fails when it floats clear of that group and above the ground.
+ * A figure on the ground must not stand in a water zone. Feet are [x, z].
+ * The kernel's place turns NaN into 0, so folk records the requested x,z and the check
+ * reads that before trusting the placed origin. A bad coordinate fails by name.
+ * Prints FAIL and the group name, and exits 1 on any miss. An expected negative prints
+ * `ok negative` with the reason, and does not print FAIL. The html in /tmp is removed.
  *
- * `--negative` lifts a windmill wheel and exits 0 only when the check names cart-wheel.
- * `--water` requires a figure in the tea-house pond to fail, a figure in the lighthouse's
- * open water to fail, and a figure on lighthouse rock to pass. A mesh with no support
- * fails, and a blank float reason fails.
+ * `--negative` lifts a windmill wheel, and parks an undeclared box at y = 4.5 inside the mill.
+ * Both must fail. `--water` requires a figure in the tea-house pond to fail, a figure in the
+ * lighthouse's open water to fail, and a figure on lighthouse rock to pass.
  */
 import { existsSync, rmSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
@@ -95,9 +98,21 @@ export function supportAudit() {
     }
     return f;
   }
+  function who(node) {
+    if (!node) return "root";
+    if (node.name) return node.name;
+    if (node.support && node.support.name && node.support.name !== "piece") return node.support.name;
+    var p = node.parent, idx = 0;
+    if (p && p.children) { var at = p.children.indexOf(node); idx = at < 0 ? 0 : at; }
+    var host = p;
+    while (host && !host.name && !(host.support && host.support.name && host.support.name !== "piece")) host = host.parent;
+    var pname = host ? (host.name || host.support.name) : "root";
+    return pname + " child " + idx;
+  }
   function label(node) {
     var s = node && node.support;
-    return (s && s.name) || (node && node.name) || "piece";
+    if (s && s.name && s.name !== "piece") return s.name;
+    return who(node);
   }
   var seen = [];
   function covered(node) {
@@ -108,13 +123,28 @@ export function supportAudit() {
   function walkAll(cur) {
     if (!cur || seen.indexOf(cur) >= 0) return;
     seen.push(cur);
-    if (cur.geo && !covered(cur)) fails.push({ name: cur.name || "piece", why: (cur.name || "piece") + " has no support" });
+    if (cur.geo && !covered(cur)) fails.push({ name: who(cur), why: who(cur) + " has no support" });
+    else if (cur.geo && !cur.support) {
+      var a = cur.parent;
+      while (a && !a.support) a = a.parent;
+      if (a && a.support.float == null) {
+        var bc = bounds(cur), g = sep(bc, bounds(a, cur));
+        if (g > px && bc && bc.min[1] > px) {
+          var nm = cur.name || who(cur);
+          fails.push({ name: nm, why: nm + " floats " + g.toFixed(3) + " apart from " + label(a) });
+        }
+      }
+    }
     if (cur.support) check(cur);
     var ch = cur.children || [], i;
     for (i = 0; i < ch.length; i++) walkAll(ch[i]);
   }
   function check(node) {
-    var s = node.support, name = s.name || "piece", box, gap, f, before;
+    var s = node.support, name = (s.name && s.name !== "piece") ? s.name : who(node), box, gap, f, before;
+    if (node.figure && node.stand && (!finite(node.stand[0]) || !finite(node.stand[1]))) {
+      fails.push({ name: name, why: name + " has no place to stand" });
+      return;
+    }
     if (s.float != null) {
       if (!String(s.float).trim()) fails.push({ name: name, why: name + " floats without a reason" });
       return;
@@ -190,15 +220,21 @@ function unique(fails) {
   return out;
 }
 
-/** Still frame and one frame where the tick has moved. Identical misses are reported once. */
+/** Still, and the quarter, half, three-quarter and end of the loop. For these yards that is t = 2, 4, 6 and 8. */
+export function frameTimes(spec) {
+  const still = spec.still || 0, dur = spec.duration || 8;
+  const out = [];
+  for (const t of [still, dur / 4, dur / 2, (dur * 3) / 4, dur]) {
+    const time = t < 0 ? 0 : t > dur ? dur : t;
+    if (!out.some((u) => Math.abs(u - time) < 1e-6)) out.push(time);
+  }
+  return out;
+}
+
+/** Identical misses across those frames are reported once. */
 export async function auditPage(page) {
-  const times = await page.evaluate(() => {
-    var spec = window.__dither.spec, still = spec.still || 0, dur = spec.duration || 8;
-    var moving = still + dur / 2;
-    if (moving >= dur) moving = dur / 8;
-    if (Math.abs(moving - still) < 1e-6) moving = (still + 1) % dur;
-    return [still, moving];
-  });
+  const spec = await page.evaluate(() => ({ still: window.__dither.spec.still || 0, duration: window.__dither.spec.duration || 8 }));
+  const times = frameTimes(spec);
   const fails = [];
   let px = 0;
   for (const t of times) {
@@ -222,6 +258,10 @@ function printFails(fails) {
   fails.forEach((fail) => console.log("FAIL " + fail.why));
 }
 
+function okBecause(kind, label, fails) {
+  console.log("ok " + kind + ": " + label + " (" + fails.map((f) => f.why).join("; ") + ")");
+}
+
 async function runNegative() {
   const opened = await open(join(here(".."), "examples", "windmill.js"));
   try {
@@ -229,7 +269,7 @@ async function runNegative() {
     if (before.fails.length) {
       console.log("FAIL negative: the windmill already misses a support, so the lift is not a clean test");
       printFails(before.fails);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
     const lifted = await opened.page.evaluate(() => {
       var rt = window.__dither.runtime, n = rt.parts.hot[0], root = n, hit = null;
@@ -243,16 +283,76 @@ async function runNegative() {
       hit.position.y += .25;
       return { found: true };
     });
-    if (!lifted.found) { console.log("FAIL negative: no cart-wheel to lift"); process.exit(1); }
+    if (!lifted.found) { console.log("FAIL negative: no cart-wheel to lift"); process.exitCode = 1; return; }
     const after = await opened.page.evaluate(supportAudit);
     const named = unique(after.fails.filter((f) => f.name === "cart-wheel"));
     if (!named.length) {
       console.log("FAIL negative: a lifted cart-wheel did not fail");
       printFails(after.fails);
-      process.exit(1);
+      process.exitCode = 1; return;
     }
-    printFails(named);
-    console.log("ok negative: cart-wheel");
+    okBecause("negative", "cart-wheel", named);
+  } finally { await close(opened); }
+}
+
+async function runChild() {
+  const opened = await open(join(here(".."), "examples", "windmill.js"));
+  try {
+    const before = await auditPage(opened.page);
+    if (before.fails.length) {
+      console.log("FAIL negative: the windmill already misses a support, so the floating child is not a clean test");
+      printFails(before.fails);
+      process.exitCode = 1; return;
+    }
+    const planted = await opened.page.evaluate(() => {
+      var rt = window.__dither.runtime, root = rt.parts.hot[0], mill = null;
+      while (root.parent) root = root.parent;
+      (function walk(cur) {
+        if (mill || !cur) return;
+        if (cur.support && cur.support.name === "mill") mill = cur;
+        (cur.children || []).forEach(walk);
+      })(root);
+      if (!mill) return "";
+      var box = rt.P.box(.2, .2, .2, "stone", 0, 4.5, 0, mill);
+      box.name = "childfloat";
+      return box.name;
+    });
+    if (!planted) { console.log("FAIL negative: no mill to hang a child on"); process.exitCode = 1; return; }
+    const after = await opened.page.evaluate(supportAudit);
+    const named = unique(after.fails.filter((f) => f.name === "childfloat" && f.why.indexOf("apart from") >= 0));
+    if (!named.length) {
+      console.log("FAIL negative: a child of the mill at y=4.5 did not fail");
+      printFails(after.fails);
+      process.exitCode = 1; return;
+    }
+    okBecause("negative", "childfloat", named);
+  } finally { await close(opened); }
+}
+
+async function runUnnamed() {
+  const opened = await open(join(here(".."), "examples", "windmill.js"));
+  try {
+    const planted = await opened.page.evaluate(() => {
+      var rt = window.__dither.runtime, root = rt.parts.hot[0], mill = null;
+      while (root.parent) root = root.parent;
+      (function walk(cur) {
+        if (mill || !cur) return;
+        if (cur.support && cur.support.name === "mill") mill = cur;
+        (cur.children || []).forEach(walk);
+      })(root);
+      if (!mill) return false;
+      rt.P.box(.2, .2, .2, "stone", 0, 4.5, 0, mill);
+      return true;
+    });
+    if (!planted) { console.log("FAIL negative: no mill for an unnamed child"); process.exitCode = 1; return; }
+    const after = await opened.page.evaluate(supportAudit);
+    const unnamed = unique(after.fails.filter((f) => f.why.indexOf("mill child ") === 0 && f.why.indexOf("apart from mill") >= 0));
+    if (!unnamed.length) {
+      console.log("FAIL negative: an unnamed child was not named from its parent");
+      printFails(after.fails);
+      process.exitCode = 1; return;
+    }
+    okBecause("negative", "unnamed child", unnamed);
   } finally { await close(opened); }
 }
 
@@ -276,8 +376,7 @@ async function expectWater(src, place, label) {
       process.exitCode = 1;
       return;
     }
-    printFails(hit);
-    console.log("ok water: " + label);
+    okBecause("water", label, hit);
   } finally { await close(opened); }
 }
 
@@ -329,10 +428,7 @@ async function runWater() {
         console.log("FAIL water: a NaN or undefined foot did not fail");
         printFails(coords.fails);
         process.exitCode = 1;
-      } else {
-        printFails(found);
-        console.log("ok water: bad coordinates");
-      }
+      } else okBecause("water", "bad coordinates", found);
       const extraNames = await dry.page.evaluate(() => {
         var P = window.__dither.runtime.P;
         var bare = P.box(.2, .2, .2, "rock", 3, 1, 3);
@@ -348,25 +444,39 @@ async function runWater() {
         console.log("FAIL support: a mesh with no support did not fail");
         printFails(extra.fails);
         process.exitCode = 1;
-      } else {
-        printFails(bareHit);
-        console.log("ok support: undeclared mesh");
-      }
+      } else okBecause("negative", "undeclared mesh", bareHit);
       if (!markHit.length) {
         console.log("FAIL support: a blank float reason did not fail");
         printFails(extra.fails);
         process.exitCode = 1;
-      } else {
-        printFails(markHit);
-        console.log("ok support: blank reason");
-      }
+      } else okBecause("negative", "blank reason", markHit);
+      const folkNames = await dry.page.evaluate(() => {
+        var P = window.__dither.runtime.P;
+        var nan = Dither.folk(P, NaN, .2, { h: .4, name: "folk-nan" });
+        var missing = Dither.folk(P, undefined, .2, { h: .4, name: "folk-missing" });
+        return [nan.root.support.name, missing.root.support.name];
+      });
+      const folkReport = await dry.page.evaluate(supportAudit);
+      const folkHit = unique(folkReport.fails.filter((f) => folkNames.indexOf(f.name) >= 0 && f.why.indexOf("no place to stand") >= 0));
+      if (folkHit.length !== folkNames.length) {
+        console.log("FAIL support: folk with NaN or undefined did not fail");
+        printFails(folkReport.fails);
+        process.exitCode = 1;
+      } else okBecause("negative", "folk coordinates", folkHit);
     }
   } finally { await close(dry); }
   if (process.exitCode) process.exit(process.exitCode);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(here("./support.mjs"))) {
-  if (negative) await runNegative();
+  if (negative) {
+    await runNegative();
+    if (process.exitCode) process.exit(process.exitCode);
+    await runChild();
+    if (process.exitCode) process.exit(process.exitCode);
+    await runUnnamed();
+    if (process.exitCode) process.exit(process.exitCode);
+  }
   else if (water) await runWater();
   else {
     if (!files.length) { console.error("usage: node support.mjs examples/<name>.js [more] | --negative | --water"); process.exit(2); }
