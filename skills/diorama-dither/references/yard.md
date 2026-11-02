@@ -79,7 +79,7 @@ Smoke from a chimney is three or four boxes on a loop `(q + i / n) % 1`, rising 
 
 ## Stall, cart, and night
 
-A stall is four posts, beams seated on the posts, and a cloth roof seated on the front beam. Yaw the group about `0.68` so the opening faces the camera. Posts about `0.09` thick and `0.86` tall. The front beam is about `1.64` by `0.07` by `0.08`, centred at `y = 0.895`, so the underside is `0.86`. The roof is about `1.78` by `0.05` by `1.08`: thick enough to read, thin enough to be cloth.
+A stall is four posts, beams seated on the posts, and a cloth roof seated on the front beam. Yaw the group about `0.68` so the opening faces the camera. Posts about `0.09` thick and `0.86` tall. The front beam is about `1.64` by `0.07` by `0.08`, centred at `y = 0.895` and local `z = 0.42`, so the underside is `0.86`. The cord and the lantern use that same `z`. At yaw `0.68` and camera azimuth 45, local `+Z` points toward the camera, and the beam at `z` `0.42` is the near one. The cord meets it: the gap is 0, and one voxel is about `0.017`. The beam at `z` `-0.42` is the back one, and the same cord misses it by about `0.33`. The roof is about `1.78` by `0.05` by `1.08`: thick enough to read, thin enough to be cloth.
 
 Stripes come from the pixel material, through `Dither.mat`:
 
@@ -92,15 +92,18 @@ awning: Dither.mat('sail', { stripe: .18, alt: '#a33b32' })
 A hung lantern is not `Dither.lamp`. That helper is a post on the ground. A cord thinner than one voxel (`P.px`, about `0.017` at scale 60) either misses the raster or leaves a gap wider than a voxel, and support fails. Use a cord at least `0.04` thick. Seat it on the beam, and seat the lantern on the cord, faces touching:
 
 ```js
+var beam = Dither.seat(P.box(1.64, .07, .08, 'beam', 0, .895, .42, stall), 'beam', post);
 var cord = Dither.seat(P.box(.04, .16, .04, 'beam', x, .78, .42, stall), 'cord', beam);
 Dither.seat(P.box(.18, .18, .14, 'lantern', x, .61, .42, stall), 'lantern', cord);
 ```
 
 The cord runs from the beam's underside (`y` about `0.86`) to the lantern's top (`y` about `0.70`). An `ember` box on the camera face, seated on the lantern, is the flame. Toggle it with `.visible`. A lantern seated straight on the beam is a yellow square stuck to the wood. Never set `glow`.
 
+`look` calls the loop's change `motion`. It is the largest step between the frames at a quarter, a half and three quarters, and it has to be over `0.002` of the picture. At 360 by 280 that is more than about 202 pixels. A step of `0.0003` or `0.0011` fails. One core of `0.09` by `0.10` by `0.03` never got there: a travel of `u * 0.8` measured `0.0010`, and turning the core on for a quarter of the loop measured `0.0005`. A core twice that on each side, `0.18` by `0.20` by `0.06`, travelling out by `u * 0.35`, measured `0.0022` and passed. Other motion in the frame can clear `0.002` without the core. The core cannot be the only change unless it is that large.
+
 A pot sits on the counter. Eight sides, body about `0.14` across and `0.16` tall, a wider rim about `0.035` tall seated on the body, a lid seated on the rim. Hide the lid when the pot is open. `iron` is `#5c636c`, a blue-grey. A warmer pot is another hex passed to `Dither.mat`, still a plain face.
 
-Steam under the awning is three boxes, `Dither.afloat(g, 'smoke', 'steam')`, phase `i / 3`. Use `sail`. The `smoke` preset is a grey that disappears on timber. Start each puff at the lip, past the valance (local `z` about `0.56` on the roof above), and carry it further out by `u * 0.35` where `u` is `(q + phase) % 1`. A rise that begins under the cloth, even a pale one, stays under the cloth. The chimney recipe above the roof is the other case.
+Steam under the awning is three boxes, `Dither.afloat(g, 'smoke', 'steam')`, phase `i / 3`. Use `sail`. The `smoke` preset is a grey that disappears on timber. The boxes that cleared the motion check were about `0.28` by `0.14` by `0.22`, then `0.04` narrower and `0.03` shallower. Start each puff at the lip, past the valance (local `z` about `0.56` on the roof above), and carry it further out by `u * 0.35` where `u` is `(q + phase) % 1`. That run, under the awning, measured `0.0021`. In the open, `u * 0.20` measured `0.0018` and failed, and `u * 0.22` measured `0.00202` and passed. A shorter run does not. A sway of `0.03` with `u * 0.12` up and `u * 0.08` out measured `0.0007` under the cloth and `0.0018` in the open. A rise that climbs back into the cloth hides the run: the same `u * 0.35` plus `u * 0.12` of rise measured `0.0017` under the awning and failed. `0.0003` and `0.0011` fail the same check. If the puffs are the only motion, take them out by `u * 0.35` and do not lift them back under the cloth. The chimney recipe above the roof is the other case.
 
 A cart with one axle shows one wheel on this side. The far wheel sits behind the box. Two axles, one near each end, put a near wheel at both ends. Yaw about `0.85` so the long side faces the camera. This is the mill's cart in `examples/windmill.js`:
 
@@ -119,9 +122,9 @@ Dither.seat(cart, 'cart');
 Dither.seat(P.box(1.02, .08, .52, 'cart', 0, r + .07, 0, cart), 'cart-bed', axle);
 ```
 
-The wheel centre is the radius, so one vertex of the 10-sided cylinder meets the ground. The bed sits on an axle. The pair on the far side of the box stays hidden. That is the camera, and a third axle does not bring it out.
+The wheel centre is the radius, so one vertex of the 10-sided cylinder meets the ground. The bed sits on an axle. The far pair does not stay hidden. On the mill's cart, side boards included, hiding those two wheels removed 53 pixels that show past the box, up by the rail, above the near wheels. The near pair is the one that reads. A third axle does not cover that sliver.
 
-`look` writes `zoom-figure.png` from the first name in `folkZoom` and `zoom-carter.png` from the second. The default is `['miller', 'carter']`, matched to `parts.hot` by exact `.name`, and only when the hover hits that person. A cook named `cook` gets `zoom-cook.png` from the hot-group pass and does not get `zoom-figure.png`. Set `folkZoom: ['cook', 'customer']` on the scene to fill the two fixed files from those groups.
+`look` writes `zoom-figure.png` from the first name in `folkZoom` and `zoom-carter.png` from the second. The default is `['miller', 'carter']`, matched to `parts.hot` by exact `.name`, and only when the hover hits that person. A cook named `cook` gets `zoom-cook.png` from the hot-group pass and does not get `zoom-figure.png`. Set `folkZoom: ['cook', 'customer']` on the scene to fill the two fixed files from those groups. A person the hover never hits writes no zoom, including one listed in `folkZoom` who stands behind the stall. `look` still requires `pointer` (every hot group can be picked) and `figures` (a zoom for every hot group), so a hidden hot person fails both.
 
 Night keeps `Dither.sun`. The sun does not move, and `glow` is never set. What reads as evening is dark cloth, the striped awning, `lantern` panels and the `ember` cores you show and hide. The ground and the page stay the day palette. A black sky and a pool of light are outside this finish. The tea house dusk is the same limit: it swaps the paper, the lantern cores and one hard disk. It does not add a light.
 
@@ -147,7 +150,7 @@ Dither.afloat(sack, 'sack', 'carried');
 
 `folk` seats the person. A standing figure keeps the bind-pose sole about `0.01 × h` under the origin. Pass `on: deck` to put that sole exactly on a mesh: the helper reads the mesh's highest point, including a yawed parent, and seats the figure there. Setting `root.position.y` afterwards replaces it. `hull(P, x, z, { h, y, amp })` is a timber box cut by the water. `h` is the height, `y` the centre (default `0.04 - h / 2`), and `amp` is stored on the group for the tick. `yaw`, `len`, `beam`, `mat` and `name` are optional. The mesh is `group.hull`. Helpers for walls, gates, fences, lamps, trees, bushes and grass seat themselves. A lamp shade sits on the post. The cap sits on the shade.
 
-Wheels use 10 sides and `rotation.x = π/2`, with the centre at `y = radius`, so one vertex is on `y = 0`. One axle hides the far wheel behind the box. Two axles, yawed about `0.85`, show a near wheel at each end. The mill's cart in `examples/windmill.js` is that pattern, and the stall notes above spell it out. The bed sits on an axle. Feet and hooves meet a solid: meadow, earth, sand, rock, a deck, or the floor of a boat. A bridge's piles stand on the banks, not in the pond. Posts reach `y = 0`.
+Wheels use 10 sides and `rotation.x = π/2`, with the centre at `y = radius`, so one vertex is on `y = 0`. One axle hides its far wheel behind the box. Two axles, yawed about `0.85`, show a near wheel at each end, and the far wheels of that pair still peek over the box. The mill's cart in `examples/windmill.js` is that pattern, and the stall notes above spell it out. The bed sits on an axle. Feet and hooves meet a solid: meadow, earth, sand, rock, a deck, or the floor of a boat. A bridge's piles stand on the banks, not in the pond. Posts reach `y = 0`.
 
 Checklist:
 
@@ -174,6 +177,8 @@ A readable cast:
 ## Tap
 
 `hint` contains `tap the <name>`. `parts.hot[i].name` starts with that name.
+
+Validate check 8 reads the scene source, comments stripped, and requires the text `.name =`. A `name:` field passed to `folk` sets the name at runtime and does not satisfy the check. One `.name =` in the file is enough for the check. Each hot group still needs its own name for the read-out.
 
 The toggled state is `c.active === thatRoot`. At `still + 0.5` seconds the two states must differ by a mass you can see at a glance: the ray, the dusk screens and lantern cores, the forge mouth and the hammer. Set `c.read` to a short status. Hover still shows the group's name, which is what the pointer check expects.
 

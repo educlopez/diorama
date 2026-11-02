@@ -16,8 +16,11 @@
  *  6 kernel         the kernel in a built page is kit/dither.js, byte for byte.
  *  7 size           a scene of at most 260 lines. A .js is assembled into the
  *                   page, and that page is at most 71680 bytes, same <= as look.
- *  8 pointer        parts.hot is set, each hot group has a .name, and a hint
- *                   tells a visitor what to hover and tap.
+ *                   If that build throws, the report is one line and the run
+ *                   exits 1. No stack.
+ *  8 pointer        parts.hot is set, the scene source contains `.name =`
+ *                   (comments stripped; a name: field on folk does not count),
+ *                   and a hint tells a visitor what to hover and tap.
  *  9 renderer       no three.js and no WebGL: the kernel draws on a 2D canvas.
  */
 import { readFileSync, realpathSync } from "node:fs";
@@ -69,12 +72,20 @@ export function validate(text) {
   check(6, "kernel", !page || kernel === kernelSource(), "the page's kernel differs from kit/dither.js: rebuild with scripts/build.mjs");
 
   const lines = scene.split("\n").length;
-  const pageBytes = page ? Buffer.byteLength(text) : Buffer.byteLength(assemble(scene));
+  let builtPage = page ? text : "";
+  if (!page) {
+    try { builtPage = assemble(scene); }
+    catch (err) {
+      const why = String(err && err.message || err).split(/\r?\n/)[0];
+      return [{ n: 7, label: "size", ok: false, why: "page build failed: " + why }];
+    }
+  }
+  const pageBytes = Buffer.byteLength(builtPage);
   const why7 = lines > LINES ? `${lines} lines, limit ${LINES}` : pageBytes > PAGE_BYTES ? `built page ${pageBytes} bytes, limit ${PAGE_BYTES}` : "";
   check(7, "size", !why7, why7);
 
   const hot = /\bhot\s*[:=]/.test(strip), named = /\.name\s*=/.test(strip);
-  check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "give each hot group a .name for the read-out" : "add a hint: what to hover, what to tap");
+  check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "the scene source needs .name = for the read-out; a name: option does not count" : "add a hint: what to hover, what to tap");
 
   const three = /\bTHREE\.\w+|Three\.js Authors|getContext\s*\(\s*["']webgl/.test(whole);
   check(9, "renderer", !three, "three.js or WebGL found: the kernel draws on a 2D canvas");
