@@ -175,11 +175,11 @@ try {
     }
     function folkBox(name) {
       const hot = rt.parts.hot || [], idx = hot.findIndex((h) => (h.name || "") === name);
-      if (idx < 0) return { x: 8, y: 8 };
+      if (idx < 0) return null;
       let hit = null;
       for (let y = .9; y > -.9 && !hit; y -= .02) for (let x = -.9; x < .9; x += .02) if (rt.hoverAt(x, y) === hot[idx]) hit = [x, y];
       rt.hoverAt(5, 5);
-      if (!hit) return { x: 8, y: 8 };
+      if (!hit) return null;
       return { x: Math.round((hit[0] + 1) / 2 * W - 32), y: Math.round((hit[1] + 1) / 2 * H - 46) };
     }
     const fig = folkBox("miller"), carterBox = folkBox("carter");
@@ -269,6 +269,7 @@ try {
     }
     rt.renderAt(stillT);
     function zoom(box) {
+      if (!box) return null;
       const S = 64, Z = 8;
       const x = Math.max(0, Math.min(W - S, box.x | 0)), y = Math.max(0, Math.min(H - S, box.y | 0));
       const src = g.getImageData(x, y, S, S);
@@ -336,6 +337,7 @@ try {
     };
   }, { stillT: meta.still, familyBody: fnBody(groundFamily) });
   for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-carter", zooms.carter], ["zoom-sail", zooms.sail], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
+    if (!url) continue;
     const path = join(outdir, `${name}-${label}.png`);
     writeFileSync(path, Buffer.from(url.split(",")[1], "base64"));
     report.images.push(path);

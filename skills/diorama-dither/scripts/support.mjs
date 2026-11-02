@@ -19,7 +19,7 @@
  * stands a figure in the tower, and stands figures on a step's edge and in the opening.
  * Those must fail, and the tower figure must fail only as `stands inside`. A figure in the
  * square corner of a cylinder, outside the round wall, must pass. It also checks the snow
- * report, the gate height, and the cold ground family. `--water` requires a figure in the tea-house pond to fail, a figure in the
+ * report, the gate height, the cold ground family, a tall sand post, the figure sole and the hull. `--water` requires a figure in the tea-house pond to fail, a figure in the
  * lighthouse's open water to fail, and a figure on lighthouse rock to pass.
  */
 import { existsSync, readdirSync, rmSync } from "node:fs";
@@ -48,16 +48,22 @@ export function fnBody(fn) {
 }
 
 /* A hard cast passes on a grass silhouette, or on earth, water, grass or cold
-   ground at the sharp threshold. Snow's lit pixels are cold and the veil moves
-   the cast into water, where the spread is about 3. That wider allowance applies
-   only when a ground material is named snow, and the cast has to be at least 36
-   pixels wide. Rock uses family 4 and the sharp threshold. */
+   ground at the sharp threshold. A post on sand #d2c09a leaves a tall narrow
+   earth stain: the two lightest ramp steps are outside that family, and the
+   trace can be under 10 pixels wide. It passes when it is at least 28 pixels
+   tall and at least three times as tall as it is wide. Snow's lit pixels are
+   cold and the veil moves the cast into water, where the spread is about 3.
+   That wider allowance applies only when a ground material is named snow, and
+   the cast has to be at least 36 pixels wide. Rock uses family 4 and the sharp
+   threshold. */
 export function shadowOk(shadow, width, part, snow) {
   if (shadow !== "hard" || !part) return "";
   const arm = (m) => m && m.n >= 1400 && m.n <= 5500 && m.contrast >= 24 && m.std >= 4 && m.w >= 36 && m.w <= 120 && m.x1 > width * .52 && m.x1 < width * .84 && m.beyond >= 200;
   if (arm(part.at0) && arm(part.at8) && arm(part.at4) && part.shape >= 100) return "silhouette";
   const sharp = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 4 && m.w >= 10 && m.w < width * .85;
   if (sharp(part.earth) || sharp(part.water) || sharp(part.at0) || sharp(part.cold)) return "sharp";
+  const post = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 4 && m.h >= 28 && m.w >= 2 && m.w < 10 && m.h >= m.w * 3;
+  if (post(part.earth)) return "post";
   const veil = (m) => m && m.n >= 160 && m.contrast >= 24 && m.std >= 3 && m.w >= 36 && m.w < width * .85;
   if (snow && veil(part.water)) return "snow";
   return "";
@@ -850,7 +856,14 @@ async function runKit() {
   if (shadowOk("hard", 360, { water: thin }, true)) return miss("a thin snow cast passed");
   if (shadowOk("hard", 360, { cold: cold }) !== "sharp") return miss("a rock cast did not pass");
   if (shadowOk("soft", 360, { earth: sharp })) return miss("a soft shadow passed");
+  const sandPost = { n: 222, contrast: 93, std: 17.2, w: 6, h: 38 };
+  const sandSpeck = { n: 73, contrast: 105, std: 12, w: 2, h: 37 };
+  const sandShort = { n: 200, contrast: 40, std: 8, w: 8, h: 12 };
+  if (shadowOk("hard", 360, { earth: sandPost }) !== "post") return miss("a tall sand post did not pass");
+  if (shadowOk("hard", 360, { earth: sandSpeck })) return miss("a short sand speck passed");
+  if (shadowOk("hard", 360, { earth: sandShort })) return miss("a short narrow earth stain passed");
   console.log("ok negative: cold ground");
+  console.log("ok negative: sand post");
 
   const opened = await open(join(here(".."), "examples", "windmill.js"));
   try {
@@ -882,7 +895,40 @@ async function runKit() {
         same: snow.ramp.join() === ramp.join(),
         lighter: lum(snow.ramp[2]) > lum(grey[2]),
         tall: posts(tall), low: posts(low),
-        tallLintel: lintel(tall), lowLintel: lintel(low)
+        tallLintel: lintel(tall), lowLintel: lintel(low),
+        sole: (function () {
+          function span(node) {
+            var lo = 1e9, hi = -1e9;
+            (function walk(cur) {
+              var v = cur.geo && cur.geo.v, i, p, ch, k;
+              if (v) for (i = 0; i < v.length; i += 3) {
+                p = cur.worldPoint(v[i], v[i + 1], v[i + 2]);
+                if (p[1] < lo) lo = p[1];
+                if (p[1] > hi) hi = p[1];
+              }
+              ch = cur.children || [];
+              for (k = 0; k < ch.length; k++) walk(ch[k]);
+            })(node);
+            return [lo, hi];
+          }
+          var pier = P.group(4, 0, 4);
+          pier.rotation.y = Math.PI * .75;
+          var deck = P.box(2.2, .1, 1.12, "timber", 0, .13, 0, pier);
+          var fisher = Dither.folk(P, 4, 4, { h: .42, on: deck, name: "fisher" });
+          var stander = Dither.folk(P, 5, 5, { h: .4, name: "stander" });
+          var boat = Dither.hull(P, 6, 6, { h: .32, y: -.01, amp: .024, yaw: -.4 });
+          var plain = Dither.hull(P, 7, 7, { h: .3 });
+          P.update();
+          var hullBox = span(boat.hull), plainBox = span(plain.hull);
+          return {
+            ground: span(stander.root)[0],
+            feet: span(fisher.root)[0],
+            deck: span(deck)[1],
+            onDeck: fisher.root.support.on === deck,
+            amp: boat.amp, center: boat.hull.position.y, lo: hullBox[0], hi: hullBox[1], yaw: boat.rotation.y,
+            plainAmp: plain.amp, plainY: plain.hull.position.y, plainLo: plainBox[0], plainHi: plainBox[1]
+          };
+        })()
       };
     });
     const repOk = kit.ground && kit.tex === "sand" && kit.tones === 5 && kit.maxGap <= .08 && kit.shadowViolet < 36 && kit.lightYellow > 0 && kit.same && kit.lighter;
@@ -903,6 +949,24 @@ async function runKit() {
       return;
     }
     console.log("ok negative: gate height");
+    const sole = kit.sole;
+    const soleOk = sole && Math.abs(sole.ground) < 1e-6 && Math.abs(sole.feet - sole.deck) < 1e-6 && sole.onDeck;
+    if (!soleOk) {
+      console.log("FAIL negative: figure sole");
+      console.log(JSON.stringify(sole));
+      process.exitCode = 1;
+      return;
+    }
+    console.log("ok negative: figure sole");
+    const hullOk = sole && near(sole.amp, .024) && near(sole.center, -.01) && sole.lo < -.02 && sole.hi > .02 && near(sole.yaw, -.4)
+      && near(sole.plainAmp, .024) && near(sole.plainY, .04 - .3 / 2) && sole.plainLo < -.02 && sole.plainHi > .02;
+    if (!hullOk) {
+      console.log("FAIL negative: hull");
+      console.log(JSON.stringify(sole));
+      process.exitCode = 1;
+      return;
+    }
+    console.log("ok negative: hull");
   } finally { await close(opened); }
 }
 

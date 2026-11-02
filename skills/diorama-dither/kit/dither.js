@@ -1,7 +1,7 @@
 /* GENERATED, do not edit.
    sources:
    skills/diorama-pixel/kit/pixel.js b09c660802b92eed77da10f1c0fbed3902f0c504b4295fe65aa6587c502f17e6
-   skills/diorama-dither/kit-src/finish.js a96794da9ee404adbc925b3eef4c96ad2c8542a1d639bfb737eddf0bb863bae6
+   skills/diorama-dither/kit-src/finish.js 1b88223a56b7fb377729e0fb90ad689d7c4208ea2097cf030836e8893417c8b6
 */
 /* ============================================================================
    Diorama Pixel kernel · one global `Pixel`, no dependency: a software
@@ -627,7 +627,6 @@ var Pixel = (function () {
   return { scene: scene, scenes: scenes, mount: mount, RAMPS: RAMPS, TEX: TEX, noise: noise, fbm: fbm, hash: hash };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Pixel;
-/* Dither finish. A Pixel page never loads this file. */
 var Dither = (function () {
   var COOL = [78, 88, 102], WARM = [255, 220, 160];
 
@@ -722,10 +721,15 @@ var Dither = (function () {
     return node;
   }
 
+  function crown(n) {
+    var v = n.geo && n.geo.v, y = -1e9, i, p, c = n.children || [], k;
+    if (v) for (i = 0; i < v.length; i += 3) { p = n.worldPoint(v[i], v[i + 1], v[i + 2]); if (p[1] > y) y = p[1]; }
+    for (k = 0; k < c.length; k++) if ((p = crown(c[k])) > y) y = p;
+    return y;
+  }
+
   function folk(P, x, z, opt) {
     opt = opt || {};
-    /* place() in the kernel treats a missing number as 0, and NaN is missing there,
-       so a call with NaN would stand at the origin and look seated. Refuse that here. */
     var finite = function (n) { return typeof n === "number" && n === n && n !== Infinity && n !== -Infinity; };
     if (!finite(x) || !finite(z)) {
       var lost = P.group(0, 0, 0, opt.parent || null);
@@ -743,11 +747,26 @@ var Dither = (function () {
       hat: opt.hat ? wear(opt.hat) : undefined,
       shoes: wear(opt.shoes || '#2a2420'), sleeve: wear(opt.sleeve || shirt)
     });
+    var k = who.k, lift = .01 * k, on = opt.on, y = lift, top;
     who.root.name = opt.name || '';
     who.root.figure = true;
     who.root.stand = [x, z];
-    seat(who.root, opt.name || 'figure');
+    if (on && typeof on === 'object') {
+      P.update();
+      top = crown(on);
+      if (top > -1e8) y = top + lift - who.root.worldPoint(0, 0, 0)[1];
+      seat(who.root, opt.name || 'figure', on);
+    } else seat(who.root, opt.name || 'figure');
+    who.root.position.y = y;
     return who;
+  }
+
+  function hull(P, x, z, o) {
+    o = o || {};
+    var h = o.h == null ? .3 : o.h, y = o.y == null ? .04 - h / 2 : o.y, g = P.group(x, 0, z);
+    g.rotation.y = o.yaw || 0; g.amp = o.amp == null ? .024 : o.amp;
+    g.hull = P.box(o.len || 1.1, h, o.beam || .48, o.mat || 'timber', 0, y, 0, g);
+    return seat(g.hull, o.name || 'hull', 'water'), g;
   }
 
   function wall(P, x, z, len, yaw, opt) {
@@ -822,8 +841,6 @@ var Dither = (function () {
     return out;
   }
 
-  /* Upright cone. The base sits at opt.y and overhangs the tower top by opt.over.
-     A flat disk turned toward the camera reads as a lid, so this stays a slope. */
   function cap(P, tower, opt) {
     opt = opt || {};
     var r = opt.r == null ? .4 : opt.r, over = opt.over == null ? .1 : opt.over, h = opt.h == null ? .46 : opt.h;
@@ -833,9 +850,6 @@ var Dither = (function () {
     return seat(cone, opt.name || 'cap', tower);
   }
 
-  /* Four equal sails on a shaft along local +Z. The parent yaw points +Z at the camera.
-     rotation.x tilts that shaft down toward the camera. Spin rotation.z only.
-     face is where the shaft meets the cap, behind the hub, so the neck is inside the cone. */
   function rotor(P, parent, opt) {
     opt = opt || {};
     var y = opt.y == null ? 1.7 : opt.y, z = opt.z == null ? .62 : opt.z, face = opt.face == null ? z - .36 : opt.face;
@@ -888,20 +902,15 @@ var Dither = (function () {
   }
 
   var prev = Pixel.mount;
-  Pixel.mount = function (spec, canvas, opts) {
-    if (spec.width == null) spec.width = 360;
-    if (spec.height == null) spec.height = 280;
-    if (spec.bayer == null) spec.bayer = 4;
-    if (spec.shadow == null) spec.shadow = 'hard';
-    if (spec.rim == null) spec.rim = true;
-    if (spec.wind == null) spec.wind = 8;
-    if (spec.contact == null) spec.contact = .66;
-    return prev(spec, canvas, opts);
+  Pixel.mount = function (s, canvas, opts) {
+    var d = { width: 360, height: 280, bayer: 4, shadow: 'hard', rim: true, wind: 8, contact: .66 }, k;
+    for (k in d) if (s[k] == null) s[k] = d[k];
+    return prev(s, canvas, opts);
   };
 
   return {
     ramp: ramp, wear: wear, mat: mat, folk: folk, sway: sway, carry: carry, sun: sun, report: report,
-    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor, cap: cap,
+    wall: wall, gate: gate, fence: fence, lamp: lamp, tree: tree, bush: bush, fringe: fringe, rotor: rotor, cap: cap, hull: hull,
     seat: seat, afloat: afloat
   };
 })();
