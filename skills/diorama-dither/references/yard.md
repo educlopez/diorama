@@ -40,7 +40,7 @@ Standing pixels are `h × cos(elevation) × scale`, because screen-up is `cos(el
 
 Three colours, far apart: shirt, pants, sleeve. Hat and hair may repeat pants. Skin stays the default. A chief that still separates is shirt `#8e2f2a`, pants `#1c2433`, sleeve `#cbb892`. A traveler is shirt `#2c4f78`, pants `#6b3a2a`, sleeve `#d7c4a2`. A case in the hand is a fourth colour, `sack`, not the sleeve. `Dither.afloat(P.box(0.11, 0.08, 0.13, 'sack', 0, -0.06, 0.05, handR), 'case', 'carried')`. The tick adds `Dither.carry(q) * 0.05` to `y`.
 
-Write `root.name = '…'` in the scene source after `folk`. A `name:` option sets the name inside the kit and does not satisfy validate check 8. The halt passes that check because of `master.root.name = 'master'`. The traveler's `name: 'traveler'` does not count. Give each hot person their own `.name =`.
+`folk` sets `root.name` from `name:`, and that is enough for the read-out. `.name =` in the scene source is only for validate check 8. The halt passes that check because of `master.root.name = 'master'`. The traveler's `name: 'traveler'` names the read-out and does not satisfy the check.
 
 Pose after `P.pose(person, 'work')` or `'hold'`:
 
@@ -144,9 +144,9 @@ materials:'meadow earth moss stone timber beam tile sail sack iron coal leaf car
 },{deck:Dither.mat('timber',{grain:'z'}),blade:Dither.mat('sail',{stripe:.14,alt:'#a33b32'})})
 ```
 
-Canopy. Deck `2.3` by `0.12` by `1.08`, timber grain `z`, centre `y` `0.06`, seated on the ground. Four posts `0.08` by `0.64` by `0.08` at local `(±0.92, 0.44, ±0.38)`, seated on the deck. The front pair is local `z` `+0.38`. Front beam `1.96` by `0.07` by `0.08` at `y` `0.795`, `z` `0.38`, seated on a front post. Back beam the same at `z` `-0.38`. Tile roof `2.12` by `0.05` by `1.02` at `y` `0.855`, seated on the front beam. Bench: legs `0.04` by `0.18` by `0.04`, seat `0.48` by `0.04` by `0.16`, back `0.48` by `0.16` by `0.04`.
+Canopy. Deck `2.3` by `0.12` by `1.08`, timber grain `z`, centre `y` `0.06`, seated on the ground. Four posts `0.08` by `0.64` by `0.08` at local `(±0.92, 0.44, ±0.38)`, seated on the deck. The front pair is local `z` `+0.38`. Front beam `1.96` by `0.07` by `0.08` at `y` `0.795`, `z` `0.38`, seated on a front post. The back beam is the same height and the same kind of seat, at `z` `-0.38`, and the back beam is seated on a back post. Tile roof `2.12` by `0.05` by `1.02` at `y` `0.855`, seated on the front beam. Bench: legs `0.04` by `0.18` by `0.04`, seat `0.48` by `0.04` by `0.16`, back `0.48` by `0.16` by `0.04`.
 
-Clock. The disk that reads at 360 by 280 is a cylinder of radius `0.08` and depth `0.04`, `paper`, eight sides, `rotation.x` of `π/2`. At this camera the face is about 8 pixels tall (`0.16 × cos(30°) × 58`). Radius `0.08` is the minimum. A smaller disk is a speck, not a face. The group is local `(0.88, 0, -0.2)` on the platform, off the traveler. An earlier face hid the traveler. The face sits at `y` `0.7`, `z` `0.05`, seated on a post `0.07` by `0.58` by `0.07` centred at `y` `0.41`. The minute hand is `0.02` by `0.09` by `0.02` on a group at `(0, 0.72, 0.072)`. The hour hand is `0.07` by `0.02` by `0.02` on a group at `(0, 0.72, 0.078)`. Both are iron, seated on the face, and their `z` is in front of the disk. Tick: `minute.rotation.z = -q * TAU`, and the hour is that divided by 12.
+Clock. The disk that reads at 360 by 280 is a cylinder of radius `0.08` and depth `0.04`, `paper`, eight sides, `rotation.x` of `π/2`. At this camera the face is about 8 pixels tall (`0.16 × cos(30°) × 58`). Radius `0.08` is the minimum. A smaller disk is a speck, not a face. The group is local `(0.88, 0, -0.2)` on the platform, off the traveler. Seat the clock group on the deck, or on the surface that holds it. Without that `on`, support fails. An earlier face hid the traveler. The face sits at `y` `0.7`, `z` `0.05`, seated on a post `0.07` by `0.58` by `0.07` centred at `y` `0.41`. The minute hand is `0.02` by `0.09` by `0.02` on a group at `(0, 0.72, 0.072)`. The hour hand is `0.07` by `0.02` by `0.02` on a group at `(0, 0.72, 0.078)`. Both are iron, seated on the face, and their `z` is in front of the disk. Tick: `minute.rotation.z = -q * TAU`, and the hour is that divided by 12.
 
 Signal. Clear of the left wall. An earlier arm sat inside it. Group at local `(-0.35, 0, 0.78)` on the platform. Post `0.08` by `0.86` by `0.08`, centre `y` `0.43`. Arm group at `y` `0.78`, `z` `0.04`. Blade `0.05` by `0.10` by `0.48` of the `blade` material above, centred at local `z` `0.2`, seated on the post. Lowered `arm.rotation.x = 0.1`. Raised `-1.25` when `c.active === master.root`.
 
@@ -210,7 +210,7 @@ A readable cast:
 
 `hint` contains `tap the <name>`. `parts.hot[i].name` starts with that name.
 
-Validate check 8 reads the scene source, comments stripped, and requires the text `.name =`. A `name:` field passed to `folk` sets the name at runtime and does not satisfy the check. One `.name =` in the file is enough for the check. The search also matches a string that contains `.name =`, and a comparison such as `a.name == 'b'`, so those pass the check without assigning a name. Each hot group still needs its own `.name =` in the source for the read-out. A `name:` option does not count.
+Validate check 8 reads the scene source, comments stripped, and requires the text `.name =`. A `name:` field passed to `folk` sets the name at runtime and does not satisfy the check. One `.name =` in the file is enough for the check. The search also matches a string that contains `.name =`, and a comparison such as `a.name == 'b'`, so those pass the check without assigning a name. `.name =` in the source is only for check 8. `name:` is enough for the read-out.
 
 The toggled state is `c.active === thatRoot`. At `still + 0.5` seconds the two states must differ by a mass you can see at a glance: the ray, the dusk screens and lantern cores, the forge mouth and the hammer. Set `c.read` to a short status. Hover still shows the group's name, which is what the pointer check expects.
 
@@ -237,7 +237,7 @@ A phone tap lands on the first pixel the search finds, which is often the hat. A
 
 ## Page bytes
 
-The built page is at most 71680 bytes. An empty scene assembles to 64823, so 6857 bytes remain for the scene source. The kernel takes the rest. A longer `title` spends some of that, because the shell writes the title. `node scripts/build.mjs examples/<name>.js` prints the path and the byte count. `node scripts/validate.mjs` assembles the same page and, on a pass, prints how many bytes are left: `5 bytes left of 71680` on the forge, which is 71675. The other three leave 732 (windmill, page 70948), 1565 (lighthouse, 70115) and 597 (tea house, 71083).
+The built page is at most 71680 bytes. An empty scene assembles to 64823, so 6857 bytes remain for the scene source. That remainder assumes the default title, `Dither diorama`. The kernel takes the rest. A longer `title` spends some of that, because the shell writes the title. `node scripts/build.mjs examples/<name>.js` prints the path and the byte count. `node scripts/validate.mjs` assembles the same page and, on a pass, prints how many bytes are left: `5 bytes left of 71680` on the forge, which is 71675. The other three leave 732 (windmill, page 70948), 1565 (lighthouse, 70115) and 597 (tea house, 71083).
 
 Write tight when the remainder is small. No space after a comma or a colon. Materials from one string: `'meadow earth moss stone timber beam tile sail sack iron coal leaf cart paper'.split(' ')`. One box helper, `function(w,h,d,m,x,y,z,p,n,o,j){return Dither.seat(P.box(w,h,d,m,x,y,z,p),n,o,j);}`.
 
