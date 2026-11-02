@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
+import { SkillCompare } from "@/components/skill-compare";
 import { DITHER, ditherPage, ditherPoster } from "@/lib/dither";
 import { INSTALL_DITHER, REPO } from "@/lib/site";
 import "../worlds/worlds.css";
@@ -49,31 +50,7 @@ export default function DitherPage() {
       <div><h2 id="install-dither-title">A yard of your own.</h2><p>Name the yard, the one action, and the one thing a tap toggles. Dither gives your agent the finish, the support rule and the checks.</p></div>
       <div className="worlds-setup"><h3>Install Diorama Dither</h3><p>Install the Dither skill for your coding agent. It includes the finish on the Pixel kernel, four examples, a validator, a support check and browser checks. Built pages need nothing at all.</p><CodeRow code={INSTALL_DITHER} label="Copy Diorama Dither install command" /><blockquote>Use diorama-dither to build a stone forge in a mountain yard. The smith strikes the anvil, smoke leaves the chimney, and a mule waits with the cart.</blockquote><a href={REPO}>Open the Diorama repository <span aria-hidden="true">↗</span></a><p className="worlds-honest">Node.js 20+ runs the build and checks; Chrome or Chromium runs the look. See the <a href="/docs/dither">Dither guide</a> for setup, the support rule, the byte budget and embedding.</p></div>
     </section>
-    <section className="col worlds-choice" aria-labelledby="dither-choice-title">
-      <h2 id="dither-choice-title">Four skills. One Diorama.</h2>
-      <div className="worlds-comparison dither-compare">
-        <article>
-          <h3>Diorama SVG</h3>
-          <p>Lightweight SVG illustrations for interfaces, docs and empty states. Six themes, sharp at any size, no WebGL. Roughly 30–35 KB gzip.</p>
-          <a href="/svg">Explore SVG figures <span aria-hidden="true">↗</span></a>
-        </article>
-        <article>
-          <h3>Diorama Worlds</h3>
-          <p>Textured miniature settings, articulated people and shared action timelines. Three.js and WebGL 2; roughly 0.77 MB per standalone HTML.</p>
-          <a href="/worlds">Explore Worlds <span aria-hidden="true">↗</span></a>
-        </article>
-        <article>
-          <h3>Diorama Pixel</h3>
-          <p>Dithered pixel-art miniatures from the same kernel, at 320 by 240. An 8 by 8 Bayer matrix and a ground that dissolves into the page. About 55 KB.</p>
-          <a href="/pixel">Explore Pixel <span aria-hidden="true">↗</span></a>
-        </article>
-        <article>
-          <h3>Diorama Dither</h3>
-          <p>That kernel, with this finish: 360 by 280, a 4 by 4 ordered dither, a hard shadow and a yard that fills the frame. At most 70 KB.</p>
-          <p className="worlds-honest">You are here. Reduced motion holds the clock. The camera stays fixed.</p>
-        </article>
-      </div>
-    </section>
+    <SkillCompare id="dither-choice-title" current="dither" />
     <Footer />
   </main>;
 }
