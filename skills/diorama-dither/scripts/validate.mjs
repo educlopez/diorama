@@ -16,8 +16,9 @@
  *  6 kernel         the kernel in a built page is kit/dither.js, byte for byte.
  *  7 size           a scene of at most 260 lines. A .js is assembled into the
  *                   page, and that page is at most 71680 bytes, same <= as look.
- *                   If that build throws, the report is one line and the run
- *                   exits 1. No stack.
+ *                   A pass prints how many bytes are left of 71680. If that
+ *                   build throws, the report is one line and the run exits 1.
+ *                   No stack.
  *  8 pointer        parts.hot is set, the scene source contains `.name =`
  *                   (comments stripped; a name: field on folk does not count),
  *                   and a hint tells a visitor what to hover and tap.
@@ -41,7 +42,7 @@ export function partsOf(text) {
 
 export function validate(text) {
   const { kernel, scene, page } = partsOf(text.replace(/\r\n/g, "\n"));
-  const out = [], check = (n, label, ok, why) => out.push({ n, label, ok: !!ok, why: ok ? "" : why });
+  const out = [], check = (n, label, ok, why, note) => out.push({ n, label, ok: !!ok, why: ok ? "" : why, note: note || "" });
   const strip = scene.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:\\])\/\/[^\n]*/g, "$1");
 
   const calls = [...strip.matchAll(/\bPixel\.scene\s*\(\s*\{/g)];
@@ -81,8 +82,12 @@ export function validate(text) {
     }
   }
   const pageBytes = Buffer.byteLength(builtPage);
-  const why7 = lines > LINES ? `${lines} lines, limit ${LINES}` : pageBytes > PAGE_BYTES ? `built page ${pageBytes} bytes, limit ${PAGE_BYTES}` : "";
-  check(7, "size", !why7, why7);
+  const left = PAGE_BYTES - pageBytes;
+  const leftNote = `${left} bytes left of ${PAGE_BYTES}`;
+  const bits = [];
+  if (lines > LINES) bits.push(`${lines} lines, limit ${LINES}; ${leftNote}`);
+  if (pageBytes > PAGE_BYTES) bits.push(`built page ${pageBytes} bytes, limit ${PAGE_BYTES}; ${-left} bytes over`);
+  check(7, "size", !bits.length, bits.join("; "), leftNote);
 
   const hot = /\bhot\s*[:=]/.test(strip), named = /\.name\s*=/.test(strip);
   check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "the scene source needs .name = for the read-out; a name: option does not count" : "add a hint: what to hover, what to tap");
@@ -93,7 +98,10 @@ export function validate(text) {
 }
 
 export function report(results) {
-  for (const r of results) console.log(`${r.ok ? "ok  " : "FAIL"} ${r.n} ${r.label}${r.ok ? "" : ": " + r.why}`);
+  for (const r of results) {
+    const tail = r.ok ? (r.note ? ": " + r.note : "") : ": " + r.why;
+    console.log(`${r.ok ? "ok  " : "FAIL"} ${r.n} ${r.label}${tail}`);
+  }
   return results.every((r) => r.ok);
 }
 
