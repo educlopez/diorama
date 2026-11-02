@@ -1,6 +1,6 @@
 <h1 align="center">Diorama</h1>
 
-<p align="center"><b>Three agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Describe a place; get one self-contained offline HTML file.</p>
+<p align="center"><b>Four agent skills. Small worlds, made to move.</b><br>Diorama SVG builds lightweight interactive illustrations. Diorama Worlds builds detailed miniature stories with articulated people and four live finishes. Diorama Pixel builds dithered pixel-art miniatures with no dependency. Diorama Dither builds yards on the Pixel kernel, with a harder dither finish. Describe a place; get one self-contained offline HTML file.</p>
 
 <p align="center">
   <a href="https://dioramas.dev"><img src="https://img.shields.io/badge/site-dioramas.dev-1b1b19?style=flat-square" alt="Site: dioramas.dev"></a>
@@ -26,17 +26,17 @@
 
 ## Choose your skill
 
-| | Diorama SVG | Diorama Worlds | Diorama Pixel |
-|---|---|---|---|
-| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards |
-| Renderer | Dependency-free SVG | Three.js / WebGL 2 | Dependency-free software rasterizer on a 2D canvas |
-| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures |
-| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment |
-| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page |
-| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) |
-| Guide | [SVG guide](https://dioramas.dev/docs) | [Worlds guide](https://dioramas.dev/docs/worlds) | [Pixel guide](https://dioramas.dev/docs/pixel) |
+| | Diorama SVG | Diorama Worlds | Diorama Pixel | Diorama Dither |
+|---|---|---|---|---|
+| Best for | UI, docs, empty states and interactive illustrations | Detailed miniature places with one coordinated story | Cozy pixel-art vignettes for pages, posts and cards | A yard that fills the frame: one structure, one action, one tap |
+| Renderer | Dependency-free SVG | Three.js / WebGL 2 | Dependency-free software rasterizer on a 2D canvas | The Pixel kernel, plus the dither finish |
+| Look | Six tunable themes | Miniature, pixel, halftone, blueprint | Pixel art: 320 x 240, Bayer dithering, procedural textures | 360 x 280, 4 x 4 ordered dither, hard shadow |
+| Examples | 18 SVG figures | 4 original showcase scenes; 3 additional regression subjects | 3 scenes: a flower stall, a pier, an allotment | 4 scenes: a forge, a lighthouse, a tea house, a windmill |
+| Ground | Illustrated rounded base | Flat irregular cutout; slab only when requested | Irregular ground that dissolves into the page | A yard or a shore that fills the frame |
+| Output | One offline HTML, ~30–35 KB gzip | One offline HTML, ~0.77 MB uncompressed | One offline HTML, ~50 KB uncompressed (~16 KB gzip) | One offline HTML, at most 70 KB uncompressed |
+| Guide | [SVG guide](https://dioramas.dev/docs) | [Worlds guide](https://dioramas.dev/docs/worlds) | [Pixel guide](https://dioramas.dev/docs/pixel) | [Dither guide](https://dioramas.dev/docs/dither) |
 
-The file sizes use different measures; they are not a like-for-like benchmark. Install one skill, two or all three. They do not share renderers or dependencies.
+The file sizes use different measures; they are not a like-for-like benchmark. Install any one of them. SVG, Worlds and Pixel do not share a renderer. Dither reuses the Pixel kernel and adds its own finish; it does not use the Worlds renderer.
 
 <p align="center"><img src="apps/site/public/worlds/posters/flat-ground-1/florist.png" width="720" alt="Diorama Worlds: a florist and customer in an animated flower stall with flat irregular ground, no display platform."></p>
 
@@ -72,7 +72,17 @@ npx skills add educlopez/diorama --skill diorama-pixel -g
 /diorama-pixel a tiny bakery front at dawn, the baker carrying a tray of loaves out to a stall, for our blog header
 ```
 
-In agents without slash commands, ask “Use the diorama skill…”, “Use the diorama-worlds skill…” or “Use the diorama-pixel skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
+**Diorama Dither** — yards on the Pixel kernel, with a harder finish:
+
+```sh
+npx skills add educlopez/diorama --skill diorama-dither -g
+```
+
+```text
+/diorama-dither a stone forge in a mountain yard, the smith striking the anvil, smoke leaving the chimney, a mule waiting with the cart
+```
+
+In agents without slash commands, ask “Use the diorama skill…”, “Use the diorama-worlds skill…”, “Use the diorama-pixel skill…” or “Use the diorama-dither skill…”. Add `-a claude-code` or `-a codex` to target one agent; omit `-g` to install in the current project. Restart/reload the agent if it does not discover the installed skill immediately.
 
 Each skill lives in its own folder under `skills/`. `npx skills add educlopez/diorama` without `--skill` lists them all and lets you pick; `npx skills add educlopez/diorama --list` prints them without installing.
 
@@ -230,7 +240,7 @@ Everything below lives in `skills/diorama/`, the folder the skills CLI installs.
 
 ## Site
 
-`apps/site` is [dioramas.dev](https://dioramas.dev): the landing, the SVG, Worlds and Pixel pages and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/examples` with the skill's own build, so the pages show the real figures live, with a theme switcher on each.
+`apps/site` is [dioramas.dev](https://dioramas.dev): the landing, the SVG, Worlds, Pixel and Dither pages and the docs, a Next.js app with Tailwind. Its prebuild writes every example into `public/` with the skill's own build, so the pages show the real figures live, with a theme switcher on each SVG figure.
 
 ```sh
 cd apps/site && npm install && npm run dev
@@ -265,6 +275,20 @@ node skills/diorama-pixel/scripts/look.mjs skills/diorama-pixel/examples/pier.js
 ```
 
 Built pages are about 50 KB and make no network request. The look command (Playwright, a dev dependency of the skill only) writes the still, four loop moments, hover, press and mobile captures and checks motion, the loop seam, picking, reduced motion and frame cost. It is a different thing from the Worlds `pixel` finish, which renders the Worlds Three.js scene at low resolution: Pixel trades articulated contact poses for textured surfaces, a dissolving ground and a page fifteen times smaller. The site's `/pixel` page shows the three examples live.
+
+## Diorama Dither
+
+A fourth skill, [`diorama-dither`](skills/diorama-dither/SKILL.md), builds isometric yards on the Pixel kernel. The kernel file stays fixed. The finish draws at 360 by 280, twelve frames a second, with five close tones, a 4 by 4 ordered dither and one hard shadow that darkens the ground's own colour. The yard or the shore fills the frame. One or two people do one looping action, and a tap toggles one state. A lamp is a paper box. A beam is a thin box of hard pixels. A scene stays at or under 260 lines, and the built page at or under 71680 bytes. Every solid meets a surface, or names why it does not: `npm run support`.
+
+```sh
+node skills/diorama-dither/scripts/build.mjs skills/diorama-dither/examples/forge.js dither-forge.html
+node skills/diorama-dither/scripts/validate.mjs skills/diorama-dither/examples/forge.js
+npm run support --prefix skills/diorama-dither
+npm ci --ignore-scripts --prefix skills/diorama-dither
+node skills/diorama-dither/scripts/look.mjs skills/diorama-dither/examples/forge.js work/forge-look
+```
+
+Built pages make no network request. The look command writes the still, four loop moments, hover, press, mobile and figure zooms, and checks the support rule, hard shadows, the loop and the frame cost. It is not the Worlds pixel finish, and it is not a second copy of Pixel: Pixel keeps 320 by 240, an 8 by 8 Bayer matrix and a ground that dissolves into the page. The site's `/dither` page shows the four examples live: a forge, a lighthouse, a tea house and a windmill.
 
 ## SVG limits
 

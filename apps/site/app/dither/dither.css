@@ -1,0 +1,8 @@
+/* The pixel gallery, with this finish's frame. No extra shadow. */
+.dither-page .pixel-live { aspect-ratio: 360 / 280; }
+.dither-page .pixel-scene { scroll-margin-top: 24px; }
+.dither-page .nav-menu a[href="/dither"] { min-height: 44px; }
+.dither-page .dither-compare { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 760px) {
+  .dither-page .dither-compare { grid-template-columns: 1fr; }
+}
