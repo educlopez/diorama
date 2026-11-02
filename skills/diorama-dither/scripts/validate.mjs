@@ -90,7 +90,7 @@ export function validate(text) {
   check(7, "size", !bits.length, bits.join("; "), leftNote);
 
   const hot = /\bhot\s*[:=]/.test(strip), named = /\.name\s*=/.test(strip);
-  check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "the scene source needs .name = for the read-out; a name: option does not count" : "add a hint: what to hover, what to tap");
+  check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "the scene source needs .name = for check 8" : "add a hint: what to hover, what to tap");
 
   const three = /\bTHREE\.\w+|Three\.js Authors|getContext\s*\(\s*["']webgl/.test(whole);
   check(9, "renderer", !three, "three.js or WebGL found: the kernel draws on a 2D canvas");

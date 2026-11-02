@@ -67,7 +67,7 @@ These live on `Dither` and do not run for a pixel scene:
 - `sway(P, node, base, t, amp, phase)` for plants. `carry(q)` for a lift that rests at both ends of the loop.
 - `seat(node, name, on, join)` and `afloat(node, name, reason)`. Every solid mesh declares one, or sits inside a group that does and actually meets it. See Support.
 
-Check 8 of `validate` searches the scene source for `.name =`, comments stripped. A `name:` field on `folk` does not match that search. `folk` already sets `root.name` from `name:`, and that is enough for the read-out. `.name =` in the source is only for check 8. One `.name =` in the file passes the check. A string that contains `.name =`, or a comparison `a.name == 'b'`, matches too, without assigning a name. `parts.hot` lists them. The `hint` says what to hover and names the tap target with the words `tap the <name>`.
+Check 8 of `validate` requires the text `.name =` in the scene source, comments stripped, for each hot group. `parts.hot` lists them. `name:` is enough for the read-out: `folk` sets `root.name` from it. `name:` does not satisfy check 8. One `.name =` in the file passes the search. A string that contains `.name =`, or a comparison `a.name == 'b'`, matches too, without assigning a name. The `hint` says what to hover and names the tap target with the words `tap the <name>`.
 
 ## Halt
 
