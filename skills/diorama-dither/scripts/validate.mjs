@@ -14,7 +14,7 @@
  *                   <script src>, <link href> or url() in the page or the scene.
  *  5 no URLs        no http(s) address anywhere in the page or the scene.
  *  6 kernel         the kernel in a built page is kit/dither.js, byte for byte.
- *  7 size           a scene of at most 260 lines; a built page of at most 70 KB.
+ *  7 size           a scene of at most 260 lines; a built page of at most 71680 bytes.
  *  8 pointer        parts.hot is set, each hot group has a .name, and a hint
  *                   tells a visitor what to hover and tap.
  *  9 renderer       no three.js and no WebGL: the kernel draws on a 2D canvas.

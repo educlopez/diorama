@@ -547,7 +547,7 @@ try {
 } finally {
   await browser.close();
 }
-check("size: built page under 70 KB", bytes < 70 * 1024, bytes);
+check("size: built page at most 71680 bytes", bytes <= 70 * 1024, bytes);
 check("no browser errors", report.errors.length === 0, report.errors);
 check("offline: no network request", report.network.length === 0, report.network);
 writeFileSync(join(outdir, `${name}-look.json`), JSON.stringify(report, null, 2) + "\n");

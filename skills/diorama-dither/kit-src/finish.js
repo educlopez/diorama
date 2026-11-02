@@ -118,7 +118,7 @@ var Dither = (function () {
       hat: opt.hat ? wear(opt.hat) : undefined,
       shoes: wear(opt.shoes || '#2a2420'), sleeve: wear(opt.sleeve || shirt)
     });
-    var k = who.k, lift = .01 * k, on = opt.on, y = lift, top;
+    var k = who.k, lift = .01 * k, on = opt.on, y = 0, top;
     who.root.name = opt.name || '';
     who.root.figure = true;
     who.root.stand = [x, z];

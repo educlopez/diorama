@@ -950,7 +950,7 @@ async function runKit() {
     }
     console.log("ok negative: gate height");
     const sole = kit.sole;
-    const soleOk = sole && Math.abs(sole.ground) < 1e-6 && Math.abs(sole.feet - sole.deck) < 1e-6 && sole.onDeck;
+    const soleOk = sole && sole.ground < 0 && sole.ground > -.01 && Math.abs(sole.feet - sole.deck) < 1e-6 && sole.onDeck;
     if (!soleOk) {
       console.log("FAIL negative: figure sole");
       console.log(JSON.stringify(sole));
