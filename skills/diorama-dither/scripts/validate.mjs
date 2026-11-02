@@ -14,13 +14,15 @@
  *                   <script src>, <link href> or url() in the page or the scene.
  *  5 no URLs        no http(s) address anywhere in the page or the scene.
  *  6 kernel         the kernel in a built page is kit/dither.js, byte for byte.
- *  7 size           a scene of at most 260 lines; a built page of at most 71680 bytes.
+ *  7 size           a scene of at most 260 lines. A .js is assembled into the
+ *                   page, and that page is at most 71680 bytes, same <= as look.
  *  8 pointer        parts.hot is set, each hot group has a .name, and a hint
  *                   tells a visitor what to hover and tap.
  *  9 renderer       no three.js and no WebGL: the kernel draws on a 2D canvas.
  */
 import { readFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { assemble } from "./build.mjs";
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 export const kernelSource = () => readFileSync(here("../kit/dither.js"), "utf8").replace(/\r\n/g, "\n").trim();
@@ -66,8 +68,10 @@ export function validate(text) {
 
   check(6, "kernel", !page || kernel === kernelSource(), "the page's kernel differs from kit/dither.js: rebuild with scripts/build.mjs");
 
-  const lines = scene.split("\n").length, bytes = Buffer.byteLength(text);
-  check(7, "size", lines <= LINES && (!page || bytes <= PAGE_BYTES), lines > LINES ? `${lines} lines, limit ${LINES}` : `${bytes} bytes, limit ${PAGE_BYTES}`);
+  const lines = scene.split("\n").length;
+  const pageBytes = page ? Buffer.byteLength(text) : Buffer.byteLength(assemble(scene));
+  const why7 = lines > LINES ? `${lines} lines, limit ${LINES}` : pageBytes > PAGE_BYTES ? `built page ${pageBytes} bytes, limit ${PAGE_BYTES}` : "";
+  check(7, "size", !why7, why7);
 
   const hot = /\bhot\s*[:=]/.test(strip), named = /\.name\s*=/.test(strip);
   check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "give each hot group a .name for the read-out" : "add a hint: what to hover, what to tap");

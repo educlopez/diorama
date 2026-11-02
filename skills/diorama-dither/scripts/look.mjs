@@ -46,7 +46,8 @@ try {
     shadow: window.__dither.spec.shadow || "none",
     snow: !!(window.__dither.spec.materials && window.__dither.spec.materials.snow && window.__dither.spec.materials.snow.ground),
     hint: window.__dither.spec.hint || "", fps: window.__dither.spec.fps == null ? 12 : window.__dither.spec.fps,
-    w: document.getElementById("stage").width, h: document.getElementById("stage").height
+    w: document.getElementById("stage").width, h: document.getElementById("stage").height,
+    folkZoom: Array.isArray(window.__dither.spec.folkZoom) && window.__dither.spec.folkZoom.length ? window.__dither.spec.folkZoom : ["miller", "carter"]
   }));
   const pixels = () => page.evaluate(() => { const c = document.getElementById("stage"); return Array.from(c.getContext("2d").getImageData(0, 0, c.width, c.height).data); });
   const shot = async (label, locator) => {
@@ -144,7 +145,7 @@ try {
   check("scale: the canvas enlarges by a whole number of pixels", scale.rw >= 1 && Math.abs(scale.rw - Math.round(scale.rw)) < 1e-6 && Math.abs(scale.rh - Math.round(scale.rh)) < 1e-6, scale);
   check("touch-action: manipulation", scale.touch === "manipulation", scale.touch);
 
-  const zooms = await page.evaluate(({ stillT, familyBody }) => {
+  const zooms = await page.evaluate(({ stillT, familyBody, folkZoom }) => {
     const rt = window.__dither.runtime, c = document.getElementById("stage");
     const W = c.width, H = c.height, g = c.getContext("2d");
     const grab = (t) => { rt.renderAt(t); return g.getImageData(0, 0, W, H).data; };
@@ -182,7 +183,7 @@ try {
       if (!hit) return null;
       return { x: Math.round((hit[0] + 1) / 2 * W - 32), y: Math.round((hit[1] + 1) / 2 * H - 46) };
     }
-    const fig = folkBox("miller"), carterBox = folkBox("carter");
+    const fig = folkBox(folkZoom[0]), carterBox = folkBox(folkZoom[1] || "");
     const linen = (d, p) => {
       const r = d[p], g = d[p + 1], b = d[p + 2];
       return r > 155 && g > 135 && b > 105 && r < 230 && Math.abs(r - g) < 36 && g > b + 8 && r > b + 16;
@@ -335,7 +336,7 @@ try {
       waterHard: brief(waterHard),
       cold0: brief(cold0)
     };
-  }, { stillT: meta.still, familyBody: fnBody(groundFamily) });
+  }, { stillT: meta.still, familyBody: fnBody(groundFamily), folkZoom: meta.folkZoom });
   for (const [label, url] of [["zoom-edge", zooms.edge], ["zoom-figure", zooms.figure], ["zoom-carter", zooms.carter], ["zoom-sail", zooms.sail], ["zoom-shadow", zooms.shadow], ["mini", zooms.mini.url]]) {
     if (!url) continue;
     const path = join(outdir, `${name}-${label}.png`);
