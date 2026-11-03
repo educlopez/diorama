@@ -1,0 +1,16 @@
+{
+  "name": "diorama-dither",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "validate": "node scripts/validate.mjs",
+    "look": "node scripts/look.mjs",
+    "record": "node scripts/record.mjs",
+    "support": "node scripts/support.mjs && node scripts/support.mjs --negative && node scripts/support.mjs --water"
+  },
+  "devDependencies": {
+    "playwright-core": "1.64.1"
+  }
+}
