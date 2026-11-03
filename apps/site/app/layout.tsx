@@ -43,7 +43,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
-        <Analytics />
+        {/* The insights script is served by Vercel. next start has no /_vercel/insights route, so the production-site check 404s it. */}
+        {process.env.VERCEL === "1" ? <Analytics /> : null}
       </body>
     </html>
   );
