@@ -11,4 +11,3 @@
 .pixel-meta span{font-variant-numeric:tabular-nums;padding:4px 0}
 .pixel-meta a{display:inline-flex;align-items:center;min-height:44px;text-underline-offset:4px;color:var(--color-text)}
 @media(max-width:760px){.pixel-gallery{grid-template-columns:1fr;gap:40px}.pixel-caption{flex-direction:column;gap:8px}.pixel-meta{flex-direction:row;flex-wrap:wrap;align-items:center;gap:0 16px}}
-.pixel-page .nav-menu a[href="/pixel"]{min-height:44px}
