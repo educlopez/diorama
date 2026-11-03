@@ -85,12 +85,12 @@ export function validate(text) {
   const left = PAGE_BYTES - pageBytes;
   const leftNote = `${left} bytes left of ${PAGE_BYTES}`;
   const bits = [];
-  if (lines > LINES) bits.push(`${lines} lines, limit ${LINES}; ${leftNote}`);
+  if (lines > LINES) bits.push(pageBytes > PAGE_BYTES ? `${lines} lines, limit ${LINES}` : `${lines} lines, limit ${LINES}; ${leftNote}`);
   if (pageBytes > PAGE_BYTES) bits.push(`built page ${pageBytes} bytes, limit ${PAGE_BYTES}; ${-left} bytes over`);
   check(7, "size", !bits.length, bits.join("; "), leftNote);
 
   const hot = /\bhot\s*[:=]/.test(strip), named = /\.name\s*=/.test(strip);
-  check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "the scene source needs .name = for the read-out; a name: option does not count" : "add a hint: what to hover, what to tap");
+  check(8, "pointer", hot && named && !!hint, !hot ? "set parts.hot to the groups the pointer may pick" : !named ? "the scene source needs .name = for check 8" : "add a hint: what to hover, what to tap");
 
   const three = /\bTHREE\.\w+|Three\.js Authors|getContext\s*\(\s*["']webgl/.test(whole);
   check(9, "renderer", !three, "three.js or WebGL found: the kernel draws on a 2D canvas");
