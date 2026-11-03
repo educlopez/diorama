@@ -140,7 +140,7 @@ export default function Page() {
             <div className="made-posters">
               {shown.map((fig) => (
                 <a key={fig.name} className="card made-poster" href={`/svg#${fig.name}`}>
-                  <span className="made-poster-art"><Image src={svgPoster(fig.name)} alt="" fill sizes="(max-width: 520px) 92vw, (max-width: 767px) 46vw, 224px" unoptimized /></span>
+                  <span className="made-poster-art"><Image src={svgPoster(fig.name)} alt="" fill sizes="(max-width: 520px) 92vw, (max-width: 767px) 46vw, 224px" /></span>
                   <span className="made-poster-name">{fig.title ?? fig.name}<span className="sr-only">, SVG</span></span>
                 </a>
               ))}
