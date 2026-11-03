@@ -15,9 +15,11 @@ export function CodeRow({ code, label }: { code: string; label?: string }) {
   const copy = async () => {
     try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1400); } catch {}
   };
+  const skill = code.indexOf(" --skill ");
+  const shown = skill < 0 ? code : <>{code.slice(0, skill)} <span className="code-keep">{code.slice(skill + 1)}</span></>;
   return (
     <div className="code-row" data-install>
-      <code>{code}</code>
+      <code>{shown}</code>
       <button type="button" className="copy-btn" onClick={copy} aria-label={label ?? "Copy command"} data-copied={copied}>{copied ? <Check /> : <Copy />}</button>
     </div>
   );
