@@ -21,7 +21,7 @@ export function SkillCompare({ id, current }: { id: string; current: "worlds" | 
         </article>
         <article>
           <h3>Diorama Dither</h3>
-          <p>That same kernel, with this finish: 360 by 280, a 4 by 4 ordered dither, a hard shadow and a yard that fills the frame. At most 70 KB.</p>
+          <p>The Pixel kernel, with this finish: 360 by 280, a 4 by 4 ordered dither, a hard shadow and a yard that fills the frame. At most 70 KB.</p>
           {current === "dither" ? <p className="worlds-honest">You are here. Reduced motion holds the clock. The camera stays fixed.</p> : <a href="/dither">Explore Dither <span aria-hidden="true">↗</span></a>}
         </article>
       </div>
