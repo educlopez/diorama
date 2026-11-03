@@ -241,3 +241,24 @@ code.chip-code, .prose code { font-family: var(--font-mono); font-size: 12.5px; 
 
 /* Four skill paths share the 4/3 art box (16/10 on a narrow screen) so each row lines up. */
 .skill-path--pixel .skill-path-art img,.skill-path--dither .skill-path-art img{image-rendering:pixelated}
+
+/* Home strip: one band per skill. Posters reuse the card outline; the picture has no second ring. */
+.made-skills{display:flex;flex-direction:column;gap:48px}
+.made-head{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;min-height:44px;margin:0 0 16px}
+.made-id{display:flex;align-items:baseline;gap:12px;min-width:0;flex-wrap:wrap}
+.made-head h3{margin:0;font-size:18px;font-weight:500;letter-spacing:-.02em;line-height:24px}
+.made-count{margin:0;font-size:13px;line-height:18px;color:var(--color-muted)}
+.made-head a{display:inline-flex;align-items:center;gap:6px;flex:none;min-height:44px;padding:0 2px;font-size:13px;font-weight:500;line-height:18px;text-decoration:none}
+.made-head a svg{width:14px;height:14px}
+.made-head a:focus-visible,.made-poster:focus-visible{outline:2px solid var(--color-text);outline-offset:3px}
+.made-posters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.made-poster{display:flex;flex-direction:column;min-width:0;padding:8px 8px 0;text-decoration:none;color:inherit}
+.made-poster-art{position:relative;display:block;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:transparent}
+.made-poster-art img{object-fit:contain}
+.made-poster--pixels img{image-rendering:pixelated}
+.made-poster-name{display:flex;align-items:center;min-height:44px;padding:0 6px;font-size:13px;font-weight:500;line-height:18px;overflow-wrap:break-word}
+@media(max-width:767px){.made-skills{gap:36px}.made-posters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media(max-width:520px){
+  .made-head{flex-direction:column;align-items:flex-start;gap:0;margin-bottom:12px}
+  .made-posters > :last-child:nth-child(odd){grid-column:1 / -1}
+}

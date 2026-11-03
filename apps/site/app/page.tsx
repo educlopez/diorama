@@ -3,10 +3,11 @@ import { Arrow, Footer, Topbar } from "@/components/chrome";
 import { CodeRow } from "@/components/install";
 import { FIGURES, byName } from "@/lib/figures";
 import Image from "next/image";
-import { WORLD_POSTER_REVISION } from "@/lib/worlds";
+import { WORLDS, WORLD_POSTER_REVISION } from "@/lib/worlds";
 import { DITHER, ditherPoster } from "@/lib/dither";
 import { AUTHOR, INSTALL, INSTALL_DITHER, INSTALL_PIXEL, INSTALL_WORLDS, REPO, SITE, THEMES } from "@/lib/site";
 import { PIXEL, pixelPoster } from "@/lib/pixel";
+import { svgPoster } from "@/lib/svg-posters";
 import { RELEASE_VIDEO } from "@/lib/seo";
 import pkg from "../package.json";
 
@@ -40,7 +41,12 @@ const JSON_LD = {
   ],
 };
 
-const STRIP = ["island", "launchpad", "cafe", "server", "mailbox", "desk"];
+/** Three figures shown as still posters. The live town stays in the section above. */
+const SHOW = ["island", "launchpad", "cafe"] as const;
+
+function MadeLink({ href, children }: { href: string; children: string }) {
+  return <a href={href}>{children} <Arrow /></a>;
+}
 
 const PLAYS = [
   ["Move the pointer", "The camera tilts a few degrees toward it and settles back on a spring. Nothing is a video: every frame is drawn as you watch."],
@@ -50,12 +56,13 @@ const PLAYS = [
 ] as const;
 
 /**
- * The home: who made what, one figure to play with and how, a strip of the
- * rest, the install line, three steps and a few answers.
+ * The home: four skills, one SVG figure to play with, then a few pieces from
+ * each skill. Worlds, Pixel and Dither stay as posters so the home does not
+ * load their scenes.
  */
 export default function Page() {
   const town = byName("town");
-  const strip = STRIP.map(byName);
+  const shown = SHOW.map(byName);
   return (
     <main id="main" className="app">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
@@ -104,7 +111,7 @@ export default function Page() {
       <section className="section" id="play" aria-labelledby="play-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
           <h2 className="steps-title" id="play-title">Try an SVG figure.<br /><span className="steps-title-dim">It answers the pointer</span></h2>
-          <p className="steps-lede">This is the town, an example from the SVG skill, as the agent wrote it: one file, no build step. Try it before reading on.</p>
+          <p className="steps-lede">The town is one example from the SVG skill: one file, no build step, and it answers the pointer. Worlds, Pixel and Dither are the other three skills, and each has its own page. The next section shows all four.</p>
         </div>
         <div className="cards">
           <FigureCard fig={town} index={1} full />
@@ -121,14 +128,66 @@ export default function Page() {
 
       <section className="section" id="components" aria-labelledby="made-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
-          <h2 className="steps-title" id="made-title">Made with Diorama SVG.<br /><span className="steps-title-dim">Heroes, cards and minis</span></h2>
-          <p className="steps-lede">Three sizes, six themes, and a different place each time: an island, a launchpad, a coffee bar, a server, a mailbox, a desk. The gallery has all {FIGURES.length}, live.</p>
+          <h2 className="steps-title" id="made-title">Made with Diorama.<br /><span className="steps-title-dim">Figures and stills</span></h2>
+          <p className="steps-lede">SVG, Worlds, Pixel and Dither are still posters: {FIGURES.length} figures, {WORLDS.length} Worlds, {PIXEL.length} Pixel and {DITHER.length} Dither. Open a skill to watch every one move.</p>
         </div>
-        <div className="cards">
-          {strip.map((fig, i) => <FigureCard key={fig.name} fig={fig} index={FIGURES.indexOf(fig) + 1} chips={false} lazy />)}
-        </div>
-        <div className="cta-row" style={{ marginTop: 28 }}>
-          <a className="btn btn--secondary" href="/svg">Open the gallery <Arrow /></a>
+        <div className="made-skills">
+          <section aria-labelledby="made-svg">
+            <div className="made-head">
+              <div className="made-id"><h3 id="made-svg">SVG</h3><p className="made-count">{FIGURES.length} figures · {THEMES.length} themes</p></div>
+              <MadeLink href="/svg">Explore figures</MadeLink>
+            </div>
+            <div className="made-posters">
+              {shown.map((fig) => (
+                <a key={fig.name} className="card made-poster" href={`/svg#${fig.name}`}>
+                  <span className="made-poster-art"><Image src={svgPoster(fig.name)} alt="" fill sizes="(max-width: 520px) 92vw, (max-width: 767px) 46vw, 224px" /></span>
+                  <span className="made-poster-name">{fig.title ?? fig.name}<span className="sr-only">, SVG</span></span>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section aria-labelledby="made-worlds">
+            <div className="made-head">
+              <div className="made-id"><h3 id="made-worlds">Worlds</h3><p className="made-count">{WORLDS.length} scenes</p></div>
+              <MadeLink href="/worlds">Explore Worlds</MadeLink>
+            </div>
+            <div className="made-posters">
+              {WORLDS.map((world) => (
+                <a key={world.name} className="card made-poster" href="/worlds">
+                  <span className="made-poster-art"><Image src={`/worlds/posters/${WORLD_POSTER_REVISION}/${world.name}.png`} alt="" fill sizes="(max-width: 767px) 46vw, 224px" /></span>
+                  <span className="made-poster-name">{world.place}<span className="sr-only">, Worlds</span></span>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section aria-labelledby="made-pixel">
+            <div className="made-head">
+              <div className="made-id"><h3 id="made-pixel">Pixel</h3><p className="made-count">{PIXEL.length} scenes</p></div>
+              <MadeLink href="/pixel">Explore Pixel</MadeLink>
+            </div>
+            <div className="made-posters">
+              {PIXEL.map((scene) => (
+                <a key={scene.name} className="card made-poster made-poster--pixels" href={`/pixel#${scene.name}`}>
+                  <span className="made-poster-art"><Image src={pixelPoster(scene.name)} alt="" fill sizes="(max-width: 520px) 92vw, (max-width: 767px) 46vw, 224px" unoptimized /></span>
+                  <span className="made-poster-name">{scene.title}<span className="sr-only">, Pixel</span></span>
+                </a>
+              ))}
+            </div>
+          </section>
+          <section aria-labelledby="made-dither">
+            <div className="made-head">
+              <div className="made-id"><h3 id="made-dither">Dither</h3><p className="made-count">{DITHER.length} scenes</p></div>
+              <MadeLink href="/dither">Explore Dither</MadeLink>
+            </div>
+            <div className="made-posters">
+              {DITHER.map((scene) => (
+                <a key={scene.name} className="card made-poster made-poster--pixels" href={`/dither#${scene.name}`}>
+                  <span className="made-poster-art"><Image src={ditherPoster(scene.name)} alt="" fill sizes="(max-width: 767px) 46vw, 224px" unoptimized /></span>
+                  <span className="made-poster-name">{scene.title}<span className="sr-only">, Dither</span></span>
+                </a>
+              ))}
+            </div>
+          </section>
         </div>
       </section>
 
