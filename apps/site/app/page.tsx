@@ -40,7 +40,7 @@ const JSON_LD = {
   ],
 };
 
-/** Three of the figures the home used to show live. One row of the existing card grid. */
+/** Three figures shown as still posters. The live town stays in the section above. */
 const SHOW = ["island", "launchpad", "cafe"] as const;
 
 function MadeLink({ href, children }: { href: string; children: string }) {
@@ -128,7 +128,7 @@ export default function Page() {
       <section className="section" id="components" aria-labelledby="made-title" style={{ scrollMarginTop: 24 }}>
         <div className="steps-head">
           <h2 className="steps-title" id="made-title">Made with Diorama.<br /><span className="steps-title-dim">Figures and stills</span></h2>
-          <p className="steps-lede">SVG keeps {SHOW.length} figures live, from {FIGURES.length} in the gallery. Worlds, Pixel and Dither are still posters: {WORLDS.length}, {PIXEL.length} and {DITHER.length} scenes. Open a skill to watch every one move.</p>
+          <p className="steps-lede">SVG, Worlds, Pixel and Dither are still posters: {FIGURES.length} figures, {WORLDS.length} Worlds, {PIXEL.length} Pixel and {DITHER.length} Dither. Open a skill to watch every one move.</p>
         </div>
         <div className="made-skills">
           <section aria-labelledby="made-svg">
@@ -136,8 +136,13 @@ export default function Page() {
               <div className="made-id"><h3 id="made-svg">SVG</h3><p className="made-count">{FIGURES.length} figures · {THEMES.length} themes</p></div>
               <MadeLink href="/svg">Explore figures</MadeLink>
             </div>
-            <div className="cards">
-              {shown.map((fig) => <FigureCard key={fig.name} fig={fig} index={FIGURES.indexOf(fig) + 1} chips={false} lazy />)}
+            <div className="made-posters">
+              {shown.map((fig) => (
+                <a key={fig.name} className="card made-poster" href={`/svg#${fig.name}`}>
+                  <span className="made-poster-art"><Image src={`/tiles/${fig.name}.png`} alt="" fill sizes="(max-width: 520px) 92vw, (max-width: 767px) 46vw, 224px" /></span>
+                  <span className="made-poster-name">{fig.title ?? fig.name}<span className="sr-only">, SVG</span></span>
+                </a>
+              ))}
             </div>
           </section>
           <section aria-labelledby="made-worlds">
