@@ -253,7 +253,7 @@ code.chip-code, .prose code { font-family: var(--font-mono); font-size: 12.5px; 
 .made-head a:focus-visible,.made-poster:focus-visible{outline:2px solid var(--color-text);outline-offset:3px}
 .made-posters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .made-poster{display:flex;flex-direction:column;min-width:0;padding:8px 8px 0;text-decoration:none;color:inherit}
-.made-poster-art{position:relative;display:block;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--color-stage)}
+.made-poster-art{position:relative;display:block;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:transparent}
 .made-poster-art img{object-fit:contain}
 .made-poster--pixels img{image-rendering:pixelated}
 .made-poster-name{display:flex;align-items:center;min-height:44px;padding:0 6px;font-size:13px;font-weight:500;line-height:18px;overflow-wrap:break-word}
