@@ -2,6 +2,20 @@
 
 All notable changes to Diorama are listed here. The versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes. From 1.0.0 on, [release-please](https://github.com/googleapis/release-please) writes each new section from the pull requests merged since the last version (`feat:` under Added, `fix:` under Fixed, `perf:` and `refactor:` under Changed, `docs:` under Documentation) and opens the release pull request that publishes it.
 
+## [1.4.0](https://github.com/educlopez/diorama/compare/v1.3.0...v1.4.0) (2026-11-03)
+
+
+### Added
+
+* **diorama-dither:** phase 0, four yards ([#33](https://github.com/educlopez/diorama/issues/33)) ([de54daa](https://github.com/educlopez/diorama/commit/de54daa7fca16129c951f9a5b58e5b605f9fff5d))
+* **site:** add the dither landing and guide ([#41](https://github.com/educlopez/diorama/issues/41)) ([76bbfd6](https://github.com/educlopez/diorama/commit/76bbfd6aa3517e8e066b504d9a16ad8c2d93fdd6))
+
+
+### Fixed
+
+* **site:** la home muestra las cuatro skills, no solo SVG ([#43](https://github.com/educlopez/diorama/issues/43)) ([47d2bbf](https://github.com/educlopez/diorama/commit/47d2bbf3518ed74e612e188109f3c23d96fff308))
+* skip Vercel Analytics outside Vercel ([#39](https://github.com/educlopez/diorama/issues/39)) ([45ae182](https://github.com/educlopez/diorama/commit/45ae182fa94d3d6568fcf83cfb25957f0a4cb6fc))
+
 ## [1.3.0](https://github.com/educlopez/diorama/compare/v1.2.0...v1.3.0) (2026-10-21)
 
 
