@@ -25,7 +25,7 @@ export default function PixelPage() {
     </header>
     <section className="col pixel-gallery" aria-label="Live pixel scenes">
       {PIXEL.map((s, i) => (
-        <article key={s.name} className={`pixel-scene${i === 0 ? " pixel-scene--lead" : ""}`}>
+        <article key={s.name} id={s.name} className={`pixel-scene${i === 0 ? " pixel-scene--lead" : ""}`}>
           <div className="pixel-live">
             <img className="pixel-poster" src={pixelPoster(s.name)} alt="" width={960} height={720} loading={i === 0 ? "eager" : "lazy"} />
             <iframe src={pixelPage(s.name)} title={`${s.title}, animated pixel scene`} loading={i === 0 ? "eager" : "lazy"} />
