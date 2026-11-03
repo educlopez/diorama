@@ -22,17 +22,21 @@ const mark = readFileSync(join(SITE, "public/icon.svg"), "utf8").match(/ d="([^"
 const INSTALL = "npx skills add educlopez/diorama";
 
 const CARDS = [
-  { route: "", title: ["Small worlds.", "Made to move."], sub: "Three agent skills for animated isometric illustrations.", scenes: ["tiles/town-home.png", "worlds/posters/flat-ground-1/florist.png", "pixel/posters/v1/flower-stall.png"], alt: "Diorama: a small SVG town, a 3D flower stall and a pixel-art flower stall, three skills for animated isometric illustrations." },
+  { route: "", title: ["Small worlds.", "Made to move."], sub: "Four agent skills for animated isometric illustrations.", scenes: ["tiles/town-home.png", "worlds/posters/flat-ground-1/florist.png", "pixel/posters/v1/flower-stall.png", "dither/posters/v1/forge.png"], alt: "Diorama: a small SVG town, a 3D flower stall, a pixel-art flower stall and a dithered forge. Four skills for animated isometric illustrations." },
   { route: "svg", title: ["Diorama SVG"], sub: "Small figures in six themes that answer the pointer. No WebGL.", scenes: ["tiles/town-home.png"], cmd: `${INSTALL} --skill diorama`, alt: "Diorama SVG: an isometric town with houses, a tram and a crane, drawn in SVG." },
   { route: "worlds", title: ["Diorama Worlds"], sub: "Textured 3D miniatures with people at work. Four finishes.", scenes: ["worlds/posters/flat-ground-1/florist.png"], cmd: `${INSTALL} --skill diorama-worlds`, alt: "Diorama Worlds: a 3D flower stall with a florist and a customer on paving stones and grass." },
   { route: "pixel", title: ["Diorama Pixel"], sub: "Dithered pixel-art miniatures on a canvas. No three.js.", scenes: ["pixel/posters/v1/flower-stall.png"], cmd: `${INSTALL} --skill diorama-pixel`, alt: "Diorama Pixel: a pixel-art flower stall with a striped awning on dithered grass." },
   { route: "docs", title: ["Diorama guides"], sub: "Install a skill, describe a place, drop the HTML into your page.", scenes: ["tiles/town-home.png"], cmd: INSTALL, alt: "Diorama guides: an isometric SVG town beside the install command." },
   { route: "docs/worlds", title: ["Worlds guide"], sub: "Setup, prompts, browser checks and embedding for Diorama Worlds.", scenes: ["worlds/posters/flat-ground-1/bakery.png"], cmd: `${INSTALL} --skill diorama-worlds`, alt: "Diorama Worlds guide: a 3D bakery scene beside the install command." },
   { route: "docs/pixel", title: ["Pixel guide"], sub: "Setup, prompts, checks and embedding for Diorama Pixel.", scenes: ["pixel/posters/v1/pier.png"], cmd: `${INSTALL} --skill diorama-pixel`, alt: "Diorama Pixel guide: a pixel-art pier with someone fishing beside the install command." },
+  { route: "dither", title: ["Diorama Dither"], sub: "Yards on the Pixel kernel. A 4 by 4 dither and a hard shadow.", scenes: ["dither/posters/v1/forge.png"], cmd: `${INSTALL} --skill diorama-dither`, alt: "Diorama Dither: a dithered stone forge in a mountain yard, a smith at the anvil and a mule with a cart." },
+  { route: "docs/dither", title: ["Dither guide"], sub: "Setup, the support rule, the byte budget and embedding.", scenes: ["dither/posters/v1/lighthouse.png"], cmd: `${INSTALL} --skill diorama-dither`, alt: "Diorama Dither guide: a dithered lighthouse on rock, a hard ray across the water and a small boat." },
 ];
 
 const page = (c) => {
-  const many = c.scenes.length > 1;
+  const count = c.scenes.length;
+  const many = count > 1;
+  const gap = 16;
   const scenes = c.scenes.map((s) => `<img src="${img(s)}">`).join("");
   return `<!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Roboto+Mono:wght@400&display=swap">
@@ -48,8 +52,8 @@ const page = (c) => {
   p { margin-top: 22px; font-size: 27px; line-height: 1.3; color: #6c6c6c; font-weight: 500; }
   code { position: absolute; left: 72px; bottom: 64px; font-family: "Roboto Mono", monospace; font-size: 21px; color: #0d0d0d; }
   .url { position: absolute; right: 72px; bottom: 62px; font-size: 24px; font-weight: 500; color: #6c6c6c; }
-  .scenes { position: absolute; display: flex; align-items: flex-end; justify-content: center; ${many ? "left: 40px; right: 40px; bottom: 104px; height: 232px; gap: 8px;" : "right: 24px; top: 70px; width: 560px; height: 440px;"} }
-  .scenes img { height: 100%; width: auto; max-width: ${many ? "380px" : "100%"}; object-fit: contain; }
+  .scenes { position: absolute; display: flex; align-items: flex-end; justify-content: center; ${many ? `left: 56px; right: 56px; bottom: 100px; height: 210px; gap: ${gap}px;` : "right: 24px; top: 70px; width: 560px; height: 440px;"} }
+  .scenes img { ${many ? `height: auto; width: auto; max-height: 100%; max-width: calc((100% - ${(count - 1) * gap}px) / ${count}); object-fit: contain;` : "height: 100%; width: auto; max-width: 100%; object-fit: contain;"} }
 </style></head><body>
   <div class="brand"><svg viewBox="0 0 38 48"><path fill="#0d0d0d" fill-rule="evenodd" d="${mark}"/></svg>Diorama</div>
   <div class="text"><h1>${c.title.map((t) => `<span>${t}</span>`).join("")}</h1>${many ? "" : `<p>${c.sub}</p>`}</div>
@@ -62,7 +66,10 @@ const page = (c) => {
 const tmp = join(tmpdir(), "diorama-og");
 rmSync(tmp, { recursive: true, force: true });
 mkdirSync(tmp, { recursive: true });
-for (const c of CARDS) {
+const only = process.argv.slice(2);
+const cards = only.length ? CARDS.filter((c) => only.includes(c.route)) : CARDS;
+if (only.length && cards.length !== only.length) { console.error(`unknown route: ${only.filter((r) => !cards.some((c) => c.route === r)).join(", ")}`); process.exit(2); }
+for (const c of cards) {
   const html = join(tmp, `${c.route.replace(/\//g, "-") || "home"}.html`);
   writeFileSync(html, page(c));
   const dir = join(SITE, "app", c.route);

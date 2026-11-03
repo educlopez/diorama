@@ -4,7 +4,8 @@ import { CodeRow } from "@/components/install";
 import { FIGURES, byName } from "@/lib/figures";
 import Image from "next/image";
 import { WORLD_POSTER_REVISION } from "@/lib/worlds";
-import { AUTHOR, INSTALL, INSTALL_PIXEL, INSTALL_WORLDS, REPO, SITE, THEMES } from "@/lib/site";
+import { DITHER, ditherPoster } from "@/lib/dither";
+import { AUTHOR, INSTALL, INSTALL_DITHER, INSTALL_PIXEL, INSTALL_WORLDS, REPO, SITE, THEMES } from "@/lib/site";
 import { PIXEL, pixelPoster } from "@/lib/pixel";
 import { RELEASE_VIDEO } from "@/lib/seo";
 import pkg from "../package.json";
@@ -16,7 +17,7 @@ const JSON_LD = {
     {
       "@type": "SoftwareSourceCode",
       name: "Diorama",
-      description: "Agent skills that build animated isometric illustrations for the web, each one self-contained HTML: SVG figures, 3D miniature worlds and dithered pixel-art miniatures.",
+      description: "Agent skills that build animated isometric illustrations for the web, each one self-contained HTML: SVG figures, 3D miniature worlds, dithered pixel-art miniatures and dithered yards on the pixel kernel.",
       url: SITE,
       codeRepository: REPO,
       license: "https://opensource.org/licenses/MIT",
@@ -60,16 +61,16 @@ export default function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <Topbar />
       <header className="header home-hero">
-        <p className="badge"><span className="beta">Open source</span><span>Three skills for your coding agent</span></p>
+        <p className="badge"><span className="beta">Open source</span><span>Four skills for your coding agent</span></p>
         <h1 className="title">Small worlds.<br /><span className="home-title-dim">Made to move.</span></h1>
-        <p className="subtitle">Lightweight SVG figures, detailed miniature worlds or dithered pixel art. Describe a place; your agent builds an animated scene and hands you one self-contained HTML file.</p>
+        <p className="subtitle">Lightweight SVG figures, detailed miniature worlds, dithered pixel art, or a yard on that same pixel kernel. Describe a place; your agent builds an animated scene and hands you one self-contained HTML file.</p>
         <div className="cta-row">
           <a className="btn btn--primary" href="/worlds">Explore Worlds <Arrow /></a>
           <a className="btn btn--secondary" href="#choose-skill">Choose your skill</a>
         </div>
       </header>
 
-      <section className="col skill-pair skill-trio" id="choose-skill" aria-label="Choose your Diorama skill">
+      <section className="col skill-pair" id="choose-skill" aria-label="Choose your Diorama skill">
         <article className="skill-path">
           <a className="skill-path-art" href="/svg" aria-label="Explore Diorama SVG figures"><Image src="/tiles/town-home.png" alt="A small SVG town with streets, houses, a tram and a crane." fill priority sizes="(max-width: 700px) 100vw, 480px" /></a>
           <div className="skill-path-heading"><h2>Diorama <span>SVG</span></h2><span className="skill-facts">{FIGURES.length} figures · {THEMES.length} themes</span></div>
@@ -90,6 +91,13 @@ export default function Page() {
           <p>Tiny places in dithered pixel art. Textured materials, one clear action. A small canvas renderer, no WebGL.</p>
           <CodeRow code={INSTALL_PIXEL} label="Copy Diorama Pixel install command" />
           <div className="skill-path-links"><a href="/pixel">Explore Pixel <Arrow /></a><a href="/docs/pixel">Pixel guide</a></div>
+        </article>
+        <article className="skill-path skill-path--dither">
+          <a className="skill-path-art" href="/dither" aria-label="Explore Diorama Dither"><Image src={ditherPoster("forge")} alt="A dithered stone forge in a mountain yard: a smith at the anvil, smoke leaving the chimney, a mule waiting with a cart." fill sizes="(max-width: 700px) 100vw, 480px" unoptimized /></a>
+          <div className="skill-path-heading"><h2>Diorama <span>Dither</span></h2><span className="skill-facts">{DITHER.length} scenes · pixel kernel</span></div>
+          <p>Yards on the Pixel kernel, with a harder finish. A full frame, a hard shadow, one tap that toggles a state. No WebGL.</p>
+          <CodeRow code={INSTALL_DITHER} label="Copy Diorama Dither install command" />
+          <div className="skill-path-links"><a href="/dither">Explore Dither <Arrow /></a><a href="/docs/dither">Dither guide</a></div>
         </article>
       </section>
 
@@ -132,7 +140,7 @@ export default function Page() {
         <ol className="steps">
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">1</span><h3 className="step-title">Install the skill</h3></div>
-            <p className="step-text">Choose SVG, Worlds or Pixel above. Each command installs the matching skill for Claude Code, Cursor or Codex; your agent follows its renderer-specific setup.</p>
+            <p className="step-text">Choose SVG, Worlds, Pixel or Dither above. Each command installs the matching skill for Claude Code, Cursor or Codex; your agent follows its setup.</p>
           </li>
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">2</span><h3 className="step-title">Ask for a place</h3></div>
@@ -140,7 +148,7 @@ export default function Page() {
           </li>
           <li className="step">
             <div className="step-meta"><span className="step-num" aria-hidden="true">3</span><h3 className="step-title">Drop in the file</h3></div>
-            <p className="step-text">Serve the offline HTML, frame it, or mount the renderer in React. <a href="/docs#embed">Embed SVG</a>, <a href="/docs/worlds#worlds-embed">Worlds</a> or <a href="/docs/pixel#pixel-embed">Pixel</a>.</p>
+            <p className="step-text">Serve the offline HTML, frame it, or mount the renderer in React. <a href="/docs#embed">Embed SVG</a>, <a href="/docs/worlds#worlds-embed">Worlds</a>, <a href="/docs/pixel#pixel-embed">Pixel</a> or <a href="/docs/dither#dither-embed">Dither</a>.</p>
           </li>
         </ol>
       </section>
@@ -149,12 +157,12 @@ export default function Page() {
         <h2 className="section-title" id="faq-title">FAQs</h2>
         <div className="faq-list">
           {[
-            ["Which skill should I choose?", "Diorama SVG makes lightweight interactive illustrations for UI, docs and empty states. Diorama Worlds makes detailed 3D miniature stories with articulated people and four finishes. Diorama Pixel makes dithered pixel-art miniatures with no dependency. Same repository; separate renderers and install commands."],
-            ["Is it free?", "Yes. All three skills, their renderers and examples are MIT. Use them in personal or commercial projects. Your coding agent may have its own usage costs."],
-            ["What do I need?", "An agent that reads skills and Node.js 20+ for the build/check scripts. Browser checks need Chrome or Chromium. Worlds also installs its pinned build dependencies once and needs WebGL 2 in the viewer; Pixel installs one dev dependency for its browser checks. The install CLI may require a newer Node release; see each guide."],
-            ["Does a finished file need a network connection?", "No. SVG and Pixel include their small renderers; Worlds bundles Three.js and generated textures. SVG files are roughly 30–35 KB gzip, Pixel files about 55 KB uncompressed, Worlds files about 0.77 MB uncompressed. These are different size measures, not a like-for-like benchmark."],
+            ["Which skill should I choose?", "Diorama SVG makes lightweight interactive illustrations for UI, docs and empty states. Diorama Worlds makes detailed 3D miniature stories with articulated people and four finishes. Diorama Pixel makes dithered pixel-art miniatures with no dependency. Diorama Dither uses the Pixel kernel for a yard that fills the frame, with a 4 by 4 ordered dither and a hard shadow. Same repository; separate install commands."],
+            ["Is it free?", "Yes. All four skills, their renderers and examples are MIT. Use them in personal or commercial projects. Your coding agent may have its own usage costs."],
+            ["What do I need?", "An agent that reads skills and Node.js 20+ for the build/check scripts. Browser checks need Chrome or Chromium. Worlds also installs its pinned build dependencies once and needs WebGL 2 in the viewer; Pixel and Dither each install one dev dependency for their browser checks. The install CLI may require a newer Node release; see each guide."],
+            ["Does a finished file need a network connection?", "No. SVG, Pixel and Dither include their small renderers; Worlds bundles Three.js and generated textures. SVG files are roughly 30–35 KB gzip, Pixel files about 55 KB uncompressed, Dither files at most 70 KB uncompressed, Worlds files about 0.77 MB uncompressed. These are different size measures, not a like-for-like benchmark."],
             ["Does it work in React?", "Yes. Every renderer mounts into an element and releases its resources on cleanup. Use the corresponding guide: their APIs and dependencies are deliberately separate."],
-            ["Can I change the look?", "SVG has six tunable themes. Worlds has miniature, pixel, halftone and blueprint finishes sharing the same action and clock. Pixel takes its palette, ramps and textures from the scene. All three honor reduced motion."],
+            ["Can I change the look?", "SVG has six tunable themes. Worlds has miniature, pixel, halftone and blueprint finishes sharing the same action and clock. Pixel takes its palette, ramps and textures from the scene. Dither keeps the Pixel kernel and sets its own frame, dither and hard shadow. All four honor reduced motion."],
           ].map(([q, a]) => (
             <details key={q} className="faq">
               <summary>{q}</summary>

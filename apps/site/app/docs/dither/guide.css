@@ -1,0 +1,4 @@
+/* Long calls stay inside the column. No extra shadow. */
+.dither-guide .tbl { table-layout: fixed; width: 100%; }
+.dither-guide .tbl td,
+.dither-guide .tbl th { white-space: normal; overflow-wrap: anywhere; }

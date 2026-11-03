@@ -11,3 +11,7 @@ public/worlds/*.html
 # Generated Pixel pages; reviewed posters are versioned.
 public/pixel/*.html
 lib/pixel.json
+
+# Generated Dither pages; reviewed posters are versioned.
+public/dither/*.html
+lib/dither.json
