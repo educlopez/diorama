@@ -148,7 +148,7 @@ export default function Page() {
             <div className="made-posters">
               {WORLDS.map((world) => (
                 <a key={world.name} className="card made-poster" href="/worlds">
-                  <span className="made-poster-art"><Image src={`/worlds/posters/${WORLD_POSTER_REVISION}/${world.name}.png`} alt="" fill sizes="(max-width: 760px) 46vw, 240px" /></span>
+                  <span className="made-poster-art"><Image src={`/worlds/posters/${WORLD_POSTER_REVISION}/${world.name}.png`} alt="" fill sizes="(max-width: 767px) 46vw, 224px" /></span>
                   <span className="made-poster-name">{world.place}<span className="sr-only">, Worlds</span></span>
                 </a>
               ))}
@@ -159,10 +159,10 @@ export default function Page() {
               <div className="made-id"><h3 id="made-pixel">Pixel</h3><p className="made-count">{PIXEL.length} scenes</p></div>
               <MadeLink href="/pixel">Explore Pixel</MadeLink>
             </div>
-            <div className="made-posters made-posters--3">
+            <div className="made-posters">
               {PIXEL.map((scene) => (
                 <a key={scene.name} className="card made-poster made-poster--pixels" href={`/pixel#${scene.name}`}>
-                  <span className="made-poster-art"><Image src={pixelPoster(scene.name)} alt="" fill sizes="(max-width: 760px) 46vw, 320px" unoptimized /></span>
+                  <span className="made-poster-art"><Image src={pixelPoster(scene.name)} alt="" fill sizes="(max-width: 520px) 92vw, (max-width: 767px) 46vw, 224px" unoptimized /></span>
                   <span className="made-poster-name">{scene.title}<span className="sr-only">, Pixel</span></span>
                 </a>
               ))}
@@ -176,7 +176,7 @@ export default function Page() {
             <div className="made-posters">
               {DITHER.map((scene) => (
                 <a key={scene.name} className="card made-poster made-poster--pixels" href={`/dither#${scene.name}`}>
-                  <span className="made-poster-art made-poster-art--dither"><Image src={ditherPoster(scene.name)} alt="" fill sizes="(max-width: 760px) 46vw, 240px" unoptimized /></span>
+                  <span className="made-poster-art"><Image src={ditherPoster(scene.name)} alt="" fill sizes="(max-width: 767px) 46vw, 224px" unoptimized /></span>
                   <span className="made-poster-name">{scene.title}<span className="sr-only">, Dither</span></span>
                 </a>
               ))}
