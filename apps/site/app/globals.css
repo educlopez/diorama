@@ -9,8 +9,9 @@
   --color-bg: #fdfdfd;
   --color-text: #0d0d0d;
   --color-muted: #6c6c6c;
-  --color-subtle: #757575;
-  --color-faint: #737373;
+  /* One quieter grey, lighter than muted. Faint and subtle share it. */
+  --color-subtle: #6e6e6e;
+  --color-faint: var(--color-subtle);
   --color-card: #ffffff;
   --color-stage: #f9f9f9;
   --color-chip: #f4f4f4;
