@@ -283,8 +283,8 @@ A fourth skill, [`diorama-dither`](skills/diorama-dither/SKILL.md), builds isome
 ```sh
 node skills/diorama-dither/scripts/build.mjs skills/diorama-dither/examples/forge.js dither-forge.html
 node skills/diorama-dither/scripts/validate.mjs skills/diorama-dither/examples/forge.js
-npm run support --prefix skills/diorama-dither
 npm ci --ignore-scripts --prefix skills/diorama-dither
+npm run support --prefix skills/diorama-dither
 node skills/diorama-dither/scripts/look.mjs skills/diorama-dither/examples/forge.js work/forge-look
 ```
 
