@@ -9,7 +9,7 @@ import { INSTALL, REPO, SIZES, SKILL_FILES, THEME_FIELDS, THEME_ROWS } from "@/l
 
 export const metadata: Metadata = pageMetadata({
   title: "Guides",
-  description: "Choose a Diorama skill. Install SVG for lightweight interactive figures, Worlds for detailed miniature scenes, Pixel for dithered pixel-art miniatures, or Dither for yards on the pixel kernel. SVG setup, themes and embedding.",
+  description: "Choose a Diorama skill: SVG for interactive isometric figures, Worlds for 3D miniatures, Pixel or Dither for animated pixel scenes. Setup, themes and embedding.",
   path: "/docs",
 });
 
