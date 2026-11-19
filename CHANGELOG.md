@@ -2,6 +2,13 @@
 
 All notable changes to Diorama are listed here. The versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and every version is a [release on GitHub](https://github.com/educlopez/diorama/releases) with the same notes. From 1.0.0 on, [release-please](https://github.com/googleapis/release-please) writes each new section from the pull requests merged since the last version (`feat:` under Added, `fix:` under Fixed, `perf:` and `refactor:` under Changed, `docs:` under Documentation) and opens the release pull request that publishes it.
 
+## [1.4.1](https://github.com/educlopez/diorama/compare/v1.4.0...v1.4.1) (2026-11-19)
+
+
+### Fixed
+
+* **seo:** noindex demo pages, trim metas and bump next ([#44](https://github.com/educlopez/diorama/issues/44)) ([ffdc6d9](https://github.com/educlopez/diorama/commit/ffdc6d96ba70ed951f5c6ee1e9af0cad524676e8))
+
 ## [1.4.0](https://github.com/educlopez/diorama/compare/v1.3.0...v1.4.0) (2026-11-03)
 
 
