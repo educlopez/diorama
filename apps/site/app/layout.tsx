@@ -6,7 +6,7 @@ import { RELEASE_VIDEO } from "@/lib/seo";
 import "./globals.css";
 
 const TITLE = "Diorama · small 3D worlds that move";
-const DESCRIPTION = "Four agent skills for animated isometric illustrations: lightweight SVG figures, detailed 3D miniature worlds, dithered pixel-art miniatures and dithered yards on the pixel kernel, each one self-contained HTML file your coding agent builds.";
+const DESCRIPTION = "Diorama: agent skills for animated isometric illustrations. SVG figures, 3D miniature worlds, pixel-art and dithered scenes, each a self-contained HTML file.";
 
 /* The defaults, and the home's own card: every other page passes its own through pageMetadata. */
 export const metadata: Metadata = {
